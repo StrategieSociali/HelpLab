@@ -1,6 +1,5 @@
 # HelpLab
 Humanity Empowered for Local Progress
-# HelpLab
 
 ## 🚀 Empowering People, Transforming Communities
 
