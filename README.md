@@ -81,7 +81,6 @@ HelpLab is released under the **MIT License**. See the [LICENSE](LICENSE) file f
 ## 🌎 Community & Support
 - Join our **[Discussion Forum](#)**
 - Report issues via **[GitHub Issues](https://github.com/your-repo/helplab-space/issues)**
-- Follow us on **[Twitter](#)**
 
 Let’s build a more sustainable world together! 🌍💚
 
