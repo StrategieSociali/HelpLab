@@ -1,0 +1,10 @@
+# Node
+**/node_modules/
+**/.env
+
+# Build output
+frontend/dist/
+
+# System/IDE
+.DS_Store
+.vscode/

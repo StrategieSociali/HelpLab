@@ -1,0 +1,10 @@
+# robots.txt for HelpLab
+User-agent: *
+Disallow: /admin
+Disallow: /dashboard
+Sitemap: https://www.helplab.space/sitemap.xml
+
+
+# Link to the sitemap
+Sitemap: https://www.helplab.space/sitemap.xml
+
