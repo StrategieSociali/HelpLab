@@ -1,5 +1,8 @@
 # HelpLab License Agreement
 
+## 0. Backend Licence (No licence)
+At the moment we don't think to a OS licence for backend and Database
+
 ## 1. Frontend License (Open Source - MIT with Attribution)
 The frontend code of the HelpLab project is licensed under the **MIT License with Attribution**. You are free to:
 - Use, copy, modify, merge, publish, and distribute the frontend software.
