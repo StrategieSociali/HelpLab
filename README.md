@@ -79,7 +79,7 @@ We welcome contributions! Check out our **[CONTRIBUTING.md](CONTRIBUTING.md)** f
 HelpLab is released under the **MIT License**. See the [LICENSE](LICENSE) file for more details.
 
 ## 🌎 Community & Support
-- Join our **[Discussion Forum](#)**
+- Join our **[Telegram](https://t.me/+h_Rh9IpYpgZjZjc0)**
 - Report issues via **[GitHub Issues](https://github.com/your-repo/helplab-space/issues)**
 
 Let’s build a more sustainable world together! 🌍💚
