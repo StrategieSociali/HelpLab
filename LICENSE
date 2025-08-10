@@ -1,0 +1,55 @@
+# HelpLab License Agreement
+
+## 1. Frontend License (Open Source - MIT with Attribution)
+The frontend code of the HelpLab project is licensed under the **MIT License with Attribution**. You are free to:
+- Use, copy, modify, merge, publish, and distribute the frontend software.
+- Create derivative works based on the frontend software.
+
+### Conditions:
+- You **must** include proper attribution to the original HelpLab project in all copies or substantial portions of the software.
+- You **must not** misrepresent the origin of the software.
+- The software is provided "as is", without warranty of any kind.
+
+```
+MIT License with Attribution
+Copyright (c) [2025] HelpLab
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+Proper attribution to the HelpLab project must be included in any redistributions
+or derivative works.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## 2. Backend License (Closed Source - Proprietary)
+The backend code of the HelpLab project is **proprietary software** and is not open-source.
+- The backend may **only** be used in connection with the official HelpLab project.
+- No rights are granted for modification, distribution, or commercial use of the backend source code.
+- Only essential API documentation and data structures required for frontend development will be shared.
+
+## 3. Database License (Closed Source - Proprietary)
+The database schema, structure, and queries are **proprietary** and not publicly available.
+- Only the minimum necessary data required for frontend operation will be exposed via API endpoints.
+- Unauthorized access, modification, or redistribution of database structures is strictly prohibited.
+
+## 4. General Terms
+- Any attempt to reverse-engineer, decompile, or extract proprietary backend or database components is strictly prohibited.
+- Violations of these terms may result in legal action.
+
+For any questions or licensing inquiries, please contact: **[antonio@strategiesociali.it]**.
+
