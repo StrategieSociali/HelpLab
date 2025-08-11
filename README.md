@@ -1,6 +1,9 @@
 # HelpLab
 Humanity Empowered for Local Progress
 
+## Disclaimer
+This project is in its **early stages**, and we are currently uploading the first lines of code. Follow us if you want to stay up to date.
+
 ## 🚀 Empowering People, Transforming Communities
 
 HelpLab is an open-source platform designed to **encourage sustainable behaviors** through challenges, learning paths, and gamification. It also includes a **micro-payment system** using the Bitcoin Lightning Network to facilitate the local exchange of micro-services and second-hand products, fostering a **circular economy**.
