@@ -23,28 +23,46 @@ export default function App() {
         <div className="App">
           {/* Intestazione */}
           <Header />
-          <main>
-            <Routes>
-              {/* Rotte pubbliche */}
-              <Route path={routes.home} element={<HomepageStatic />} />
-              <Route path={routes.auth.login} element={<Login />} />
-              <Route path={routes.auth.register} element={<Register />} />
-              <Route path={routes.joinHelpLab} element={<JoinHelpLab />} />
-              {/* 👉 Learning Paths pubblica */}
-              <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
-              {/* Alias senza trattino (facoltativo) */}
-              <Route path="/learningpaths" element={<Navigate to={routes.dashboard.learningPaths} replace />} />
+         <main>
+  <Routes>
+    {/* Rotte pubbliche */}
+    <Route path={routes.home} element={<HomepageStatic />} />
+    <Route path={routes.auth.login} element={<Login />} />
+    <Route path={routes.auth.register} element={<Register />} />
+    <Route path={routes.joinHelpLab} element={<JoinHelpLab />} />
 
-              {/* Rotte protette */}
-              <Route
-                path={routes.dashboard.challenges}
-                element={
-                  <ProtectedRoute>
-                    <Challenges />
-                  </ProtectedRoute>
-                }
-              />
-               {/* Togliere la rotta pubblica in produzione o lasciare solo i dati generali per i non loggati
+    {/* Learning Paths pubblica */}
+    <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
+    {/* Alias senza trattino */}
+    <Route path="/learningpaths" element={<Navigate to={routes.dashboard.learningPaths} replace />} />
+
+    {/* Rotte protette */}
+    <Route
+      path={routes.dashboard.challenges}
+      element={
+        <ProtectedRoute>
+          <Challenges />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path={routes.dashboard.userProfile}
+      element={
+        <ProtectedRoute>
+          <UserProfile />
+        </ProtectedRoute>
+      }
+    />
+
+    {/* Pagina 404 esplicita (se esiste in routes) */}
+    {/* <Route path={routes.notFound} element={<NotFound />} /> */}
+
+    {/* Fallback 404 */}
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+</main>
+
+          {/* Questo codice sostituisce la rotta pubblica in produzione o lasciare solo i dati generali per i non loggati
              <Route
                 path={routes.dashboard.learningPaths}
                 element={
@@ -53,26 +71,6 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />*/}
-              {/* Fallback 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-              <Route
-                path={routes.dashboard.userProfile}
-                element={
-                  <ProtectedRoute>
-                    <UserProfile />
-                  </ProtectedRoute>
-                   </Routes>
-                }
-              />
-
-              {/* Homepage */}
-               <Route path={routes.home} element={<HomepageStatic />} />
-
-              {/* Pagina 404 */}
-              <Route path={routes.notFound} element={<NotFound />} />
-            </Routes>
-          </main>
 
           {/* Footer */}
           <Footer />
@@ -81,5 +79,3 @@ export default function App() {
     </AuthProvider>
   );
 }
-
-export default App;
