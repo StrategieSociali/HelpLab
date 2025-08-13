@@ -469,3 +469,16 @@ body {
     z-index: 2;
     background-color: white;
 }
+
+/* Leggibilità menu a tendina */
+.registration-form select { color: #ffffff; }
+.registration-form select option {
+  color: #0f172a;
+  background-color: #ffffff;
+}
+.registration-form select option:checked {
+  background-color: #e5f9f1;
+  color: #065f46;
+}
+.registration-form select option[value=""] { color: #94a3b8; }
+
