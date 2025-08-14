@@ -9,6 +9,6 @@ export const routes = {
     userProfile: '/userprofile',
   },
   home: '/',
-  joinHelpLab: '/unisciti',
+  joinHelpLab: '/unisciti', // Cambiare in community con il backend
   notFound: '*', // Gestione della pagina 404
 };

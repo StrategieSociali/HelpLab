@@ -1,4 +1,5 @@
 import React from 'react';
+import FormNotice from "@/components/common/FormNotice.jsx";
 
 const HomepageStatic = () => {
   return (
@@ -120,7 +121,10 @@ const HomepageStatic = () => {
       <section className="registration-section" id="registration">
         <div className="container">
           <h2>Inizia il Tuo Viaggio Sostenibile</h2>
-          <p>A breve sarà possibile iscriversi alla nostra lista d'attesa per essere un beta tester della piattaforma. Inizia a fare la differenza per il pianeta prima del lancio dell'app, avrai benefici riservati ai tester. La registrazione è gratuita e immediata, non temere ti contatteremo noi appena partiranno i test nella tua area di interesse (segui gli aggiornamenti su GitHub). Intanto se vuoi maggiori informazioni ci trovi su telegram qui: https://t.me/+h_Rh9IpYpgZjZjc0</p>
+          <p>A breve sarà possibile iscriversi alla nostra lista d'attesa per essere un beta tester della piattaforma. Inizia a fare la differenza per il pianeta prima del lancio dell'app, avrai benefici riservati ai tester. La registrazione è gratuita e immediata, non temere ti contatteremo noi appena partiranno i test nella tua area di interesse</p>
+          
+           {/* Alert Form Notice */}
+           <FormNotice />
 
           <form className="registration-form" onSubmit={(e) => e.preventDefault()}>
             <div className="form-group">

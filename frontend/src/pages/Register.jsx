@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import FormNotice from "@/components/common/FormNotice.jsx";
 
 function Register() {
   // Stato del form: identico alla tua base
@@ -27,34 +28,38 @@ function Register() {
   // Submit con validazione "password === confirmPassword" (come nel tuo file)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("Demo attiva: questo form non invia ancora i dati. " +
+    "Per contribuire cerca HelpLab su GitHub o unisciti al gruppo Telegram @HelpLab.");
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
-
-    try {
-      // Chiamata API: manteniamo esattamente l’endpoint/variabile d’ambiente che usavi
+ // Questa parte va decommentata quando arriva il backend
+    //try {
+     
+      //Chiamata API: manteniamo esattamente l’endpoint/variabile d’ambiente che usavi
       // Se in futuro usi Vite, valuta import.meta.env.VITE_API_URL
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/register`,
-        formData // inviamo lo stesso payload del tuo file originale
-      );
+      //const response = await axios.post(
+      //  `${process.env.REACT_APP_API_URL}/register`,
+      //  formData // inviamo lo stesso payload del tuo file originale
+    //  );
 
       // Comportamento di successo: uguale al tuo file
-      alert('Registration successful! Please log in.');
-      navigate('/login');
-    } catch (error) {
+     // alert('Registration successful! Please log in.');
+     // navigate('/login');
+    // } catch (error) {
       // Gestione errori: mantiene la priorità al messaggio dal server se presente
-      setError(error.response?.data?.message || 'Registration failed.');
-    }
+     // setError(error.response?.data?.message || 'Registration failed.');
+    //}
   };
 
   return (
     // Wrapper scuro + container: stessi elementi usati in Login/GreenSpark
     <section className="registration-section">
       <div className="container">
+      {/* Alert FormNotice */}
+       <FormNotice />
         {/* Il form assume gli stili vetrosi già presenti nel tuo CSS */}
         <form onSubmit={handleSubmit} className="registration-form">
           {/* Username */}

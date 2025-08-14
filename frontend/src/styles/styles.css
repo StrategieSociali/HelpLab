@@ -509,10 +509,15 @@ body {
   letter-spacing: .2px;
   color: #0f172a;
 }
+/* Mostra il claim su desktop, lo nasconde su mobile */
 .claim {
-  display: none;
+  display: inline-block;        /* <-- visibile */
   font-size: 0.875rem;
   color: #475569;
+  margin-left: 8px;
+}
+@media (max-width: 900px) {
+  .claim { display: none; }     /* solo mobile nascosto */
 }
 .main-nav {
   display: flex;
@@ -580,5 +585,32 @@ body {
   .burger {
     display: block;
   }
+}
+/* === Notice (avviso leggero) === */
+.notice {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+}
+.notice--info {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+.notice__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.notice a {
+  color: inherit;
+  text-decoration: underline;
+}
+/* Spazio naturale quando il notice precede un form */
+.notice + .registration-form {
+  margin-top: 12px;
 }
 

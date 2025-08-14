@@ -13,6 +13,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import FormNotice from "@/components/common/FormNotice.jsx";
 
 function Login() {
 // Stato del form:
@@ -47,7 +48,8 @@ return (
   // Wrapper scuro: è quello che dà il background a contrasto
   <section className="registration-section">
     <div className="container">
-      {/* Il form usa la stessa classe del form che hai nello screenshot */}
+    <FormNotice />
+      
       <form onSubmit={handleSubmit} className="registration-form">
         
         {/* Struttura prevista dal CSS: blocchi .form-group con label + input */}
