@@ -32,7 +32,7 @@ export default function Header() {
           <NavLink to={routes.home} end className={navClass} onClick={close}>
             Home
           </NavLink>
-          <NavLink to={routes.dashboard.challenges} end className={navClass} onClick={close}>
+         <NavLink to={routes.dashboard.challenges} end className={navClass}>
           Sfide
           </NavLink>
           <NavLink to={routes.dashboard.learningPaths} end className={navClass} onClick={close}>

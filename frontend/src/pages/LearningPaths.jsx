@@ -1,109 +1,96 @@
-// axios.get/post: completare questa parte a valle del backend: gestire 401/403 e mapping errori lato API
-import React, { useState, useEffect, useCallback, useContext, useMemo } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+// src/pages/LearningPaths.jsx
+// Vista demo con fallback ai JSON in /public/data/
+// Alla prima API reale: imposta VITE_API_URL e i servizi chiameranno il backend.
 
-function LearningPaths() {
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useContext,
+  useMemo,
+} from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "@/context/AuthContext";
+import {
+  fetchLearningPaths as lpFetch,
+  fetchUserProgress as lpProgress,
+  postProgress as lpPost,
+} from "@/services/learningPathsService";
+import { resetDemo } from "@/utils/demoStorage";
+
+export default function LearningPaths() {
   const [paths, setPaths] = useState([]);
   const [userProgress, setUserProgress] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [error, setError] = useState("");
+
+  // filtri locali (opzionali, già pronti se vorrai esporli in UI)
+  const [query, setQuery] = useState("");
+  const [level, setLevel] = useState(""); // 'base' | 'intermedio' | 'avanzato'
+  const [sortBy, setSortBy] = useState("recent"); // 'recent' | 'title' | 'duration'
+
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  const API_URL = import.meta.env.VITE_API_URL;  // completare questa parte a valle del backend: definire VITE_API_URL in .env
+  // Usa header Authorization solo se c’è un token
+  const authHeaders = useMemo(
+    () => (user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
+    [user?.token]
+  );
 
-  // Ricerca e filtri locali (no backend)
-  const [query, setQuery] = useState('');
-  const [level, setLevel] = useState('');          // '', 'base', 'intermedio', 'avanzato'
-  const [sortBy, setSortBy] = useState('recent');  // 'recent' | 'title' | 'duration'
-
-  // Tronca descrizioni lunghe per la card
-  const short = (text = '', max = 160) => (text.length > max ? text.slice(0, max - 1) + '…' : text);
-
-  // Calcola progresso singolo corso
-  const progressInfo = (p) => {
-    const completed = Array.isArray(p) ? p.length : 0;
-    return { completed };
-  };
-
-  // Usa l'header Authorization solo se il token esiste
-  const authHeaders = user?.token ? { Authorization: `Bearer ${user.token}` } : {};
-
-  // Recupera i percorsi di apprendimento
-  // completare questa parte a valle del backend: definire endpoint e payload attesi per /learning-paths
+  // Recupera percorsi
   const fetchLearningPaths = useCallback(async () => {
-   // completare questa parte a valle del backend: se l'endpoint /learning-paths richiede auth,
-  // ripristinare il redirect qui sotto.
-  // if (!user) {
-  //   navigate('/login');
-  //   return;
-  // }
-
-  // vista pubblica: permettiamo il fetch senza token (authHeaders è vuoto se non loggati)
-  // ...
-  setLoading(true);
-  setError('');
-  try {
-    const response = await axios.get(`${API_URL}/learning-paths`, {
-      headers: authHeaders,
-    });
-    setPaths(Array.isArray(response.data) ? response.data : []);
-  } catch (error) {
-    console.error('Errore nel recupero dei percorsi:', error);
-    setError("Errore nel caricamento dei percorsi. Riprova più tardi.");
-  } finally {
-    setLoading(false);
-  }
-  }, [navigate, user, API_URL, authHeaders]);
-
-  // Recupera il progresso utente
-  // completare questa parte a valle del backend: definire schema di risposta per /learning-paths/progress
-  const fetchUserProgress = useCallback(async () => {
-    if (!user) return;
-
+    setLoading(true);
+    setError("");
     try {
-      const response = await axios.get(`${API_URL}/learning-paths/progress`, {
-        headers: authHeaders,
-      });
-      setUserProgress(response.data);
-    } catch (error) {
-      console.error('Errore nel recupero del progresso:', error);
+      const data = await lpFetch(API_URL, authHeaders);
+      setPaths(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Errore nel recupero dei percorsi:", err);
+      setError("Errore nel caricamento dei percorsi. Riprova più tardi.");
+    } finally {
+      setLoading(false);
     }
-  }, [user, API_URL, authHeaders]);
+  }, [API_URL, authHeaders]);
+
+  // Recupera progresso (demo: localStorage; API: /learning-paths/progress)
+  const fetchUserProgress = useCallback(async () => {
+    try {
+      const data = await lpProgress(API_URL, authHeaders);
+      setUserProgress(data || {});
+    } catch (err) {
+      console.error("Errore nel recupero del progresso:", err);
+    }
+  }, [API_URL, authHeaders]);
 
   useEffect(() => {
     fetchLearningPaths();
     fetchUserProgress();
   }, [fetchLearningPaths, fetchUserProgress]);
 
-  // ---- FILTRI/ORDINAMENTO DERIVATI (punto 4) ----
-  // completare questa parte a valle del backend: popolare 'level', 'estimatedMinutes', 'updatedAt'/'createdAt' nei dati dei corsi
+  // Filtra/ordina
   const filteredPaths = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = Array.isArray(paths) ? [...paths] : [];
 
-    // filtro testo
     if (q) {
-      list = list.filter((p) => {
-        const hay = [p.title, p.description, ...(p.tags || [])]
+      list = list.filter((p) =>
+        [p.title, p.description, ...(p.tags || [])]
           .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return hay.includes(q);
-      });
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      );
     }
-
-    // filtro livello (se disponibile nei dati)
     if (level) {
-      list = list.filter((p) => (p.level || '').toLowerCase() === level);
+      list = list.filter((p) => (p.level || "").toLowerCase() === level);
     }
-
-    // ordinamento
     list.sort((a, b) => {
-      if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
-      if (sortBy === 'duration') return (a.estimatedMinutes || 0) - (b.estimatedMinutes || 0);
+      if (sortBy === "title")
+        return (a.title || "").localeCompare(b.title || "");
+      if (sortBy === "duration")
+        return (a.estimatedMinutes || 0) - (b.estimatedMinutes || 0);
       const da = new Date(a.updatedAt || a.createdAt || 0).getTime();
       const db = new Date(b.updatedAt || b.createdAt || 0).getTime();
       return db - da; // recenti prima
@@ -111,66 +98,134 @@ function LearningPaths() {
 
     return list;
   }, [paths, query, level, sortBy]);
-  // -----------------------------------------------
 
-  // Aggiorna il progresso di un modulo
-  // completare questa parte a valle del backend: verificare payload e codici di risposta di POST /learning-paths/:id/progress
+  // Aggiorna progresso di un modulo (demo → localStorage, reale → POST API)
   const updateProgress = async (pathId, moduleId) => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
-
     try {
-      await axios.post(
-        `${API_URL}/learning-paths/${pathId}/progress`,
-        { moduleId },
-        { headers: authHeaders }
+      await lpPost(API_URL, authHeaders, pathId, moduleId);
+      await fetchUserProgress();
+    } catch (err) {
+      console.error(
+        "Errore aggiornamento progresso:",
+        err?.response?.data || err.message
       );
-      fetchUserProgress(); // Aggiorna il progresso dopo il completamento
-    } catch (error) {
-      console.error('Errore aggiornamento progresso:', error.response?.data || error.message);
       alert("Errore nell'aggiornamento del progresso. Riprova.");
     }
   };
 
+  const short = (t = "", max = 160) =>
+    t.length > max ? t.slice(0, max - 1) + "…" : t;
+
   return (
-    <div>
-      <h2>Percorsi di Apprendimento</h2>
+    <div className="container page">
+      {/* A. Header di pagina */}
+      <div className="page-header">
+        <h2 className="page-title">Percorsi di Apprendimento</h2>
+        <div className="page-actions">
+          <button
+            className="btn btn-outline btn-pill"
+            onClick={() => {
+              resetDemo();
+              fetchUserProgress();
+            }}
+          >
+            Reimposta demo
+          </button>
+        </div>
+      </div>
+
+      {/* (facoltativo) filtri rapidi: lascio commentato, pronto se vuoi esporli
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <input placeholder="Cerca…" value={query} onChange={(e)=>setQuery(e.target.value)} />
+      </div> */}
 
       {loading ? (
         <p>Caricamento...</p>
       ) : error ? (
-        <p style={{ color: 'red' }}>{error}</p>
+        <p style={{ color: "red" }}>{error}</p>
       ) : filteredPaths.length === 0 ? (
         <p>Nessun percorso disponibile.</p>
       ) : (
-        filteredPaths.map((path) => (
-          <div key={path.id}>
-            <h3>{path.title}</h3>
-            <p>{short(path.description)}</p>
-            <ul>
-              {(path.modules || []).map((module) => (
-                <li key={module.id}>
-                  {module.title}
-                  {userProgress[path.id] && userProgress[path.id].includes(module.id) ? (
-                  <span> ✅</span>
-                 ) : user ? (
-               <button onClick={() => updateProgress(path.id, module.id)}>Completa</button>
-               ) : (
-               // completare questa parte a valle del backend: eventuale modal/redirect login dedicato
-               <button onClick={() => navigate('/login')}>Accedi per completare</button>
+        // C. Griglia di card
+        <div className="grid-cards lp-grid">
+          {/* B. Card pulite con meta, tag, barra di avanzamento */}
+          {filteredPaths.map((path) => {
+            const done = userProgress[path.id] || [];
+            const total = path.modules?.length || 0;
+            const doneCount = Array.isArray(done) ? done.length : 0;
+            const pct = total ? Math.round((doneCount / total) * 100) : 0;
+
+            return (
+              <article key={path.id} className="card lp-card">
+                <h3>{path.title}</h3>
+                <p>{short(path.description)}</p>
+
+                {/* meta */}
+                <div className="lp-meta">
+                  {path.level && <span>Livello: {path.level}</span>}
+                  {typeof path.estimatedMinutes === "number" && (
+                    <span>• {path.estimatedMinutes} min</span>
+                  )}
+                </div>
+
+                {/* tag */}
+                {(path.tags || []).length > 0 && (
+                  <div style={{ marginBottom: 8 }}>
+                    {(path.tags || []).map((t) => (
+                      <span key={t} className="chip">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
                 )}
 
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
+                {/* progresso */}
+                {total > 0 && (
+                  <div style={{ margin: "8px 0 12px" }}>
+                    <div className="progress" aria-label={`Progresso ${pct}%`}>
+                      <span style={{ width: `${pct}%` }} />
+                    </div>
+                    <small style={{ color: "#64748b" }}>
+                      {doneCount}/{total} moduli completati
+                    </small>
+                  </div>
+                )}
+
+                {/* moduli */}
+                <ul style={{ marginTop: 12 }}>
+                  {(path.modules || []).map((m) => (
+                    <li key={m.id} style={{ marginBottom: 6 }}>
+                      {m.title}{" "}
+                      {Array.isArray(done) && done.includes(m.id) ? (
+                        <span>✅</span>
+                      ) : user ? (
+                        <button
+                          className="btn btn-small"
+                          onClick={() => updateProgress(path.id, m.id)}
+                        >
+                          Completa
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-small btn-outline"
+                          onClick={() => navigate("/login")}
+                        >
+                          Accedi per completare
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            );
+          })}
+        </div>
       )}
     </div>
   );
 }
-
-export default LearningPaths;
 
