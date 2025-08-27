@@ -1,27 +1,27 @@
-# node
+# Node dependencies
 node_modules/
-npm-debug.log*
-pnpm-lock.yaml
-yarn.lock
+**/node_modules/
+
+# Build output
 dist/
 build/
 
-# env & local
+# Env files (qualsiasi cartella, qualsiasi nome che inizi con .env)
 .env
 .env.*
-!.env.example
+**/.env
+**/.env.*
 
-# logs
-logs/
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 *.log
-.pnpm-debug.log*
 
-# pm2
-.pmd*
-.pm2/
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal
 
-# OS/editor
+# Misc
 .DS_Store
-Thumbs.db
-.idea/
-.vscode/

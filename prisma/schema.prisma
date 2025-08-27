@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model challenge_participants {
+  id           BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  challenge_id BigInt     @db.UnsignedBigInt
+  user_id      BigInt     @db.UnsignedBigInt
+  joined_at    DateTime   @default(now()) @db.DateTime(0)
+  challenges   challenges @relation(fields: [challenge_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cp_ch")
+  users        users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cp_us")
+
+  @@unique([challenge_id, user_id], map: "uq_cp")
+  @@index([user_id], map: "fk_cp_us")
+}
+
+model challenge_scores {
+  challenge_id BigInt     @db.UnsignedBigInt
+  user_id      BigInt     @db.UnsignedBigInt
+  score        Int        @default(0)
+  updated_at   DateTime   @default(now()) @db.DateTime(0)
+  challenges   challenges @relation(fields: [challenge_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cs_ch")
+  users        users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cs_us")
+
+  @@id([challenge_id, user_id])
+  @@index([user_id], map: "fk_cs_us")
+}
+
+model challenge_submissions {
+  id             BigInt                       @id @default(autoincrement()) @db.UnsignedBigInt
+  challenge_id   BigInt                       @db.UnsignedBigInt
+  user_id        BigInt                       @db.UnsignedBigInt
+  payload_json   Json?
+  status         challenge_submissions_status @default(pending)
+  points_awarded Int?
+  created_at     DateTime                     @default(now()) @db.DateTime(0)
+  challenges     challenges                   @relation(fields: [challenge_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csub_ch")
+  users          users                        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csub_us")
+
+  @@index([challenge_id], map: "fk_csub_ch")
+  @@index([user_id], map: "fk_csub_us")
+}
+
+model challenges {
+  id                     BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
+  slug                   String                   @unique(map: "slug") @db.VarChar(160)
+  title                  String                   @db.VarChar(200)
+  type                   String                   @default("generic") @db.VarChar(80)
+  location               String?                  @db.VarChar(255)
+  rules                  String?                  @db.Text
+  deadline               DateTime?                @db.Date
+  status                 challenges_status        @default(open)
+  budget_amount          Decimal?                 @db.Decimal(10, 2)
+  budget_currency        String?                  @db.Char(3)
+  sponsor_id             BigInt?                  @db.UnsignedBigInt
+  judge_user_id          BigInt?                  @db.UnsignedBigInt
+  target_json            Json?
+  created_at             DateTime                 @default(now()) @db.DateTime(0)
+  updated_at             DateTime                 @default(now()) @db.DateTime(0)
+  challenge_participants challenge_participants[]
+  challenge_scores       challenge_scores[]
+  challenge_submissions  challenge_submissions[]
+  users                  users?                   @relation(fields: [judge_user_id], references: [id], onUpdate: NoAction, map: "fk_ch_judge")
+  sponsors               sponsors?                @relation(fields: [sponsor_id], references: [id], onUpdate: NoAction, map: "fk_ch_sponsor")
+
+  @@index([judge_user_id], map: "fk_ch_judge")
+  @@index([sponsor_id], map: "fk_ch_sponsor")
+  @@index([deadline], map: "idx_deadline")
+  @@index([status], map: "idx_status")
+}
+
+model learning_modules {
+  id                   BigInt                 @id @default(autoincrement()) @db.UnsignedBigInt
+  path_id              BigInt                 @db.UnsignedBigInt
+  title                String                 @db.VarChar(200)
+  content_url          String?                @db.VarChar(500)
+  order_index          Int                    @default(1)
+  est_minutes          Int?
+  learning_paths       learning_paths         @relation(fields: [path_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_lm_path")
+  user_module_progress user_module_progress[]
+
+  @@unique([path_id, order_index], map: "uq_path_order")
+}
+
+model learning_paths {
+  id                BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
+  slug              String                @unique(map: "slug") @db.VarChar(160)
+  title             String                @db.VarChar(200)
+  description       String?               @db.Text
+  level             learning_paths_level?
+  estimated_minutes Int?
+  tags_json         Json?
+  published         Boolean               @default(true)
+  created_at        DateTime              @default(now()) @db.DateTime(0)
+  updated_at        DateTime              @default(now()) @db.DateTime(0)
+  learning_modules  learning_modules[]
+
+  @@index([level], map: "idx_level")
+}
+
+model sponsors {
+  id         BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  name       String       @db.VarChar(180)
+  website    String?      @db.VarChar(255)
+  challenges challenges[]
+}
+
+model user_module_progress {
+  user_id          BigInt           @db.UnsignedBigInt
+  module_id        BigInt           @db.UnsignedBigInt
+  completed_at     DateTime         @default(now()) @db.DateTime(0)
+  learning_modules learning_modules @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ump_mod")
+  users            users            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ump_user")
+
+  @@id([user_id, module_id])
+  @@index([module_id], map: "fk_ump_mod")
+}
+
+model users {
+  id                     BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
+  username               String                   @unique(map: "username") @db.VarChar(80)
+  email                  String?                  @unique(map: "email")
+  password_hash          String?                  @db.VarChar(255)
+  role                   users_role?              @default(user)
+  created_at             DateTime                 @default(now()) @db.DateTime(0)
+  challenge_participants challenge_participants[]
+  challenge_scores       challenge_scores[]
+  challenge_submissions  challenge_submissions[]
+  challenges             challenges[]
+  user_module_progress   user_module_progress[]
+}
+
+enum users_role {
+  user
+  judge
+  admin
+}
+
+enum challenge_submissions_status {
+  pending
+  approved
+  rejected
+}
+
+enum learning_paths_level {
+  beginner
+  intermediate
+  advanced
+}
+
+enum challenges_status {
+  open
+  in_review
+  closed
+}
