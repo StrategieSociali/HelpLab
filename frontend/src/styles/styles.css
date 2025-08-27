@@ -1,33 +1,51 @@
-/* =============== RESET DI BASE =============== */
+/* =========================================================
+   STYLES.GLOBAL — HelpLab
+   Obiettivi:
+   - Home invariata (hero e sezioni chiare)
+   - Pagine interne (Sfide/Corsi) tema scuro con testo bianco
+   - Form blu invariati
+   - Navigazione: hover sì, “active” non invasivo
+   - Sticky footer, niente bande bianche
+   ========================================================= */
+
+/* =============== RESET & TOKENS =============== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root{
-  /* Token colore brand (home/header/pulsanti) */
+  /* Brand */
   --brand-start:#1e40af; /* indigo-800 */
   --brand-end:#3b82f6;   /* blue-500  */
   --brand-600:#2563eb;
   --brand-700:#1d4ed8;
 
-  /* Token neutrali */
+  /* Neutral / surfaces */
   --surface:#ffffff;
   --border:#e5e7eb;
   --shadow:0 2px 8px rgba(0,0,0,.04);
 
+  /* Tipografia */
   --text-primary:#0f172a;   /* slate-900 */
   --text-secondary:#475569; /* slate-600 */
   --text-muted:#64748b;     /* slate-500 */
 
-  /* Tema pagine interne */
-  --page-grad-1:#121a2a; /* grigio/ardesia scuro */
-  --page-grad-2:#263247; /* slate-800 */
+  /* Tema pagine interne (grigio/ardesia scuro) */
+  --page-grad-1:#121a2a;
+  --page-grad-2:#263247;
   --page-grad-3:#121a2a;
+
+  /* Accenti interni */
+  --accent-green-1:#10b981;
+  --accent-green-2:#059669;
 }
+
+html, body, #root, .App { height: 100%; }
+.App { min-height: 100vh; display: flex; flex-direction: column; }
 
 body{
   font-family:'Inter', -apple-system, BlinkMacSystemFont,'Segoe UI', Roboto, sans-serif;
   line-height:1.6;
   color:var(--text-primary);
-  background:#ffffff; /* la home resta invariata */
+  background:#ffffff; /* la HOME resta chiara */
 }
 
 .container{ max-width:1200px; margin:0 auto; padding:0 1.5rem; }
@@ -46,14 +64,31 @@ body{
 @media (max-width:900px){ .claim{ display:none; } }
 
 .main-nav{ display:flex; gap:16px; align-items:center; }
-.nav-link{ text-decoration:none; color:#111827; padding:6px 10px; border-radius:8px; transition:background .2s ease; }
+.nav-link{
+  text-decoration:none; color:#111827; padding:6px 10px; border-radius:8px; transition:background .2s ease, box-shadow .2s ease;
+}
 .nav-link:hover{ background:#f3f4f6; }
-.nav-link.active{ background:#e5e7eb; }
+/* Active “leggero”: niente grigio pieno persistente */
+.nav-link.active{
+  background: transparent;
+  box-shadow: inset 0 -2px 0 0 var(--brand-600);
+  font-weight: 700;
+}
 
 .auth-actions{ display:flex; gap:8px; align-items:center; }
-.btn{ border:1px solid var(--border); padding:6px 10px; border-radius:8px; text-decoration:none; color:#111827; font-weight:600; }
-.btn:hover{ background:#f9fafb; }
-.btn-outline{ background:transparent; }
+.btn{
+  border:1px solid var(--border); padding:8px 12px; border-radius:10px;
+  text-decoration:none; color:#111827; font-weight:600; background:#fff; cursor:pointer;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+}
+.btn:hover{ background:#f9fafb; transform: translateY(-1px); }
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent-green-1),var(--accent-green-2));
+  border-color:transparent; color:#ffffff;
+}
+.btn-ghost{
+  background:transparent; color:#ffffff; border-color:rgba(255,255,255,.35);
+}
 .btn-small{ padding:6px 10px; font-size:.9rem; }
 .btn-pill{ border-radius:9999px; }
 
@@ -68,7 +103,7 @@ body{
   .burger{ display:block; }
 }
 
-/* =============== HOME ======================== */
+/* =============== HOME (invariata) =============== */
 /* Hero */
 .hero-section{
   position:relative; min-height:100vh; display:flex; align-items:center; justify-content:center;
@@ -92,7 +127,7 @@ body{
 .stat-label{ font-size:.875rem; opacity:.8; }
 
 .cta-button{
-  background:linear-gradient(135deg,#10b981,#059669); color:white; padding:1rem 2rem; border:none; border-radius:.75rem;
+  background:linear-gradient(135deg,var(--accent-green-1),var(--accent-green-2)); color:white; padding:1rem 2rem; border:none; border-radius:.75rem;
   font-size:1.125rem; font-weight:600; cursor:pointer; transition:all .3s ease; display:inline-flex; align-items:center; gap:.5rem;
   box-shadow:0 10px 30px -10px rgba(16,185,129,.4);
 }
@@ -112,14 +147,6 @@ body{
 .table-row:last-child{ border-bottom:none; }
 .feature-cell{ padding:1.25rem 1rem; font-weight:500; color:#374151; }
 .plan-cell{ padding:1.25rem 1rem; text-align:center; color:#6b7280; }
-
-/* (Badge “Più popolare” disattivato – se vuoi riattivarlo togli i commenti)
-.premium{ background:linear-gradient(135deg,#10b981,#059669) !important; position:relative; padding-top:2.25rem; }
-.premium::after{
-  content:"Più Popolare"; position:absolute; top:.5rem; left:50%; transform:translateX(-50%);
-  background:#fbbf24; color:#0f172a; padding:.25rem .75rem; border-radius:9999px; font-size:.75rem; font-weight:600;
-}
-*/
 
 /* Community */
 .community-section{
@@ -151,7 +178,7 @@ body{
 .support-card h3{ font-size:1.25rem; font-weight:600; margin-bottom:1rem; color:#0f172a; }
 .support-card p{ color:#6b7280; line-height:1.6; }
 
-/* Registration (form blu: lasciamo invariato) */
+/* Registration (FORM BLU) */
 .registration-section{
   padding:5rem 0; background:linear-gradient(135deg,#0f172a,#1e40af); color:white;
 }
@@ -167,34 +194,39 @@ body{
   background:rgba(255,255,255,.1); color:white; font-size:1rem;
 }
 .form-group input::placeholder{ color:rgba(255,255,255,.6); }
-.form-group input:focus, .form-group select:focus{ outline:none; border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.3); }
+.form-group input:focus, .form-group select:focus{ outline:none; border-color:var(--accent-green-1); box-shadow:0 0 0 3px rgba(16,185,129,.3); }
 .checkbox-group{ display:flex; align-items:center; gap:.5rem; }
 .checkbox-group input[type="checkbox"]{ width:auto; }
 .submit-button{
-  width:100%; background:linear-gradient(135deg,#10b981,#059669); color:white; padding:.875rem 1.5rem; border:none; border-radius:.5rem;
+  width:100%; background:linear-gradient(135deg,var(--accent-green-1),var(--accent-green-2)); color:white; padding:.875rem 1.5rem; border:none; border-radius:.5rem;
   font-size:1rem; font-weight:600; cursor:pointer; transition:all .3s ease;
 }
 .submit-button:hover{ transform:translateY(-2px); box-shadow:0 10px 25px -5px rgba(16,185,129,.4); }
 
-/* Leggibilità menu a tendina */
+/* Leggibilità select */
 .registration-form select{ color:#ffffff; }
 .registration-form select option{ color:#0f172a; background:#ffffff; }
 .registration-form select option:checked{ background:#e5f9f1; color:#065f46; }
 .registration-form select option[value=""]{ color:#94a3b8; }
 
-/* =============== PAGINE INTERNE (Learning Paths / Sfide, ecc.) =============== */
-/* Sfondo a tutta pagina: gradiente grigio */
+/* =============== PAGINE INTERNE (Sfide, Corsi, ecc.) =============== */
+/* Sfondo scuro globale delle pagine interne */
 main{
   background: linear-gradient(135deg, var(--page-grad-1), var(--page-grad-2) 50%, var(--page-grad-3));
 }
 
-/* Wrapper pagina interna: testo bianco */
-.page{ padding-top:24px; color:#ffffff; }
-.page-title{ margin:0; font-weight:800; font-size:clamp(24px,3vw,36px); color:#ffffff; }
-.page-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
-.page-actions .btn{ font-weight:600; }
+/* Utility wrapper + testo bianco (usate in Challenges/LearningPaths) */
+.page-section{ padding:24px 0; }
+.page-bg{ /* opzionale: già coperto da main, ma utile se la sezione è isolata */ 
+  background: linear-gradient(135deg, var(--page-grad-1), var(--page-grad-2) 50%, var(--page-grad-3));
+}
+.page-text{ color:#ffffff; }
 
-/* Card e griglia (versione “dark glass” per pagine interne) */
+.page-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.page-title{ margin:0; font-weight:800; font-size:clamp(24px,3vw,36px); color:#ffffff; }
+.page-subtitle{ color:rgba(255,255,255,.85); }
+
+/* Card & grid (dark glass) */
 .grid-cards{ display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(320px,1fr)); }
 .card{
   background:rgba(255,255,255,.08);
@@ -206,39 +238,112 @@ main{
   color:#ffffff;
 }
 .card:hover{ transform:translateY(-2px); box-shadow:0 16px 40px -12px rgba(0,0,0,.55); }
-.card h3{ margin:0 0 6px 0; color:#ffffff; font-weight:800; }
+.card-title{ margin:6px 0 8px; font-weight:800; color:#ffffff; }
+.card-header{ display:flex; gap:8px; align-items:center; justify-content:flex-start; }
+.glass{ /* alias semantico */ }
 
-.lp-meta{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; color:rgba(255,255,255,.85); font-size:.95rem; }
+/* Chip */
 .chip{
   display:inline-block; padding:.25rem .6rem; border-radius:9999px;
   background:rgba(255,255,255,.12);
   color:#ffffff; border:1px solid rgba(255,255,255,.25);
-  font-size:.8rem; font-weight:600; margin-right:6px;
+  font-size:.8rem; font-weight:600;
 }
 
-/* Progress bar su fondo scuro */
-.progress{ height:10px; background:rgba(255,255,255,.18); border-radius:9999px; overflow:hidden; }
-.progress>span{ display:block; height:100%; background:linear-gradient(90deg,#10b981,#059669); }
+/* Testo/metadati */
+.meta-list{ list-style:none; padding:0; margin:8px 0 10px; }
+.meta-list li{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 0; border-bottom:1px dashed rgba(255,255,255,.15); }
+.meta-list li:last-child{ border-bottom:none; }
+.meta-label{ color:rgba(255,255,255,.75); font-size:.95rem; }
+.meta-value{ color:#ffffff; font-weight:600; }
 
-/* Liste: allineate a sinistra */
+/* Descrizione */
+.card-description{ color:rgba(255,255,255,.92); }
+
+/* Obiettivo/target */
+.target-box{ margin-top:10px; border:1px solid rgba(255,255,255,.2); border-radius:12px; padding:10px; background:rgba(255,255,255,.06); }
+.target-title{ font-weight:700; margin-bottom:6px; color:#ffffff; }
+.target-body{ color:#ffffff; }
+.checklist{ list-style:disc outside; padding-left:1.25rem; margin:6px 0 0; }
+
+/* Layout mini-infos (Sponsor/Giudice) */
+.row{ display:flex; flex-wrap:wrap; }
+.two-col{ gap:12px; }
+.soft-gap{ margin-top:10px; }
+.mini-box{ flex:1 1 160px; border:1px solid rgba(255,255,255,.2); border-radius:10px; padding:8px 10px; background:rgba(255,255,255,.06); }
+.mini-label{ font-size:.85rem; color:rgba(255,255,255,.75); }
+.mini-value{ font-weight:700; }
+
+/* Scoreboard */
+.scoreboard{ margin-top:12px; }
+.scoreboard-title{ font-weight:800; margin-bottom:6px; }
+.scoreboard-list{ list-style:none; padding:0; margin:0; }
+.score-row{ display:grid; grid-template-columns: 40px 1fr auto; align-items:center; gap:8px; padding:6px 8px; border-radius:8px; }
+.score-row:nth-child(odd){ background:rgba(255,255,255,.06); }
+.rank{ font-weight:800; opacity:.9; }
+.user{ text-align:left; }
+.score{ font-weight:700; }
+
+/* Azioni card */
+.card-actions{ display:flex; gap:10px; margin-top:12px; }
+.page .btn{ color:#ffffff; border-color:rgba(255,255,255,.35); background:transparent; }
+.page .btn:hover{ background:rgba(255,255,255,.1); }
+.page .btn-primary{ background:linear-gradient(135deg,var(--accent-green-1),var(--accent-green-2)); border-color:transparent; }
+
+/* Footer info della card */
+.card-footer{ margin-top:8px; }
+.small{ font-size:.9rem; }
+.muted{ color:rgba(255,255,255,.75); }
+
+/* Callout (info/error) */
+.callout{
+  border:1px solid var(--border); background:#f9fafb; color:#111827;
+  border-radius:12px; padding:.75rem 1rem; margin-bottom:12px;
+}
+.callout.neutral{ border-color:#cbd5e1; background:#f1f5f9; }
+.callout.error{ border-color:#fecaca; background:#fee2e2; }
+
+/* Liste allineate a sinistra anche nelle card di corsi/sfide */
 .lp-card ul, .ch-card ul{ list-style:disc outside; padding-left:1.25rem; margin:12px 0 0; text-align:left; }
 .lp-card li, .ch-card li{ margin-bottom:6px; line-height:1.4; }
 
-/* Sidebar sfide */
+/* Sidebar sfide (se usata) */
 .ch-layout{ display:grid; gap:16px; grid-template-columns:260px 1fr; }
 .ch-sidebar .ch-item{ display:block; width:100%; margin-bottom:8px; text-align:left; }
 @media (max-width:900px){ .ch-layout{ grid-template-columns:1fr; } }
 
-/* =============== NOTICE (avvisi leggeri) =============== */
-.notice{
-  display:flex; gap:.6rem; align-items:flex-start;
-  border:1px solid var(--border); background:#f9fafb; color:#111827;
-  border-radius:12px; padding:.75rem 1rem;
+/* =============== FOOTER (scuro coerente) =============== */
+.site-footer{
+  background: linear-gradient(135deg, var(--page-grad-1), var(--page-grad-2) 50%, var(--page-grad-3));
+  color: #ffffff;
+  border-top: 1px solid rgba(255,255,255,.12);
+  flex-shrink: 0;
+  margin-top: 0; /* niente gap sopra */
 }
-.notice--info{ border-color:#93c5fd; background:#eff6ff; }
-.notice__icon{ font-size:1.1rem; line-height:1; }
-.notice a{ color:inherit; text-decoration:underline; }
-.notice + .registration-form{ margin-top:12px; }
+.footer-inner{
+  padding: 40px 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+.footer-brand{ display:flex; gap:10px; align-items: baseline; }
+.footer-claim{ color: rgba(255,255,255,.85); font-size: .95rem; }
+.footer-nav{ display:flex; gap:16px; flex-wrap: wrap; margin-top: 6px; }
+.footer-link{
+  color: rgba(255,255,255,.9);
+  text-decoration: none;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.footer-link:hover{ color:#fff; background: rgba(255,255,255,.08); }
+.footer-copy{ opacity:.75; font-size:.9rem; margin-top: 6px; }
+/* brand-text nel footer sempre bianco */
+.site-footer .brand-text { color: #ffffff; }
+
+/* Sticky footer: il main si allunga a riempire la pagina */
+main { flex: 1 0 auto; display: block; }
 
 /* =============== RESPONSIVE =============== */
 @media (max-width:768px){
@@ -253,135 +358,4 @@ main{
 
   .benefits-grid, .support-grid{ grid-template-columns:1fr; }
 }
-/* --- Dark text fix per pagine interne (Sfide, Corsi, ecc.) --- */
-
-/* testo bianco dentro le card delle pagine interne */
-.ch-card,
-.ch-card h3,
-.ch-card p,
-.ch-card li,
-.ch-card small,
-.ch-card strong { color: #ffffff; }
-
-/* chip/meta in sfide coerenti con il tema scuro (se li usi) */
-.ch-card .lp-meta,
-.ch-card .chip { color: rgba(255,255,255,.85); }
-
-/* bottoni nelle pagine interne: testo chiaro e bordo soft */
-.page .btn {
-  color: #ffffff;
-  border-color: rgba(255,255,255,.35);
-}
-.page .btn:hover { background: rgba(255,255,255,.1); }
-
-/* elenchi puntati a sinistra (anche per Corsi) */
-.lp-card ul, .ch-card ul {
-  list-style: disc outside;
-  padding-left: 1.25rem;
-  text-align: left;
-}
-/* === Sfide: sidebar attiva e bottoni coerenti con tema scuro === */
-.page .ch-sidebar .btn {
-  width: 100%;
-  text-align: left;
-  color: #ffffff;
-  border-color: rgba(255,255,255,.25);
-  background: transparent;           /* default (non selezionato) */
-}
-.page .ch-sidebar .btn:not(.btn-outline) { /* selezionato */
-  background: rgba(255,255,255,.12);
-}
-.page .ch-sidebar .btn:hover { background: rgba(255,255,255,.08); }
-
-/* Bottoni primari dentro le card scure (Sfide e Corsi) */
-.page .ch-card .btn:not(.btn-outline),
-.page .lp-card .btn:not(.btn-outline) {
-  background: rgba(255,255,255,.12);
-  border-color: rgba(255,255,255,.35);
-  color: #ffffff;
-}
-.page .ch-card .btn:not(.btn-outline):hover,
-.page .lp-card .btn:not(.btn-outline):hover {
-  background: rgba(255,255,255,.18);
-}
-
-/* Classifica: allineamento a sinistra anche per i nomi */
-.ch-card ol {
-  list-style: decimal outside;
-  padding-left: 1.25rem;
-  margin-top: 8px;
-  text-align: left;
-}
-.ch-card ol li { text-align: left; }
-/* ==== Footer (tema scuro coerente con pagine interne) ==== */
-.site-footer{
-  margin-top: 40px;
-  background: linear-gradient(135deg, var(--page-grad-1), var(--page-grad-2) 50%, var(--page-grad-3));
-  color: #ffffff;
-  border-top: 1px solid rgba(255,255,255,.12);
-}
-.footer-inner{
-  padding: 28px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  text-align: center;
-}
-.footer-brand{ display:flex; gap:10px; align-items: baseline; }
-.footer-claim{ opacity: .85; font-size: .95rem; }
-.footer-nav{ display:flex; gap:16px; flex-wrap: wrap; margin-top: 6px; }
-.footer-link{
-  color: rgba(255,255,255,.9);
-  text-decoration: none;
-  padding: 4px 6px;
-  border-radius: 6px;
-}
-.footer-link:hover{ color:#fff; background: rgba(255,255,255,.08); }
-.footer-copy{ opacity:.75; font-size:.9rem; margin-top: 6px; }
-/* Logo/claim bianchi nel footer scuro */
-.site-footer .brand-text { color: #ffffff; }
-.site-footer .footer-claim { color: rgba(255,255,255,.85); } /* opz., per coerenza */
-/* Elimina il gap bianco tra corpo e footer */
-.site-footer { 
-  margin-top: 0;           /* era 40px */
-}
-
-/* Se vuoi mantenere un po' d'aria prima del footer, la mettiamo dentro la pagina */
-.page { 
-  padding-bottom: 32px;    /* spazio prima del footer, sullo sfondo in gradiente */
-}
-
-/* (opzionale) se preferisci più aria dentro il footer stesso */
-.footer-inner { 
-  padding: 40px 0 28px;    /* top più generoso */
-}
-/* Niente più “sliver” bianco sotto il footer */
-html, body, #root { min-height: 100%; }
-
-body{
-  /* Se qualcosa sotto il footer resta visibile, che sia scuro come il footer */
-  background-color: var(--page-grad-3);
-}
-
-/* Il main resta con il tuo gradiente grigio */
-main{
-  background: linear-gradient(135deg, var(--page-grad-1),
-                               var(--page-grad-2) 50%,
-                               var(--page-grad-3));
-}
-
-/* Footer attaccato al contenuto (niente spazi esterni bianchi) */
-.site-footer{ margin-top: 0; }
-
-/* Un po’ di aria prima del footer, ma dentro la pagina (scuro) */
-.page{ padding-bottom: 32px; }
-/* Sticky footer: il contenuto occupa tutto, il footer sta in fondo */
-html, body, #root, .App { height: 100%; }
-.App { min-height: 100vh; display: flex; flex-direction: column; }
-main { flex: 1 0 auto; display: block; }   /* il main si “allunga” a riempire */
-.site-footer { flex-shrink: 0; margin-top: 0; }  /* niente gap sopra il footer */
-
-/* (facoltativo) evita che margini interni del footer “collassino” */
-.site-footer .footer-inner > *:last-child { margin-bottom: 0; }
 

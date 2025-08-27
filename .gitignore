@@ -1,10 +1,28 @@
-# Node
+# Node dependencies
+node_modules/
 **/node_modules/
-**/.env
 
 # Build output
-frontend/dist/
+dist/
+build/
 
-# System/IDE
+# Env files (qualsiasi cartella, qualsiasi nome che inizi con .env)
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal
+
+# Misc
 .DS_Store
-.vscode/
+

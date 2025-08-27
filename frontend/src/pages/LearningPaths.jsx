@@ -32,37 +32,53 @@ export default function LearningPaths() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL;
+  const USE_API = import.meta.env.VITE_USE_API === 'true';
 
   // Usa header Authorization solo se c’è un token
-  const authHeaders = useMemo(
-    () => (user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
-    [user?.token]
-  );
+  const authHeaders = user?.token ? { Authorization: `Bearer ${user.token}` } : {};
+const axiosConfig = USE_API ? { headers: authHeaders } : undefined;
+
+// URL helper (sceglie API o JSON)
+const LP_LIST_URL       = USE_API ? `${API_URL}/learning-paths` : '/data/learningpaths.json';
+const LP_PROGRESS_URL   = (userId) => USE_API ? `${API_URL}/learning-paths/progress?userId=${userId}` : null;
+const LP_MARK_DONE_URL  = (pathId) => USE_API ? `${API_URL}/learning-paths/${pathId}/progress` : null;
 
   // Recupera percorsi
   const fetchLearningPaths = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const data = await lpFetch(API_URL, authHeaders);
-      setPaths(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Errore nel recupero dei percorsi:", err);
-      setError("Errore nel caricamento dei percorsi. Riprova più tardi.");
-    } finally {
-      setLoading(false);
-    }
-  }, [API_URL, authHeaders]);
+  setLoading(true);
+  setError('');
+  try {
+    const res = await axios.get(LP_LIST_URL, axiosConfig);
+    // se API: array; se JSON: array (già coerente)
+    setPaths(Array.isArray(res.data) ? res.data : []);
+  } catch (err) {
+    console.error('Errore nel recupero dei percorsi:', err);
+    setError("Errore nel caricamento dei percorsi. Riprova più tardi.");
+  } finally {
+    setLoading(false);
+  }
+}, [LP_LIST_URL, axiosConfig]);
+
 
   // Recupera progresso (demo: localStorage; API: /learning-paths/progress)
   const fetchUserProgress = useCallback(async () => {
-    try {
-      const data = await lpProgress(API_URL, authHeaders);
-      setUserProgress(data || {});
-    } catch (err) {
-      console.error("Errore nel recupero del progresso:", err);
-    }
-  }, [API_URL, authHeaders]);
+  // Se non usiamo API, leggi dal localStorage (fallback demo)
+  if (!USE_API) {
+    const raw = localStorage.getItem('demo_lp_progress');
+    const progress = raw ? JSON.parse(raw) : {};
+    setUserProgress(progress);
+    return;
+  }
+
+  try {
+    const res = await axios.get(LP_PROGRESS_URL(user?.id ?? 0), axiosConfig);
+    setUserProgress(res.data || {});
+  } catch (err) {
+    console.error('Errore progresso learning paths:', err);
+    setUserProgress({});
+  }
+}, [USE_API, user, axiosConfig]);
+
 
   useEffect(() => {
     fetchLearningPaths();
@@ -101,21 +117,29 @@ export default function LearningPaths() {
 
   // Aggiorna progresso di un modulo (demo → localStorage, reale → POST API)
   const updateProgress = async (pathId, moduleId) => {
-    if (!user) {
-      navigate("/login");
+  try {
+    if (!USE_API) {
+      // Fallback demo su localStorage
+      const raw = localStorage.getItem('demo_lp_progress');
+      const progress = raw ? JSON.parse(raw) : {};
+      const current = new Set(progress[pathId] || []);
+      current.add(moduleId);
+      progress[pathId] = Array.from(current);
+      localStorage.setItem('demo_lp_progress', JSON.stringify(progress));
+      setUserProgress(progress);
       return;
     }
-    try {
-      await lpPost(API_URL, authHeaders, pathId, moduleId);
-      await fetchUserProgress();
-    } catch (err) {
-      console.error(
-        "Errore aggiornamento progresso:",
-        err?.response?.data || err.message
-      );
-      alert("Errore nell'aggiornamento del progresso. Riprova.");
-    }
-  };
+
+    // API reale
+    await axios.post(LP_MARK_DONE_URL(pathId), { userId: user?.id, moduleId }, axiosConfig);
+    // ricarica stato reale
+    fetchUserProgress();
+  } catch (err) {
+    console.error('Errore aggiornamento progresso:', err);
+    alert("Errore nell'aggiornamento del progresso. Riprova.");
+  }
+};
+
 
   const short = (t = "", max = 160) =>
     t.length > max ? t.slice(0, max - 1) + "…" : t;
