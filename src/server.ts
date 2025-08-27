@@ -1,45 +1,70 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
+import rateLimit from '@fastify/rate-limit'
 import dotenv from 'dotenv'
+import swagger from '@fastify/swagger'
+import swaggerUI from '@fastify/swagger-ui'
 
-// importa le route mock
+// Route modules
 import { challengesRoutes } from './routes/challenges.js'
 import { learningPathsRoutes } from './routes/learningPaths.js'
 
 dotenv.config()
 
-const server = Fastify({
-  logger: true
-})
+// 1) trustProxy = true (sei dietro Nginx)
+const server = Fastify({ logger: true, trustProxy: true })
 
-// CORS: solo gli origin ammessi (separa con virgole in .env)
-await server.register(cors, {
-  origin: (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean)
-})
-
-// Helmet: headers di sicurezza base
+// Sicurezza & CORS
 await server.register(helmet)
-
-// ✅ HEALTHCHECK
-server.get('/api/health', async () => {
-  return { status: 'ok' }
+await server.register(cors, {
+  origin: (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
 })
 
-// (facoltativo) redirect dalla root alla health, così non vedi 404 se apri /
-server.get('/', async (_req, reply) => reply.redirect('/api/health'))
+// Swagger (OpenAPI) - info base
+await server.register(swagger, {
+  openapi: {
+    info: { title: 'HelpLab API', version: '0.2.0' },
+    servers: [{ url: '/api' }]
+  }
+})
 
-// Rotte API (mock per ora)
+// Swagger UI - pagina web della documentazione
+await server.register(swaggerUI, {
+  routePrefix: '/api/docs',
+  uiConfig: { docExpansion: 'list' }
+})
+
+// JSON dell’OpenAPI in un punto fisso (comodo per FE/QA)
+server.get('/api/openapi.json', async (_req, reply) => {
+  return reply.send(server.swagger())
+})
+
+// Healthcheck (rate-limit disabilitato)
+server.get('/api/health', async () => ({ status: 'ok' }))
+
+// 2) Rate limit globale
+await server.register(rateLimit, {
+  max: 60,
+  timeWindow: '1 minute',
+  skipOnError: true,              // se plugin ha problemi, non blocca il traffico
+})
+
+// Disabilita rate-limit per la UI docs (opzionale ma consigliato)
+server.addHook('onRoute', (route) => {
+  if (route.url.startsWith('/api/docs')) {
+    route.config = { ...(route.config || {}), rateLimit: false }
+  }
+})
+
+// Rotte applicative
 server.register(challengesRoutes, { prefix: '/api/challenges' })
 server.register(learningPathsRoutes, { prefix: '/api/learning-paths' })
 
 const port = Number(process.env.PORT || 3001)
 const host = process.env.HOST || '127.0.0.1'
-
-try {
-  await server.listen({ port, host })
-  server.log.info(`API listening on http://${host}:${port}`)
-} catch (err) {
-  server.log.error(err)
-  process.exit(1)
-}
+await server.listen({ port, host })
+server.log.info(`API listening on http://${host}:${port}`)
