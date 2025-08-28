@@ -1,83 +1,113 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import axios from 'axios';
 
+// === Env (una sola volta) ===
+const API_URL = import.meta.env.VITE_API_URL;
+const USE_API = import.meta.env.VITE_USE_API === 'true';
+
+// Base API: aggiunge sempre /api ed evita doppi slash
+const API_BASE = `${(API_URL || '').replace(/\/$/, '')}/api`;
+
 export default function Challenges() {
-  // === ENV / CONFIG ===
-  const API_URL = import.meta.env.VITE_API_URL;
-  const USE_API = import.meta.env.VITE_USE_API === 'true';
-
-  // Token/utente opzionali (se hai un Auth reale li userai, altrimenti demo)
-  const token = localStorage.getItem('token') || null;
-  const userId = Number(localStorage.getItem('userId') || 0); // 0 = anonimo/demo
-
-  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-  const axiosConfig = USE_API ? { headers: authHeaders } : undefined;
-
-  // URL helper
-  const CH_LIST_URL = USE_API ? `${API_URL}/challenges` : '/data/challenges.json';
-  const LP_LIST_URL = USE_API ? `${API_URL}/learning-paths` : '/data/learningpaths.json';
-  const CH_LEADERBOARD_URL = (id) => USE_API ? `${API_URL}/challenges/${id}/leaderboard` : null;
-  const CH_JOIN_URL        = (id) => USE_API ? `${API_URL}/challenges/${id}/join` : null;
-  const CH_SUBMIT_URL      = (id) => USE_API ? `${API_URL}/challenges/${id}/submit` : null;
-
-  // === STATE ===
+  // Stato UI
   const [challenges, setChallenges] = useState([]);
-  const [leaderboards, setLeaderboards] = useState({}); // { [challengeId]: [{user,score}, ...] }
+  const [leaderboards, setLeaderboards] = useState({}); // { [id]: [{user,score}, ...] }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // === FETCH LISTA SFIDE (API o JSON) ===
+  // Anti-spam pulsanti
+  const [busyJoin, setBusyJoin] = useState({});
+  const [busySubmit, setBusySubmit] = useState({});
+  
+  // Filtri UX
+const [query, setQuery]   = useState('');
+const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadline'
+  
+
+  // Auth opzionale (demo)
+  const token  = localStorage.getItem('token') || null;
+  const userId = Number(localStorage.getItem('userId') || 3);
+
+  // Oggetti stabili per evitare loop
+  const authHeaders = useMemo(
+    () => (token ? { Authorization: `Bearer ${token}` } : {}),
+    [token]
+  );
+  const axiosConfig = useMemo(
+    () => (USE_API ? { headers: authHeaders } : undefined),
+    [USE_API, authHeaders]
+  );
+
+  // URL helper (API vs JSON)
+  const CH_LIST_URL        = USE_API ? `${API_BASE}/challenges` : '/data/challenges.json';
+  const CH_LEADERBOARD_URL = (id)    => USE_API ? `${API_BASE}/challenges/${id}/leaderboard` : null;
+  const CH_JOIN_URL        = (id)    => USE_API ? `${API_BASE}/challenges/${id}/join` : null;
+  const CH_SUBMIT_URL      = (id)    => USE_API ? `${API_BASE}/challenges/${id}/submit` : null;
+
+  // Per evitare richieste duplicate di leaderboard
+  const prefetchedIdsRef = useRef(new Set());
+
+  // Fetch lista sfide (esposta anche per “Riprova”)
   const fetchChallenges = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const res = await axios.get(CH_LIST_URL, axiosConfig);
-      // Normalizza: API -> array; JSON demo -> array
       const list = Array.isArray(res.data) ? res.data : [];
       setChallenges(list);
     } catch (err) {
       console.error('Errore nel recupero sfide:', err);
-      setError("Errore nel caricamento delle sfide. Riprova più tardi.");
+      const status = err?.response?.status;
+      setError(
+        status === 429
+          ? 'Troppe richieste. Attendi qualche secondo e ricarica.'
+          : 'Errore nel caricamento delle sfide. Riprova più tardi.'
+      );
       setChallenges([]);
     } finally {
       setLoading(false);
     }
   }, [CH_LIST_URL, axiosConfig]);
 
-  // Prefetch leaderboard (solo se USE_API, opzionale)
-  const prefetchLeaderboards = useCallback(async (list) => {
-    if (!USE_API) return; // nel JSON la scoreboard è già dentro l’oggetto sfida
-    const toLoad = list.filter(ch => !leaderboards[ch.id]);
-    if (!toLoad.length) return;
-
-    // carica in parallelo, ignora errori
-    await Promise.all(
-      toLoad.map(ch =>
-        axios.get(CH_LEADERBOARD_URL(ch.id), axiosConfig)
-          .then(({ data }) => {
-            const rows = Array.isArray(data) ? data : [];
-            setLeaderboards(prev => ({ ...prev, [ch.id]: rows }));
-          })
-          .catch(() => {})
-      )
-    );
-  }, [USE_API, leaderboards, axiosConfig]);
-
   useEffect(() => {
-    (async () => {
-      await fetchChallenges();
-    })();
+    fetchChallenges();
   }, [fetchChallenges]);
 
+  // Prefetch leaderboard per le sfide visibili (una volta per id)
   useEffect(() => {
-    if (challenges.length) prefetchLeaderboards(challenges);
-  }, [challenges, prefetchLeaderboards]);
+    if (!USE_API || !challenges.length) return;
 
-  // === HANDLERS: JOIN & SUBMIT (demo/API) ===
+    const toLoad = challenges
+      .map(ch => ch.id)
+      .filter(id => !prefetchedIdsRef.current.has(id));
+
+    if (!toLoad.length) return;
+
+    (async () => {
+      try {
+        await Promise.all(
+          toLoad.map(async (id) => {
+            const { data } = await axios.get(CH_LEADERBOARD_URL(id), axiosConfig);
+            prefetchedIdsRef.current.add(id);
+            setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
+          })
+        );
+      } catch (err) {
+        if (err?.response?.status === 429) {
+          console.warn('Rate limit leaderboard: riprova più tardi');
+        } else {
+          console.warn('Prefetch leaderboard error:', err?.message || err);
+        }
+      }
+    })();
+  }, [USE_API, challenges, axiosConfig]);
+
+  // Azioni (join/submit) con anti-spam
   const joinChallenge = async (id) => {
+    if (busyJoin[id]) return;
+    setBusyJoin(prev => ({ ...prev, [id]: true }));
     try {
       if (!USE_API) {
-        // DEMO: registra join localmente
         const raw = localStorage.getItem('demo_ch_joins');
         const joins = raw ? JSON.parse(raw) : {};
         joins[id] = true;
@@ -85,85 +115,157 @@ export default function Challenges() {
         alert('Partecipazione registrata (demo).');
         return;
       }
-      // API reale
       await axios.post(CH_JOIN_URL(id), { userId }, axiosConfig);
       alert('Partecipazione registrata!');
     } catch (err) {
+      const status = err?.response?.status;
+      if (status === 429) {
+        alert('Stai facendo troppe richieste. Attendi e riprova.');
+      } else {
+        alert('Errore durante la partecipazione. Riprova.');
+      }
       console.error('Join error:', err);
-      alert('Errore durante la partecipazione. Riprova.');
+    } finally {
+      setTimeout(() => setBusyJoin(prev => ({ ...prev, [id]: false })), 1500);
     }
   };
 
   const submitResult = async (id, delta = 2, payload = {}) => {
+    if (busySubmit[id]) return;
+    setBusySubmit(prev => ({ ...prev, [id]: true }));
     try {
       if (!USE_API) {
         alert('Risultato inviato (demo).');
         return;
       }
-      const { data } = await axios.post(CH_SUBMIT_URL(id), { userId, delta, payload }, axiosConfig);
-      // Aggiorna leaderboard “live”
-      const { data: lb } = await axios.get(CH_LEADERBOARD_URL(id), axiosConfig);
-      setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(lb) ? lb : [] }));
-      alert(data?.ok ? 'Punteggio aggiornato!' : 'Invio completato.');
+      await axios.post(CH_SUBMIT_URL(id), { userId, delta, payload }, axiosConfig);
+      const { data } = await axios.get(CH_LEADERBOARD_URL(id), axiosConfig);
+      setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
+      alert('Punteggio aggiornato!');
     } catch (err) {
+      const status = err?.response?.status;
+      if (status === 429) {
+        alert('Troppe richieste. Riprova fra qualche secondo.');
+      } else {
+        alert('Errore durante l’invio. Riprova.');
+      }
       console.error('Submit error:', err);
-      alert('Errore durante l’invio. Riprova.');
+    } finally {
+      setTimeout(() => setBusySubmit(prev => ({ ...prev, [id]: false })), 1500);
     }
   };
 
-  // === UI HELPERS ===
+  // Helpers
   const formatBudget = (b) => {
     if (!b || typeof b.amount === 'undefined') return '—';
     const curr = b.currency || 'EUR';
     return `${b.amount}${curr === 'EUR' ? '€' : ' ' + curr}`;
-    // NB: i dati demo sono spesso 87 EUR -> "87€"
   };
+  const deadlineLabel = (d) => (d ? new Date(d).toLocaleDateString() : '—');
+  const getScoreboard = (ch) =>
+    USE_API ? (leaderboards[ch.id] || ch.scoreboard || []) : (ch.scoreboard || []);
+    
+    //Genera lista filtrata
+    const filteredChallenges = useMemo(() => {
+  let list = Array.isArray(challenges) ? [...challenges] : [];
+  const q = query.trim().toLowerCase();
 
-  const deadlineLabel = (d) => d ? new Date(d).toLocaleDateString() : '—';
+  if (q) {
+    list = list.filter(ch =>
+      [
+        ch.title,
+        ch.location,
+        ch.rules,
+        ch.type,
+        ch.sponsor?.name,
+        ch.judge?.name
+      ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(q)
+    );
+  }
 
-  const getScoreboard = (ch) => {
-    // Se usiamo API e abbiamo la cache live, usa quella; altrimenti quella inclusa nell’oggetto.
-    if (USE_API) return leaderboards[ch.id] || ch.scoreboard || [];
-    return ch.scoreboard || [];
-  };
+  if (sortBy === 'title') {
+    list.sort((a,b) => (a.title||'').localeCompare(b.title||''));
+  } else if (sortBy === 'deadline') {
+    list.sort((a,b) => new Date(a.deadline||0) - new Date(b.deadline||0));
+  } else {
+    // recenti prima: updatedAt/createdAt desc
+    const ts = v => new Date(v?.updatedAt || v?.createdAt || 0).getTime();
+    list.sort((a,b) => ts(b) - ts(a));
+  }
 
-  // === RENDER ===
+  return list;
+}, [challenges, query, sortBy]);
+
+
   return (
     <section className="page-section page-bg page-text">
       <div className="container">
+
+        {/* DEBUG DEV ONLY — commentato per la release */}
+        {/*
+        {import.meta.env.DEV && (
+          <div style={{
+            background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.2)',
+            borderRadius: 8, padding: '6px 10px', marginBottom: 10, fontSize: 13
+          }}>
+            <strong>DEBUG</strong> – USE_API: {String(USE_API)} · CH_LIST_URL: <code>{CH_LIST_URL}</code>
+          </div>
+        )}
+        */}
+
         <header className="page-header">
           <h1 className="page-title">Sfide della Community</h1>
-          <p className="page-subtitle">
-            Partecipa a sfide locali con obiettivi chiari e risultati verificabili.
-          </p>
+          <p className="page-subtitle">Partecipa a sfide locali con obiettivi misurabili.</p>
         </header>
 
-        {/* Stato caricamento / errore */}
-        {loading && (
-          <div className="callout neutral">Caricamento sfide…</div>
-        )}
+        {loading && <div className="callout neutral">Caricamento sfide…</div>}
         {error && !loading && (
-          <div className="callout error">{error}</div>
+          <div className="callout error">
+            {error}{' '}
+            <button className="btn btn-small" onClick={fetchChallenges}>Riprova</button>
+          </div>
         )}
-
         {!loading && !error && challenges.length === 0 && (
           <div className="callout neutral">Nessuna sfida disponibile.</div>
         )}
+        
+        {/* Filtri rapidi */}
+<div className="filters-row">
+  <input
+    type="search"
+    className="control control-small control-pill"
+    placeholder="Cerca sfida…"
+    value={query}
+    onChange={(e) => setQuery(e.target.value)}
+    enterKeyHint="search"
+  />
+  <select
+    className="control control-small control-pill"
+    value={sortBy}
+    onChange={(e) => setSortBy(e.target.value)}
+    aria-label="Ordina per"
+  >
+    <option value="recent">Più recenti</option>
+    <option value="title">Titolo A–Z</option>
+    <option value="deadline">Scadenza</option>
+  </select>
+</div>
 
-        {/* GRID CARD SFIDE */}
+
         <div className="grid-cards">
-          {challenges.map((ch) => (
+          {filteredChallenges.map((ch) => (
             <article key={ch.id} className="card ch-card glass">
-              {/* Header */}
               <div className="card-header">
                 <div className="chip chip-status">{ch.status === 'open' ? 'Aperta' : ch.status}</div>
                 {ch.type && <div className="chip chip-type">{ch.type}</div>}
               </div>
 
-              {/* Titolo */}
               <h3 className="card-title">{ch.title}</h3>
 
-              {/* Meta: luogo, budget, scadenza */}
               <ul className="meta-list">
                 {ch.location && (
                   <li>
@@ -181,29 +283,18 @@ export default function Challenges() {
                 </li>
               </ul>
 
-              {/* Regole/descrizione breve */}
-              {ch.rules && (
-                <p className="card-description">{ch.rules}</p>
-              )}
+              {ch.rules && <p className="card-description">{ch.rules}</p>}
 
-              {/* Target sintetico (se presente) */}
               {ch.target && (
                 <div className="target-box">
                   <div className="target-title">Obiettivo</div>
                   <div className="target-body">
-                    {/* Prova a sintetizzare alcune forme comuni */}
-                    {ch.target.kind === 'quantity' && (
-                      <span>{ch.target.amount} {ch.target.unit || ''}</span>
-                    )}
-                    {ch.target.kind === 'area' && (
-                      <span>{ch.target.amount} {ch.target.unit || 'm²'}</span>
-                    )}
-                    {ch.target.kind === 'binary' && <span>Completamento</span>}
+                    {ch.target.kind === 'quantity' && (<span>{ch.target.amount} {ch.target.unit || ''}</span>)}
+                    {ch.target.kind === 'area' && (<span>{ch.target.amount} {ch.target.unit || 'm²'}</span>)}
+                    {ch.target.kind === 'binary' && (<span>Completamento</span>)}
                     {ch.target.kind === 'composite' && Array.isArray(ch.target.items) && (
                       <ul className="checklist">
-                        {ch.target.items.slice(0, 4).map((it, i) => (
-                          <li key={i}>• {it.label || it.id}</li>
-                        ))}
+                        {ch.target.items.slice(0, 4).map((it, i) => <li key={i}>• {it.label || it.id}</li>)}
                       </ul>
                     )}
                     {!ch.target.kind && <span>—</span>}
@@ -211,7 +302,6 @@ export default function Challenges() {
                 </div>
               )}
 
-              {/* Sponsor/Judge */}
               <div className="row two-col soft-gap">
                 <div className="mini-box">
                   <div className="mini-label">Sponsor</div>
@@ -223,39 +313,41 @@ export default function Challenges() {
                 </div>
               </div>
 
-              {/* Scoreboard */}
               <div className="scoreboard">
                 <div className="scoreboard-title">Classifica</div>
                 <ul className="scoreboard-list">
-                  {getScoreboard(ch).slice(0, 5).map((r, i) => (
-                    <li key={i} className="score-row">
-                      <span className="rank">#{i + 1}</span>
-                      <span className="user">{r.user}</span>
-                      <span className="score">{r.score}</span>
-                    </li>
-                  ))}
+                  {getScoreboard(ch).slice(0, 5).map((r, i) => {
+                    const medal = i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : '';
+                    return (
+                      <li key={i} className="score-row">
+                        <span className="rank">{medal || `#${i + 1}`}</span>
+                        <span className="user">{r.user}</span>
+                        <span className="score">{r.score}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
 
-              {/* CTA */}
               <div className="card-actions">
                 <button
                   className="btn btn-primary"
+                  disabled={!!busyJoin[ch.id]}
+                  aria-busy={!!busyJoin[ch.id]}
                   onClick={() => joinChallenge(ch.id)}
-                  title="Iscriviti alla sfida (demo/API)"
                 >
                   Partecipa (demo)
                 </button>
                 <button
                   className="btn btn-ghost"
-                  onClick={() => submitResult(ch.id, 2, { note: 'azione dimostrativa' })}
-                  title="Invia un risultato demo (+2 pt)"
+                  disabled={!!busySubmit[ch.id]}
+                  aria-busy={!!busySubmit[ch.id]}
+                  onClick={() => submitResult(ch.id, 2, { note: 'azione demo' })}
                 >
                   Invia risultato (+2)
                 </button>
               </div>
 
-              {/* Aggiornamento */}
               <div className="card-footer">
                 <span className="small muted">
                   Aggiornata: {ch.updatedAt ? new Date(ch.updatedAt).toLocaleString() : '—'}
