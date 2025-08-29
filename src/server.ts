@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
 import rateLimit from '@fastify/rate-limit'
+import cookie from '@fastify/cookie'
 import dotenv from 'dotenv'
 import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
@@ -9,6 +10,8 @@ import swaggerUI from '@fastify/swagger-ui'
 // Route modules
 import { challengesRoutes } from './routes/challenges.js'
 import { learningPathsRoutes } from './routes/learningPaths.js'
+import { authRoutes } from './routes/auth.js' 
+import { formsRoutes } from './routes/forms.js'
 
 dotenv.config()
 
@@ -21,8 +24,12 @@ await server.register(cors, {
   origin: (process.env.CORS_ORIGIN || '')
     .split(',')
     .map(s => s.trim())
-    .filter(Boolean)
-})
+    .filter(Boolean),
+  credentials: true
+})  
+
+// abilita setCookie/lettura cookie
+await server.register(cookie) 
 
 // Swagger (OpenAPI) - info base
 await server.register(swagger, {
@@ -46,6 +53,7 @@ server.get('/api/openapi.json', async (_req, reply) => {
 // Healthcheck (rate-limit disabilitato)
 server.get('/api/health', async () => ({ status: 'ok' }))
 
+
 // 2) Rate limit globale
 await server.register(rateLimit, {
   max: 60,
@@ -61,6 +69,8 @@ server.addHook('onRoute', (route) => {
 })
 
 // Rotte applicative
+server.register(authRoutes, { prefix: '/api/auth' })
+server.register(formsRoutes, { prefix: '/api/forms' }) 
 server.register(challengesRoutes, { prefix: '/api/challenges' })
 server.register(learningPathsRoutes, { prefix: '/api/learning-paths' })
 

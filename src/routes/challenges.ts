@@ -5,7 +5,10 @@ import {
   getLeaderboard,
   joinChallenge,
   submitDelta,
+  createChallenge, // <— NEW
 } from '../services/challengesService.js'
+import { authGuard } from '../utils/authGuard.js'               // <— NEW
+import { createChallengeSchema } from '../schemas/challengeSchemas.js' // <— NEW
 
 const toBig = (v: string) => {
   const n = BigInt(v)
@@ -16,6 +19,44 @@ const toBig = (v: string) => {
 export async function challengesRoutes(app: FastifyInstance) {
   // GET /api/challenges
   app.get('/', async () => listChallenges())
+
+  // NEW — POST /api/challenges  (crea una nuova challenge, protetta)
+  app.post(
+    '/',
+    {
+      preHandler: authGuard, // richiede Authorization: Bearer <accessToken>
+      config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+    },
+    async (req, reply) => {
+      // valida il body con Zod (titolo, tipo, deadline YYYY-MM-DD, ecc.)
+      const parsed = createChallengeSchema.safeParse((req as any).body)
+      if (!parsed.success) {
+        return reply.code(400).send({ error: 'invalid body' })
+      }
+
+      // userId messo in req dall'authGuard (ricavato dal JWT)
+      const userId = (req as any).userId as bigint
+      const b = parsed.data
+
+      try {
+        const data = await createChallenge(
+          b.title,
+          b.type,
+          b.location,
+          b.rules,
+          b.deadline,
+          b.budget,
+          b.sponsor?.name,
+          b.target,
+          userId
+        )
+        return reply.code(201).send(data)
+      } catch (e: any) {
+        app.log.error(e)
+        return reply.code(500).send({ error: 'server error' })
+      }
+    }
+  )
 
   // GET /api/challenges/:id/leaderboard
   app.get<{ Params: { id: string } }>('/:id/leaderboard', async (req, reply) => {

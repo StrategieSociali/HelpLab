@@ -47,31 +47,34 @@ model challenge_submissions {
 }
 
 model challenges {
-  id                     BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
-  slug                   String                   @unique(map: "slug") @db.VarChar(160)
-  title                  String                   @db.VarChar(200)
-  type                   String                   @default("generic") @db.VarChar(80)
-  location               String?                  @db.VarChar(255)
-  rules                  String?                  @db.Text
-  deadline               DateTime?                @db.Date
-  status                 challenges_status        @default(open)
-  budget_amount          Decimal?                 @db.Decimal(10, 2)
-  budget_currency        String?                  @db.Char(3)
-  sponsor_id             BigInt?                  @db.UnsignedBigInt
-  judge_user_id          BigInt?                  @db.UnsignedBigInt
-  target_json            Json?
-  created_at             DateTime                 @default(now()) @db.DateTime(0)
-  updated_at             DateTime                 @default(now()) @db.DateTime(0)
-  challenge_participants challenge_participants[]
-  challenge_scores       challenge_scores[]
-  challenge_submissions  challenge_submissions[]
-  users                  users?                   @relation(fields: [judge_user_id], references: [id], onUpdate: NoAction, map: "fk_ch_judge")
-  sponsors               sponsors?                @relation(fields: [sponsor_id], references: [id], onUpdate: NoAction, map: "fk_ch_sponsor")
+  id                                 BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
+  slug                               String                   @unique(map: "slug") @db.VarChar(160)
+  title                              String                   @db.VarChar(200)
+  type                               String                   @default("generic") @db.VarChar(80)
+  location                           String?                  @db.VarChar(255)
+  rules                              String?                  @db.Text
+  deadline                           DateTime?                @db.Date
+  status                             challenges_status        @default(open)
+  budget_amount                      Decimal?                 @db.Decimal(10, 2)
+  budget_currency                    String?                  @db.Char(3)
+  sponsor_id                         BigInt?                  @db.UnsignedBigInt
+  judge_user_id                      BigInt?                  @db.UnsignedBigInt
+  created_by                         BigInt?                  @db.UnsignedBigInt
+  target_json                        Json?
+  created_at                         DateTime                 @default(now()) @db.DateTime(0)
+  updated_at                         DateTime                 @default(now()) @db.DateTime(0)
+  challenge_participants             challenge_participants[]
+  challenge_scores                   challenge_scores[]
+  challenge_submissions              challenge_submissions[]
+  users_challenges_created_byTousers users?                   @relation("challenges_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_ch_created_by")
+  users                              users?                   @relation(fields: [judge_user_id], references: [id], onUpdate: NoAction, map: "fk_ch_judge")
+  sponsors                           sponsors?                @relation(fields: [sponsor_id], references: [id], onUpdate: NoAction, map: "fk_ch_sponsor")
 
   @@index([judge_user_id], map: "fk_ch_judge")
   @@index([sponsor_id], map: "fk_ch_sponsor")
   @@index([deadline], map: "idx_deadline")
   @@index([status], map: "idx_status")
+  @@index([created_by], map: "idx_created_by")
 }
 
 model learning_modules {
@@ -122,17 +125,31 @@ model user_module_progress {
 }
 
 model users {
-  id                     BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
-  username               String                   @unique(map: "username") @db.VarChar(80)
-  email                  String?                  @unique(map: "email")
-  password_hash          String?                  @db.VarChar(255)
-  role                   users_role?              @default(user)
-  created_at             DateTime                 @default(now()) @db.DateTime(0)
-  challenge_participants challenge_participants[]
-  challenge_scores       challenge_scores[]
-  challenge_submissions  challenge_submissions[]
-  challenges             challenges[]
-  user_module_progress   user_module_progress[]
+  id                                      BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
+  username                                String                   @unique(map: "username") @db.VarChar(80)
+  email                                   String?                  @unique(map: "email")
+  password_hash                           String?                  @db.VarChar(255)
+  role                                    users_role?              @default(user)
+  created_at                              DateTime                 @default(now()) @db.DateTime(0)
+  challenge_participants                  challenge_participants[]
+  challenge_scores                        challenge_scores[]
+  challenge_submissions                   challenge_submissions[]
+  challenges_challenges_created_byTousers challenges[]             @relation("challenges_created_byTousers")
+  challenges                              challenges[]
+  user_module_progress                    user_module_progress[]
+}
+
+model form_submissions {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  name           String   @db.VarChar(200)
+  email          String   @db.VarChar(255)
+  interests_json Json?
+  newsletter     Boolean  @default(false)
+  ip             String?  @db.VarChar(45)
+  ua             String?  @db.VarChar(255)
+  created_at     DateTime @default(now()) @db.DateTime(0)
+
+  @@index([email], map: "idx_email")
 }
 
 enum users_role {
