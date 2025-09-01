@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
+// frontend/src/pages/LearningPaths.jsx
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "@/context/AuthContext";
 import { resetDemo } from "@/utils/demoStorage";
+import { useAuth } from "@/context/AuthContext";
+// (import { api } from "@/api/client";) // non necessario qui: usiamo axios con URL assoluti
 
 // === Env ===
-const API_URL = import.meta.env.VITE_API_URL;
-const USE_API = import.meta.env.VITE_USE_API === "true";
+const API_URL  = import.meta.env.VITE_API_URL;
+const USE_API  = import.meta.env.VITE_USE_API === "true";
 const API_BASE = `${(API_URL || "").replace(/\/$/, "")}/api`;
 
 export default function LearningPaths() {
@@ -20,13 +22,14 @@ export default function LearningPaths() {
   const [level, setLevel] = useState("");
   const [sortBy, setSortBy] = useState("recent");
 
-  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Auth non bloccante
-  const token = user?.token || localStorage.getItem("token") || null;
-  const userId = user?.id ?? Number(localStorage.getItem("userId") || 3);
+  // ✅ Usa l’Auth context “ufficiale”
+  const { user, isAuthenticated } = useAuth();
+  const token  = user?.accessToken || user?.token || null; // compatibile con vecchie/nuove versioni
+  const userId = isAuthenticated && user?.id ? user.id : null; // ← se non loggato: niente userId
 
+  // Header Authorization SOLO se c’è il token
   const authHeaders = useMemo(
     () => (token ? { Authorization: `Bearer ${token}` } : {}),
     [token]
@@ -36,11 +39,12 @@ export default function LearningPaths() {
     [USE_API, authHeaders]
   );
 
-  const LP_LIST_URL = USE_API ? `${API_BASE}/learning-paths` : "/data/learningpaths.json";
-  const LP_PROGRESS_URL = (uid) => (USE_API ? `${API_BASE}/learning-paths/progress?userId=${uid}` : null);
-  const LP_MARK_DONE_URL = (pathId) => (USE_API ? `${API_BASE}/learning-paths/${pathId}/progress` : null);
+  // Endpoints
+  const LP_LIST_URL       = USE_API ? `${API_BASE}/learning-paths` : "/data/learningpaths.json";
+  const LP_PROGRESS_URL   = (uid)    => (USE_API ? `${API_BASE}/learning-paths/progress?userId=${uid}` : null);
+  const LP_MARK_DONE_URL  = (pathId) => (USE_API ? `${API_BASE}/learning-paths/${pathId}/progress` : null);
 
-  // Fetch lista percorsi
+  // === Fetch: lista percorsi ==================================================
   const reloadPaths = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -65,27 +69,40 @@ export default function LearningPaths() {
     reloadPaths();
   }, [reloadPaths]);
 
-  // Fetch progresso
+  // === Fetch: progressi utente ===============================================
+  // ✅ Chiede i progressi SOLO quando c’è un vero userId (utente loggato)
   const loadProgress = useCallback(async () => {
+    // se non loggato: progressi vuoti e basta
+    if (!userId) {
+      setUserProgress({});
+      return;
+    }
+
     try {
       if (!USE_API) {
         const raw = localStorage.getItem("demo_lp_progress");
         setUserProgress(raw ? JSON.parse(raw) : {});
         return;
       }
+
+      // chiamata reale all’API
       const { data } = await axios.get(LP_PROGRESS_URL(userId), axiosConfig);
-      setUserProgress(data || {});
+      // l’API può restituire {} o { progress: {} }
+      const payload = data?.progress ?? data ?? {};
+      setUserProgress(payload);
     } catch (err) {
-      console.error("Errore progresso LP:", err);
+      // ❗ niente errori “rumorosi” in UI: fallback a vuoto
+      console.warn("Progress fetch failed:", err?.response?.status || err?.message);
       setUserProgress({});
     }
   }, [USE_API, userId, axiosConfig]);
 
+  // Effettua UNA sola fetch quando cambia userId
   useEffect(() => {
     loadProgress();
   }, [loadProgress]);
 
-  // KPI (giustifica la v0.2 lato UX)
+  // KPI riassuntivi
   const stats = useMemo(() => {
     const totalPaths = paths.length;
     const totalModules = paths.reduce((sum, p) => sum + (p.modules?.length || 0), 0);
@@ -115,8 +132,8 @@ export default function LearningPaths() {
       list = list.filter((p) => (p.level || "").toLowerCase() === level);
     }
     list.sort((a, b) => {
-      if (sortBy === "title") return (a.title || "").localeCompare(b.title || "");
-      if (sortBy === "duration") return (a.estimatedMinutes || 0) - (b.estimatedMinutes || 0);
+      if (sortBy === "title")     return (a.title || "").localeCompare(b.title || "");
+      if (sortBy === "duration")  return (a.estimatedMinutes || 0) - (b.estimatedMinutes || 0);
       const da = new Date(a.updatedAt || a.createdAt || 0).getTime();
       const db = new Date(b.updatedAt || b.createdAt || 0).getTime();
       return db - da;
@@ -124,6 +141,7 @@ export default function LearningPaths() {
     return list;
   }, [paths, query, level, sortBy]);
 
+  // Marca modulo come completato
   const updateProgress = async (pathId, moduleId) => {
     try {
       if (!USE_API) {
@@ -136,8 +154,15 @@ export default function LearningPaths() {
         setUserProgress(progress);
         return;
       }
+
+      if (!userId) {
+        // se non loggato: invito ad accedere
+        navigate("/login");
+        return;
+      }
+
       await axios.post(LP_MARK_DONE_URL(pathId), { userId, moduleId }, axiosConfig);
-      loadProgress();
+      loadProgress(); // ricarica progressi
     } catch (err) {
       const status = err.response?.status;
       if (status === 429) {
@@ -155,7 +180,7 @@ export default function LearningPaths() {
     <section className="page-section page-bg page-text">
       <div className="container">
 
-        {/* DEBUG (solo in dev) — commentato per la release */}
+        {/* DEBUG (solo in dev) — lascia commentato in prod */}
         {/*
         {import.meta.env.DEV && (
           <div
@@ -198,33 +223,32 @@ export default function LearningPaths() {
         </div>
 
         {/* Filtri rapidi */}
-<div className="filters-row">
-  <input
-    type="search"
-    className="control control-small control-pill"
-    placeholder="Cerca percorso o tag…"
-    value={query}
-    onChange={(e) => setQuery(e.target.value)}
-    enterKeyHint="search"
-  />
-  <select
-    className="control control-small control-pill"
-    value={sortBy}
-    onChange={(e) => setSortBy(e.target.value)}
-    aria-label="Ordina per"
-  >
-    <option value="recent">Più recenti</option>
-    <option value="title">Titolo A–Z</option>
-    <option value="duration">Durata</option>
-  </select>
-</div>
-
+        <div className="filters-row">
+          <input
+            type="search"
+            className="control control-small control-pill"
+            placeholder="Cerca percorso o tag…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            enterKeyHint="search"
+          />
+          <select
+            className="control control-small control-pill"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            aria-label="Ordina per"
+          >
+            <option value="recent">Più recenti</option>
+            <option value="title">Titolo A–Z</option>
+            <option value="duration">Durata</option>
+          </select>
+        </div>
 
         {loading ? (
           <div className="callout neutral">Caricamento corsi…</div>
         ) : error ? (
           <div className="callout error">
-            {error}{' '}
+            {error}{" "}
             <button className="btn btn-small" onClick={reloadPaths}>Riprova</button>
           </div>
         ) : filteredPaths.length === 0 ? (
@@ -278,7 +302,7 @@ export default function LearningPaths() {
                         {m.title}{" "}
                         {Array.isArray(done) && done.includes(m.id) ? (
                           <span>✅</span>
-                        ) : user ? (
+                        ) : isAuthenticated ? (
                           <button className="btn btn-small" onClick={() => updateProgress(path.id, m.id)}>
                             Completa
                           </button>
