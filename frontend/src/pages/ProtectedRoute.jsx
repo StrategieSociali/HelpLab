@@ -1,16 +1,14 @@
-import React, { useContext } from 'react';
-import { Navigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+// src/components/ProtectedRoute.jsx
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
-function ProtectedRoute({ children }) {
-  const { user } = useContext(AuthContext);
+export default function ProtectedRoute({ children, redirectTo = "/login" }) {
+  const { isAuthenticated, loading } = useAuth();
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  // Evita flicker/redirect finché il refresh (cookie) non ha risposto
+  if (loading) return null; // oppure uno spinner
 
-  return children;
+  return isAuthenticated ? children : <Navigate to={redirectTo} replace />;
 }
-
-export default ProtectedRoute;
 

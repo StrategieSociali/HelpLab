@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import axios from 'axios';
+import { useAuth } from '@/context/AuthContext';
+import { api } from '@/api/client';
+import { useNavigate } from 'react-router-dom';
 
 // === Env (una sola volta) ===
 const API_URL = import.meta.env.VITE_API_URL;
@@ -7,6 +10,11 @@ const USE_API = import.meta.env.VITE_USE_API === 'true';
 
 // Base API: aggiunge sempre /api ed evita doppi slash
 const API_BASE = `${(API_URL || '').replace(/\/$/, '')}/api`;
+
+// Path RELATIVI per l'istanza `api` (baseURL = /api)
+const CH_JOIN_PATH   = (id) => `/challenges/${id}/join`;
+const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
+
 
 export default function Challenges() {
   // Stato UI
@@ -18,17 +26,19 @@ export default function Challenges() {
   // Anti-spam pulsanti
   const [busyJoin, setBusyJoin] = useState({});
   const [busySubmit, setBusySubmit] = useState({});
-  
-  // Filtri UX
-const [query, setQuery]   = useState('');
-const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadline'
-  
 
-  // Auth opzionale (demo)
-  const token  = localStorage.getItem('token') || null;
-  const userId = Number(localStorage.getItem('userId') || 3);
+  // Filtri UX
+  const [query, setQuery]   = useState('');
+  const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadline'
+
+  // Auth: prendo l’utente dal Context (v0.3), fallback a localStorage per la demo
+ const { user, isAuthenticated } = useAuth(); 
+ const navigate = useNavigate();              
+
+  const userId = user?.id ?? Number(localStorage.getItem('userId') || 3);
 
   // Oggetti stabili per evitare loop
+  const token  = null; // non usiamo più il token da localStorage qui
   const authHeaders = useMemo(
     () => (token ? { Authorization: `Bearer ${token}` } : {}),
     [token]
@@ -43,6 +53,10 @@ const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadlin
   const CH_LEADERBOARD_URL = (id)    => USE_API ? `${API_BASE}/challenges/${id}/leaderboard` : null;
   const CH_JOIN_URL        = (id)    => USE_API ? `${API_BASE}/challenges/${id}/join` : null;
   const CH_SUBMIT_URL      = (id)    => USE_API ? `${API_BASE}/challenges/${id}/submit` : null;
+  
+  // Path RELATIVI da usare con l'istanza `api` (che ha baseURL = '/api')
+const CH_JOIN_PATH   = (id) => `/challenges/${id}/join`;
+const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
 
   // Per evitare richieste duplicate di leaderboard
   const prefetchedIdsRef = useRef(new Set());
@@ -102,8 +116,12 @@ const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadlin
     })();
   }, [USE_API, challenges, axiosConfig]);
 
-  // Azioni (join/submit) con anti-spam
+  // Azioni (join/submit) con anti-spam — ora via `api.post` (Bearer + cookie/refresh)
   const joinChallenge = async (id) => {
+  if (!isAuthenticated) {
+    navigate('/login');
+    return;
+  }
     if (busyJoin[id]) return;
     setBusyJoin(prev => ({ ...prev, [id]: true }));
     try {
@@ -115,12 +133,14 @@ const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadlin
         alert('Partecipazione registrata (demo).');
         return;
       }
-      await axios.post(CH_JOIN_URL(id), { userId }, axiosConfig);
+      await api.post(CH_JOIN_PATH(id), { userId }); // <— api.post
       alert('Partecipazione registrata!');
     } catch (err) {
       const status = err?.response?.status;
       if (status === 429) {
         alert('Stai facendo troppe richieste. Attendi e riprova.');
+      } else if (status === 401) {
+        alert('Devi eseguire l’accesso per partecipare.');
       } else {
         alert('Errore durante la partecipazione. Riprova.');
       }
@@ -131,29 +151,37 @@ const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadlin
   };
 
   const submitResult = async (id, delta = 2, payload = {}) => {
-    if (busySubmit[id]) return;
-    setBusySubmit(prev => ({ ...prev, [id]: true }));
-    try {
-      if (!USE_API) {
-        alert('Risultato inviato (demo).');
-        return;
-      }
-      await axios.post(CH_SUBMIT_URL(id), { userId, delta, payload }, axiosConfig);
-      const { data } = await axios.get(CH_LEADERBOARD_URL(id), axiosConfig);
-      setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
-      alert('Punteggio aggiornato!');
-    } catch (err) {
-      const status = err?.response?.status;
-      if (status === 429) {
-        alert('Troppe richieste. Riprova fra qualche secondo.');
-      } else {
-        alert('Errore durante l’invio. Riprova.');
-      }
-      console.error('Submit error:', err);
-    } finally {
-      setTimeout(() => setBusySubmit(prev => ({ ...prev, [id]: false })), 1500);
+  if (!isAuthenticated) {
+    navigate('/login');
+    return;
+  }
+  if (busySubmit[id]) return;
+  setBusySubmit(prev => ({ ...prev, [id]: true }));
+
+  try {
+    if (!USE_API) {
+      alert('Risultato inviato (demo).');
+      return;
     }
-  };
+
+    await api.post(CH_SUBMIT_PATH(id), { userId, delta, payload });
+    const { data } = await axios.get(CH_LEADERBOARD_URL(id), axiosConfig);
+    setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
+    alert('Punteggio aggiornato!');
+  } catch (err) {
+    const status = err?.response?.status;
+    if (status === 429) {
+      alert('Troppe richieste. Riprova fra qualche secondo.');
+    } else if (status === 401) {
+      alert('Devi eseguire l’accesso per inviare risultati.');
+    } else {
+      alert('Errore durante l’invio. Riprova.');
+    }
+    console.error('Submit error:', err);
+  } finally {
+    setTimeout(() => setBusySubmit(prev => ({ ...prev, [id]: false })), 1500);
+  }
+};
 
   // Helpers
   const formatBudget = (b) => {
@@ -164,49 +192,39 @@ const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadlin
   const deadlineLabel = (d) => (d ? new Date(d).toLocaleDateString() : '—');
   const getScoreboard = (ch) =>
     USE_API ? (leaderboards[ch.id] || ch.scoreboard || []) : (ch.scoreboard || []);
-    
-    //Genera lista filtrata
-    const filteredChallenges = useMemo(() => {
-  let list = Array.isArray(challenges) ? [...challenges] : [];
-  const q = query.trim().toLowerCase();
 
-  if (q) {
-    list = list.filter(ch =>
-      [
-        ch.title,
-        ch.location,
-        ch.rules,
-        ch.type,
-        ch.sponsor?.name,
-        ch.judge?.name
-      ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase()
-      .includes(q)
-    );
-  }
+  // Lista filtrata
+  const filteredChallenges = useMemo(() => {
+    let list = Array.isArray(challenges) ? [...challenges] : [];
+    const q = query.trim().toLowerCase();
 
-  if (sortBy === 'title') {
-    list.sort((a,b) => (a.title||'').localeCompare(b.title||''));
-  } else if (sortBy === 'deadline') {
-    list.sort((a,b) => new Date(a.deadline||0) - new Date(b.deadline||0));
-  } else {
-    // recenti prima: updatedAt/createdAt desc
-    const ts = v => new Date(v?.updatedAt || v?.createdAt || 0).getTime();
-    list.sort((a,b) => ts(b) - ts(a));
-  }
+    if (q) {
+      list = list.filter(ch =>
+        [ch.title, ch.location, ch.rules, ch.type, ch.sponsor?.name, ch.judge?.name]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(q)
+      );
+    }
 
-  return list;
-}, [challenges, query, sortBy]);
+    if (sortBy === 'title') {
+      list.sort((a,b) => (a.title||'').localeCompare(b.title||''));
+    } else if (sortBy === 'deadline') {
+      list.sort((a,b) => new Date(a.deadline||0) - new Date(b.deadline||0));
+    } else {
+      // recenti prima: updatedAt/createdAt desc
+      const ts = v => new Date(v?.updatedAt || v?.createdAt || 0).getTime();
+      list.sort((a,b) => ts(b) - ts(a));
+    }
 
+    return list;
+  }, [challenges, query, sortBy]);
 
   return (
     <section className="page-section page-bg page-text">
       <div className="container">
-
-        {/* DEBUG DEV ONLY — commentato per la release */}
-        {/*
+        {/* DEBUG DEV ONLY — commentato per la release
         {import.meta.env.DEV && (
           <div style={{
             background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.2)',
@@ -232,29 +250,28 @@ const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadlin
         {!loading && !error && challenges.length === 0 && (
           <div className="callout neutral">Nessuna sfida disponibile.</div>
         )}
-        
-        {/* Filtri rapidi */}
-<div className="filters-row">
-  <input
-    type="search"
-    className="control control-small control-pill"
-    placeholder="Cerca sfida…"
-    value={query}
-    onChange={(e) => setQuery(e.target.value)}
-    enterKeyHint="search"
-  />
-  <select
-    className="control control-small control-pill"
-    value={sortBy}
-    onChange={(e) => setSortBy(e.target.value)}
-    aria-label="Ordina per"
-  >
-    <option value="recent">Più recenti</option>
-    <option value="title">Titolo A–Z</option>
-    <option value="deadline">Scadenza</option>
-  </select>
-</div>
 
+        {/* Filtri rapidi */}
+        <div className="filters-row">
+          <input
+            type="search"
+            className="control control-small control-pill"
+            placeholder="Cerca sfida…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            enterKeyHint="search"
+          />
+          <select
+            className="control control-small control-pill"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            aria-label="Ordina per"
+          >
+            <option value="recent">Più recenti</option>
+            <option value="title">Titolo A–Z</option>
+            <option value="deadline">Scadenza</option>
+          </select>
+        </div>
 
         <div className="grid-cards">
           {filteredChallenges.map((ch) => (
@@ -330,23 +347,35 @@ const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadlin
               </div>
 
               <div className="card-actions">
-                <button
-                  className="btn btn-primary"
-                  disabled={!!busyJoin[ch.id]}
-                  aria-busy={!!busyJoin[ch.id]}
-                  onClick={() => joinChallenge(ch.id)}
-                >
-                  Partecipa (demo)
-                </button>
-                <button
-                  className="btn btn-ghost"
-                  disabled={!!busySubmit[ch.id]}
-                  aria-busy={!!busySubmit[ch.id]}
-                  onClick={() => submitResult(ch.id, 2, { note: 'azione demo' })}
-                >
-                  Invia risultato (+2)
-                </button>
-              </div>
+  {isAuthenticated ? (
+    <>
+      <button
+        className="btn btn-primary"
+        disabled={!!busyJoin[ch.id]}
+        aria-busy={!!busyJoin[ch.id]}
+        onClick={() => joinChallenge(ch.id)}
+      >
+        Partecipa
+      </button>
+      <button
+        className="btn btn-ghost"
+        disabled={!!busySubmit[ch.id]}
+        aria-busy={!!busySubmit[ch.id]}
+        onClick={() => submitResult(ch.id, 2, { note: 'azione demo' })}
+      >
+        Invia risultato (+2)
+      </button>
+    </>
+  ) : (
+    <button
+      className="btn btn-outline"
+      onClick={() => navigate('/login')}
+      title="Accedi per partecipare alle sfide"
+    >
+      Accedi per partecipare
+    </button>
+  )}
+</div>
 
               <div className="card-footer">
                 <span className="small muted">

@@ -1,96 +1,85 @@
-// Login.jsx
-// Scopo: rendere il form di Login graficamente identico al GreenSparkForm
-// mantenendo il tuo comportamento originale (stato, alert, navigate).
-//
-// Come: applichiamo la stessa struttura e classi CSS del GreenSpark:
-// - <form className="greenspark-form">  --> aggancia gli stili del form
-// - <label> che avvolgono gli <input>   --> tipico pattern del GreenSpark
-// - <div className="form-message">      --> area messaggi coerente con GreenSpark
-//
-// Importante: questo file NON introduce nuovi stili. Presuppone che nel progetto
-// esista già il CSS che definisce .greenspark-form e affini. Quando è importato
-// (globalmente o per componente), il login eredita lo stesso look & feel.
-import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+// src/pages/Login.jsx
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import FormNotice from "@/components/common/FormNotice.jsx";
 
-function Login() {
-// Stato del form:
-  const [formData, setFormData] = useState({ username: '', password: '' });
-  // Stato per mostrare eventuali errori:
-  const [error, setError] = useState('');
+export default function Login() {
+  const { login } = useAuth();               // AuthContext v0.3
   const navigate = useNavigate();
-  const { login } = useAuth();
 
-// Gestione change: (spread + property name dinamico)
+  // Stato del form (email + password, come da backend v0.3)
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-// Gestione submit: incluso alert e navigate
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // azzera errori precedenti
+    setError("");
+    setSubmitting(true);
     try {
-    // tenta il login con i dati inseriti
-      await login(formData.username, formData.password);
-      // Manteniamo il tuo alert di successo
-      alert('Login successful!');
-       // e navighiamo alla dashboard
-      navigate('/dashboard');
-    } catch (error) {
-      setError(error || 'Login failed. Try again.');
+      await login(form.email, form.password); // chiama /api/auth/login
+      navigate("/challenges");                // redirect post-login
+    } catch (err) {
+      console.error(err);
+      setError("Login non riuscito. Controlla le credenziali e riprova.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-return (
-  // Wrapper scuro: è quello che dà il background a contrasto
-  <section className="registration-section">
-    <div className="container">
-    <FormNotice />
-      
-      <form onSubmit={handleSubmit} className="registration-form">
-        
-        {/* Struttura prevista dal CSS: blocchi .form-group con label + input */}
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
-          <input
-            id="username"                     // collega la label
-            type="text"
-            name="username"
-            placeholder="Username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            autoComplete="username"
-          />
-        </div>
+  return (
+    <section className="registration-section">
+      <div className="container">
+        <FormNotice />
 
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            autoComplete="current-password"
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="registration-form">
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="name@example.com"
+              value={form.email}
+              onChange={handleChange}
+              required
+              autoComplete="email"
+            />
+          </div>
 
-        {/* Messaggio di errore: tieni pure il tuo inline per ora */}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={handleChange}
+              required
+              autoComplete="current-password"
+            />
+          </div>
 
-        {/* Bottone con stile verde come il form della landing */}
-        <button type="submit" className="submit-button">Login</button>
-      </form>
-    </div>
-  </section>
-);
+          {error && <p style={{ color: "salmon", marginTop: 8 }}>{error}</p>}
 
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={submitting}
+            aria-busy={submitting}
+          >
+            {submitting ? "Accesso in corso…" : "Accedi"}
+          </button>
+        </form>
+      </div>
+    </section>
+  );
 }
 
-export default Login;

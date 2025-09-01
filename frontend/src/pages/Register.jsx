@@ -1,144 +1,147 @@
-// Register.jsx
-// Obiettivo: stesso layout/stile dei form unificati (registration-section → container → registration-form)
-// NOTA: non cambiamo la logica originale; solo markup + classi per ereditare gli stili esistenti.
-
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+// src/pages/Register.jsx
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import FormNotice from "@/components/common/FormNotice.jsx";
+import { useAuth } from "@/context/AuthContext";
 
-function Register() {
-  // Stato del form: identico alla tua base
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-
-  // Errori da mostrare all’utente (coerenti con .form-message)
-  const [error, setError] = useState('');
+export default function Register() {
+  const { register, login } = useAuth();          // dal nostro AuthContext v0.3
   const navigate = useNavigate();
 
-  // Aggiorna lo stato in base al nome del campo (pattern già usato nel tuo file)
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Submit con validazione "password === confirmPassword" (come nel tuo file)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("Demo attiva: questo form non invia ancora i dati. " +
-    "Per contribuire cerca HelpLab su GitHub o unisciti al gruppo Telegram @HelpLab.");
+    setError("");
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
+    // validazioni minime lato client
+    if (!form.email || !form.password || !form.username) {
+      setError("Compila tutti i campi.");
       return;
     }
- // Questa parte va decommentata quando arriva il backend
-    //try {
-     
-      //Chiamata API: manteniamo esattamente l’endpoint/variabile d’ambiente che usavi
-      // Se in futuro usi Vite, valuta import.meta.env.VITE_API_URL
-      //const response = await axios.post(
-      //  `${process.env.REACT_APP_API_URL}/register`,
-      //  formData // inviamo lo stesso payload del tuo file originale
-    //  );
+    if (form.password !== form.confirmPassword) {
+      setError("Le password non coincidono.");
+      return;
+    }
+    if (form.password.length < 6) {
+      setError("La password deve avere almeno 6 caratteri.");
+      return;
+    }
 
-      // Comportamento di successo: uguale al tuo file
-     // alert('Registration successful! Please log in.');
-     // navigate('/login');
-    // } catch (error) {
-      // Gestione errori: mantiene la priorità al messaggio dal server se presente
-     // setError(error.response?.data?.message || 'Registration failed.');
-    //}
+    setSubmitting(true);
+    try {
+      // 1) registra
+      await register(form.email, form.password, form.username);
+      // 2) auto-login (comodo per l’utente)
+      await login(form.email, form.password);
+      // 3) redirect
+      navigate("/challenges");
+    } catch (err) {
+      console.error(err);
+      setError("Registrazione non riuscita. Verifica i dati o riprova più tardi.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    // Wrapper scuro + container: stessi elementi usati in Login/GreenSpark
     <section className="registration-section">
       <div className="container">
-      {/* Alert FormNotice */}
-       <FormNotice />
-        {/* Il form assume gli stili vetrosi già presenti nel tuo CSS */}
+        <FormNotice />
+
         <form onSubmit={handleSubmit} className="registration-form">
-          {/* Username */}
           <div className="form-group">
-            {/* label+htmlFor/id = migliore accessibilità e combacia con i selettori CSS */}
             <label htmlFor="username">Username</label>
             <input
               id="username"
-              type="text"
               name="username"
-              placeholder="Username"
-              value={formData.username}
+              type="text"
+              placeholder="sostenitore123"
+              value={form.username}
               onChange={handleChange}
               required
               autoComplete="username"
             />
           </div>
 
-          {/* Email */}
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
               id="email"
-              type="email"
               name="email"
-              placeholder="Email"
-              value={formData.email}
+              type="email"
+              placeholder="name@example.com"
+              value={form.email}
               onChange={handleChange}
               required
               autoComplete="email"
             />
           </div>
 
-          {/* Password */}
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input
               id="password"
-              type="password"
               name="password"
+              type="password"
               placeholder="Password"
-              value={formData.password}
+              value={form.password}
               onChange={handleChange}
               required
               autoComplete="new-password"
             />
           </div>
 
-          {/* Conferma Password */}
           <div className="form-group">
             <label htmlFor="confirmPassword">Conferma Password</label>
             <input
               id="confirmPassword"
-              type="password"
               name="confirmPassword"
-              placeholder="Confirm Password"
-              value={formData.confirmPassword}
+              type="password"
+              placeholder="Conferma password"
+              value={form.confirmPassword}
               onChange={handleChange}
               required
               autoComplete="new-password"
             />
           </div>
 
-          {/* Messaggio d'errore uniforme (stessa classe del resto dei form) */}
           {error && (
-            <div className="form-message error" role="alert">
+            <p style={{ color: "salmon", marginTop: 8 }}>
               {error}
-            </div>
+            </p>
           )}
 
-          {/* CTA in stile verde (classe già presente nel tuo CSS) */}
-          <button type="submit" className="submit-button">
-            Register
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={submitting}
+            aria-busy={submitting}
+          >
+            {submitting ? "Registrazione in corso…" : "Registrati"}
           </button>
+
+          <p style={{ marginTop: 12, textAlign: "center", opacity: 0.9 }}>
+            Hai già un account?{" "}
+            <Link to="/login" style={{ textDecoration: "underline" }}>
+              Accedi
+            </Link>
+          </p>
         </form>
       </div>
     </section>
   );
 }
-
-export default Register;
 
