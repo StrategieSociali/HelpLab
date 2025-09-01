@@ -69,38 +69,30 @@ export default function LearningPaths() {
     reloadPaths();
   }, [reloadPaths]);
 
-  // === Fetch: progressi utente ===============================================
-  // ✅ Chiede i progressi SOLO quando c’è un vero userId (utente loggato)
-  const loadProgress = useCallback(async () => {
-    // se non loggato: progressi vuoti e basta
-    if (!userId) {
-      setUserProgress({});
-      return;
-    }
+// === Fetch: progressi utente (semplificato, BE stabile) ==========
+const loadProgress = useCallback(async () => {
+  // Se non loggato, non chiamare (evita 400) e azzera localmente
+  if (!userId) {
+    setUserProgress({});
+    return;
+  }
 
-    try {
-      if (!USE_API) {
-        const raw = localStorage.getItem("demo_lp_progress");
-        setUserProgress(raw ? JSON.parse(raw) : {});
-        return;
-      }
+  try {
+    const { data } = await axios.get(LP_PROGRESS_URL(userId), axiosConfig);
+    // BE garantisce { progress: {...} } (anche vuoto)
+    setUserProgress(data?.progress ?? {});
+  } catch (err) {
+    // Errore inaspettato: fallback a {}
+    console.error("LP progress error:", err?.response?.status || err?.message);
+    setUserProgress({});
+  }
+}, [userId, axiosConfig]);
 
-      // chiamata reale all’API
-      const { data } = await axios.get(LP_PROGRESS_URL(userId), axiosConfig);
-      // l’API può restituire {} o { progress: {} }
-      const payload = data?.progress ?? data ?? {};
-      setUserProgress(payload);
-    } catch (err) {
-      // ❗ niente errori “rumorosi” in UI: fallback a vuoto
-      console.warn("Progress fetch failed:", err?.response?.status || err?.message);
-      setUserProgress({});
-    }
-  }, [USE_API, userId, axiosConfig]);
+// Effettua UNA sola fetch quando cambia userId
+useEffect(() => {
+  loadProgress();
+}, [loadProgress]);
 
-  // Effettua UNA sola fetch quando cambia userId
-  useEffect(() => {
-    loadProgress();
-  }, [loadProgress]);
 
   // KPI riassuntivi
   const stats = useMemo(() => {

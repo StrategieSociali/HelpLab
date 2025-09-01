@@ -1,27 +1,20 @@
+// src/components/ProtectedRoute.jsx
 import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
-function ProtectedRoute({ children }) {
-  const { user, status, error } = useAuth();
+export default function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
-  // Stato di caricamento: possiamo mostrare uno spinner o un messaggio
-  if (status === 'loading') {
-    return <div>Caricamento in corso...</div>;
+  // Evita flicker mentre l'AuthContext sta inizializzando
+  if (loading) return null;
+
+  if (!isAuthenticated) {
+    // Passa la rotta di provenienza per tornare lì dopo il login
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // Stato di errore: se riguarda l'autenticazione, possiamo reindirizzare o mostrare un messaggio
-  if (status === 'error' || error) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Se non autenticato, reindirizza al login
-  if (!user || !user.token) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Se autenticato, renderizza i figli
-  return <>{children}</>;
+  return children;
 }
 
-export default ProtectedRoute;

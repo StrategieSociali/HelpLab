@@ -5,10 +5,11 @@ export const routes = {
   },
   dashboard: {
     challenges: '/challenges',
+    createChallenge: '/challenges/new',
     learningPaths: '/learning-paths',
     userProfile: '/userprofile',
   },
   home: '/',
-  joinHelpLab: '/unisciti', // Cambiare in community con il backend
+  joinHelpLab: '/unisciti', //usata come Community
   notFound: '*', // Gestione della pagina 404
 };
