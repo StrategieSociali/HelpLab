@@ -137,6 +137,7 @@ model users {
   challenges_challenges_created_byTousers challenges[]             @relation("challenges_created_byTousers")
   challenges                              challenges[]
   user_module_progress                    user_module_progress[]
+  challenge_proposals                     challenge_proposals[]
 }
 
 model form_submissions {
@@ -174,4 +175,55 @@ enum challenges_status {
   open
   in_review
   closed
+}
+
+enum ChallengeProposalStatus {
+  pending_review
+  approved
+  rejected
+}
+
+enum Difficulty {
+  low
+  medium
+  high
+}
+
+model challenge_proposals {
+  id      String  @id @default(uuid())
+  user_id BigInt? @db.UnsignedBigInt
+
+  title       String  @db.VarChar(200)
+  description String? @db.Text
+  impact_type String? @db.VarChar(80)
+
+  start_date DateTime? @db.Date
+  deadline   DateTime? @db.Date
+
+  location_address String? @db.VarChar(255)
+  location_geo     Json?
+
+  target             Json?
+  tasks              Json?
+  visibility_options Json?
+
+  co2e_estimate_kg Decimal?    @db.Decimal(12, 3)
+  difficulty       Difficulty?
+  complexity_notes String?     @db.VarChar(255)
+
+  sponsor_interest         Boolean? @default(false)
+  sponsor_pitch            String?  @db.VarChar(255)
+  sponsor_budget_requested Int?
+
+  terms_consent Boolean @default(false)
+
+  status ChallengeProposalStatus @default(pending_review)
+
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @db.DateTime(0)
+
+  users users? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id], map: "idx_cp_user")
+  @@index([status], map: "idx_cp_status")
 }
