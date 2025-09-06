@@ -1,0 +1,22 @@
+# .github/FUNDING.yml
+# Opzionale: GitHub Sponsors (se attivi)
+# github: helplab-space
+[![Sponsor HelpLab](https://img.shields.io/badge/Sponsor-HelpLab-2ea44f)](https://github.com/StrategieSociali/HelpLab?sponsor=1)
+# Altre piattaforme supportate (se le usi):
+# patreon: yourPatreon
+# open_collective: helplab
+# ko_fi: helplab
+# liberapay: helplab
+Grazie per aver scelto di sostenerci.
+# Link personalizzati (mostrati nel menu del bottone Sponsor)
+custom:
+  # PAYPAL — usa il link "Donate"
+  - https://www.paypal.me/AntonioToninoLazzari
+
+  # BITCOIN/LIGHTNING — usa una pagina HTTPS che mostri QR + istruzioni
+  # 
+BITCOIN
+  - bc1qytmwtf5c97ylevce043cf89098u2lszlcmpl8p
+LIGHTNING
+  - strategiesociali@blink.sv
+
