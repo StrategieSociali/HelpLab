@@ -1,15 +1,12 @@
 // frontend/src/pages/LearningPaths.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import axios from "axios";
+import axios from "axios";                   // solo per fallback JSON
 import { useNavigate } from "react-router-dom";
 import { resetDemo } from "@/utils/demoStorage";
 import { useAuth } from "@/context/AuthContext";
-// (import { api } from "@/api/client";) // non necessario qui: usiamo axios con URL assoluti
+import { api } from "@/api/client";          // API v0.4 (baseURL = VITE_API_URL)
 
-// === Env ===
-const API_URL  = import.meta.env.VITE_API_URL;
-const USE_API  = import.meta.env.VITE_USE_API === "true";
-const API_BASE = `${(API_URL || "").replace(/\/$/, "")}/api`;
+const USE_API = import.meta.env.VITE_USE_API === "true";
 
 export default function LearningPaths() {
   const [paths, setPaths] = useState([]);
@@ -19,40 +16,26 @@ export default function LearningPaths() {
 
   // Filtri UX
   const [query, setQuery] = useState("");
-  const [level, setLevel] = useState("");
-  const [sortBy, setSortBy] = useState("recent");
+  const [sortBy, setSortBy] = useState("recent"); // recent | title | duration
 
   const navigate = useNavigate();
-
-  // ✅ Usa l’Auth context “ufficiale”
   const { user, isAuthenticated } = useAuth();
-  const token  = user?.accessToken || user?.token || null; // compatibile con vecchie/nuove versioni
-  const userId = isAuthenticated && user?.id ? user.id : null; // ← se non loggato: niente userId
+  const userId = isAuthenticated && user?.id ? user.id : null;
 
-  // Header Authorization SOLO se c’è il token
-  const authHeaders = useMemo(
-    () => (token ? { Authorization: `Bearer ${token}` } : {}),
-    [token]
-  );
-  const axiosConfig = useMemo(
-    () => (USE_API ? { headers: authHeaders } : undefined),
-    [USE_API, authHeaders]
-  );
-
-  // Endpoints
-  const LP_LIST_URL       = USE_API ? `${API_BASE}/learning-paths` : "/data/learningpaths.json";
-  const LP_PROGRESS_URL   = (uid)    => (USE_API ? `${API_BASE}/learning-paths/progress?userId=${uid}` : null);
-  const LP_MARK_DONE_URL  = (pathId) => (USE_API ? `${API_BASE}/learning-paths/${pathId}/progress` : null);
-
-  // === Fetch: lista percorsi ==================================================
+  // === Fetch: lista percorsi ===
   const reloadPaths = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const { data } = await axios.get(LP_LIST_URL, axiosConfig);
-      setPaths(Array.isArray(data) ? data : []);
+      if (USE_API) {
+        const { data } = await api.get("learning-paths");
+        setPaths(Array.isArray(data) ? data : []);
+      } else {
+        const { data } = await axios.get("data/learningpaths.json");
+        setPaths(Array.isArray(data) ? data : []);
+      }
     } catch (err) {
-      console.error("Errore nel recupero dei percorsi:", err);
+      console.error("Errore LP list:", err);
       const status = err?.response?.status;
       setError(
         status === 429
@@ -63,41 +46,32 @@ export default function LearningPaths() {
     } finally {
       setLoading(false);
     }
-  }, [LP_LIST_URL, axiosConfig]);
+  }, []);
 
   useEffect(() => {
     reloadPaths();
   }, [reloadPaths]);
 
-  // === Fetch: progressi utente ===============================================
-  // ✅ Chiede i progressi SOLO quando c’è un vero userId (utente loggato)
+  // === Fetch: progressi utente (solo se loggato) ===
   const loadProgress = useCallback(async () => {
-    // se non loggato: progressi vuoti e basta
     if (!userId) {
       setUserProgress({});
       return;
     }
-
     try {
-      if (!USE_API) {
+      if (USE_API) {
+        const { data } = await api.get("learning-paths/progress", { params: { userId } });
+        setUserProgress(data?.progress ?? {});
+      } else {
         const raw = localStorage.getItem("demo_lp_progress");
         setUserProgress(raw ? JSON.parse(raw) : {});
-        return;
       }
-
-      // chiamata reale all’API
-      const { data } = await axios.get(LP_PROGRESS_URL(userId), axiosConfig);
-      // l’API può restituire {} o { progress: {} }
-      const payload = data?.progress ?? data ?? {};
-      setUserProgress(payload);
     } catch (err) {
-      // ❗ niente errori “rumorosi” in UI: fallback a vuoto
-      console.warn("Progress fetch failed:", err?.response?.status || err?.message);
+      console.warn("LP progress error:", err?.response?.status || err?.message);
       setUserProgress({});
     }
-  }, [USE_API, userId, axiosConfig]);
+  }, [userId]);
 
-  // Effettua UNA sola fetch quando cambia userId
   useEffect(() => {
     loadProgress();
   }, [loadProgress]);
@@ -106,19 +80,15 @@ export default function LearningPaths() {
   const stats = useMemo(() => {
     const totalPaths = paths.length;
     const totalModules = paths.reduce((sum, p) => sum + (p.modules?.length || 0), 0);
-    const completedModules = paths.reduce(
-      (sum, p) => sum + ((userProgress[p.id]?.length) || 0),
-      0
-    );
+    const completedModules = paths.reduce((sum, p) => sum + ((userProgress[p.id]?.length) || 0), 0);
     const pct = totalModules ? Math.round((completedModules / totalModules) * 100) : 0;
     return { totalPaths, totalModules, completedModules, pct };
   }, [paths, userProgress]);
 
-  // Filtri/ordinamento
+  // Filtri + ordinamento
   const filteredPaths = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = Array.isArray(paths) ? [...paths] : [];
-
+    let list = [...paths];
     if (q) {
       list = list.filter((p) =>
         [p.title, p.description, ...(p.tags || [])]
@@ -128,20 +98,17 @@ export default function LearningPaths() {
           .includes(q)
       );
     }
-    if (level) {
-      list = list.filter((p) => (p.level || "").toLowerCase() === level);
-    }
     list.sort((a, b) => {
-      if (sortBy === "title")     return (a.title || "").localeCompare(b.title || "");
-      if (sortBy === "duration")  return (a.estimatedMinutes || 0) - (b.estimatedMinutes || 0);
+      if (sortBy === "title")    return (a.title || "").localeCompare(b.title || "");
+      if (sortBy === "duration") return (a.estimatedMinutes || 0) - (b.estimatedMinutes || 0);
       const da = new Date(a.updatedAt || a.createdAt || 0).getTime();
       const db = new Date(b.updatedAt || b.createdAt || 0).getTime();
       return db - da;
     });
     return list;
-  }, [paths, query, level, sortBy]);
+  }, [paths, query, sortBy]);
 
-  // Marca modulo come completato
+  // Marca modulo come completato (protetto)
   const updateProgress = async (pathId, moduleId) => {
     try {
       if (!USE_API) {
@@ -154,23 +121,17 @@ export default function LearningPaths() {
         setUserProgress(progress);
         return;
       }
-
       if (!userId) {
-        // se non loggato: invito ad accedere
         navigate("/login");
         return;
       }
-
-      await axios.post(LP_MARK_DONE_URL(pathId), { userId, moduleId }, axiosConfig);
-      loadProgress(); // ricarica progressi
+      await api.post(`learning-paths/${pathId}/progress`, { userId, moduleId });
+      loadProgress();
     } catch (err) {
-      const status = err.response?.status;
-      if (status === 429) {
-        alert("Stai facendo troppe richieste. Attendi qualche secondo e riprova.");
-      } else {
-        alert("Errore nell'aggiornamento del progresso. Riprova.");
-      }
-      console.error("Errore updateProgress:", err?.response?.data || err.message);
+      const status = err?.response?.status;
+      if (status === 429) alert("Troppe richieste. Attendi e riprova.");
+      else alert("Errore nell'aggiornamento del progresso. Riprova.");
+      console.error("LP updateProgress:", err?.response?.data || err.message);
     }
   };
 
@@ -179,26 +140,7 @@ export default function LearningPaths() {
   return (
     <section className="page-section page-bg page-text">
       <div className="container">
-
-        {/* DEBUG (solo in dev) — lascia commentato in prod */}
-        {/*
-        {import.meta.env.DEV && (
-          <div
-            style={{
-              background: "rgba(255,255,255,.08)",
-              border: "1px solid rgba(255,255,255,.2)",
-              borderRadius: 8,
-              padding: "6px 10px",
-              marginBottom: 10,
-              fontSize: 13,
-            }}
-          >
-            <strong>DEBUG</strong> – USE_API: {String(USE_API)} · LP_LIST_URL: <code>{LP_LIST_URL}</code>
-          </div>
-        )}
-        */}
-
-        {/* Header pagina */}
+        {/* Header */}
         <div className="page-header">
           <h2 className="page-title">Percorsi di Apprendimento</h2>
           <div className="page-actions">
@@ -214,7 +156,7 @@ export default function LearningPaths() {
           </div>
         </div>
 
-        {/* KPI compatti */}
+        {/* KPI */}
         <div className="hero-stats" style={{ justifyContent: 'flex-start', gap: '1rem', margin: '0 0 12px' }}>
           <div className="stat"><div className="stat-number">{stats.totalPaths}</div><div className="stat-label">Percorsi</div></div>
           <div className="stat"><div className="stat-number">{stats.totalModules}</div><div className="stat-label">Moduli</div></div>
@@ -222,7 +164,7 @@ export default function LearningPaths() {
           <div className="stat"><div className="stat-number">{stats.pct}%</div><div className="stat-label">Avanzamento</div></div>
         </div>
 
-        {/* Filtri rapidi */}
+        {/* Filtri */}
         <div className="filters-row">
           <input
             type="search"
@@ -244,6 +186,7 @@ export default function LearningPaths() {
           </select>
         </div>
 
+        {/* Stato */}
         {loading ? (
           <div className="callout neutral">Caricamento corsi…</div>
         ) : error ? (
@@ -266,36 +209,28 @@ export default function LearningPaths() {
                   <h3 className="card-title">{path.title}</h3>
                   <p className="card-description">{short(path.description)}</p>
 
-                  {/* meta */}
                   <div className="lp-meta">
                     {path.level && <span>Livello: {path.level}</span>}
                     {typeof path.estimatedMinutes === "number" && <span>• {path.estimatedMinutes} min</span>}
                   </div>
 
-                  {/* tag */}
                   {(path.tags || []).length > 0 && (
                     <div style={{ marginBottom: 8 }}>
                       {(path.tags || []).map((t) => (
-                        <span key={t} className="chip">
-                          {t}
-                        </span>
+                        <span key={t} className="chip">{t}</span>
                       ))}
                     </div>
                   )}
 
-                  {/* progresso */}
                   {total > 0 && (
                     <div style={{ margin: "8px 0 12px" }}>
                       <div className="progress" aria-label={`Progresso ${pct}%`}>
                         <span style={{ width: `${pct}%` }} />
                       </div>
-                      <small className="muted">
-                        {doneCount}/{total} moduli completati
-                      </small>
+                      <small className="muted">{doneCount}/{total} moduli completati</small>
                     </div>
                   )}
 
-                  {/* moduli */}
                   <ul style={{ marginTop: 12 }}>
                     {(path.modules || []).map((m) => (
                       <li key={m.id} style={{ marginBottom: 6 }}>

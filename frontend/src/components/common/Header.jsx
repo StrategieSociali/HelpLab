@@ -1,12 +1,11 @@
 import React, { useState, useContext } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { routes } from "@/routes";
-import { AuthContext } from "@/context/AuthContext";
+import { useAuth } from '@/context/AuthContext';
 
 export default function Header() {
-  const { user } = useContext(AuthContext);
+  const { user, isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
-
   const close = () => setOpen(false);
   const navClass = ({ isActive }) => "nav-link" + (isActive ? " active" : "");
 
@@ -15,7 +14,6 @@ export default function Header() {
       <div className="container header-inner">
         <Link to={routes.home} className="brand" onClick={close}>
           <span className="brand-text">HelpLab</span>
-          {/* claim sotto il logo */}
           <span className="claim">Humanity Empowered for Local Progress</span>
         </Link>
 
@@ -32,8 +30,8 @@ export default function Header() {
           <NavLink to={routes.home} end className={navClass} onClick={close}>
             Home
           </NavLink>
-         <NavLink to={routes.dashboard.challenges} end className={navClass}>
-          Sfide
+          <NavLink to={routes.dashboard.challenges} end className={navClass} onClick={close}>
+            Sfide
           </NavLink>
           <NavLink to={routes.dashboard.learningPaths} end className={navClass} onClick={close}>
             Corsi
@@ -41,23 +39,18 @@ export default function Header() {
           <NavLink to={routes.joinHelpLab} end className={navClass} onClick={close}>
             Community
           </NavLink>
-          {/* Da Implementare:
-          <NavLink to={routes.ecommerce} end className={navClass} onClick={close}>
-            Mercatino
-          </NavLink>
-          <NavLink to={routes.aziende} end className={navClass} onClick={close}>
-            Per aziende
-          </NavLink>
-          <NavLink to={routes.Wallet} end className={navClass} onClick={close}>
-            Wallet
-          </NavLink>*/}
         </nav>
 
         <div className="auth-actions">
-          {user ? (
-            <NavLink to={routes.dashboard.userProfile} className="btn" onClick={close}>
-              Profilo
-            </NavLink>
+          {isAuthenticated ? (
+            <>
+              <NavLink to={routes.dashboard.challengeCreate} className="btn" onClick={close}>
+                Crea Sfida
+              </NavLink>
+              <NavLink to={routes.dashboard.userProfile} className="btn" onClick={close}>
+                Profilo
+              </NavLink>
+            </>
           ) : (
             <>
               <NavLink to={routes.auth.login} className="btn" onClick={close}>

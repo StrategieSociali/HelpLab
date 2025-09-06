@@ -7,8 +7,9 @@ export const routes = {
     challenges: '/challenges',
     learningPaths: '/learning-paths',
     userProfile: '/userprofile',
+    challengeCreate: "/challenges/new",
   },
   home: '/',
   joinHelpLab: '/unisciti', // Cambiare in community con il backend
-  notFound: '*', // Gestione della pagina 404
+  notFound: '*', // Gestione della 404 pagina
 };

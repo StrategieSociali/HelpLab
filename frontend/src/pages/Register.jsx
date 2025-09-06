@@ -1,144 +1,89 @@
-// src/pages/Register.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import FormNotice from "@/components/common/FormNotice.jsx";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Register() {
-  const { register, login } = useAuth();          // dal nostro AuthContext v0.3
   const navigate = useNavigate();
+  const { register } = useAuth();
 
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({ email: "", password: "", name: "" });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-
-    // validazioni minime lato client
-    if (!form.email || !form.password || !form.username) {
-      setError("Compila tutti i campi.");
-      return;
-    }
-    if (form.password !== form.confirmPassword) {
-      setError("Le password non coincidono.");
-      return;
-    }
-    if (form.password.length < 6) {
-      setError("La password deve avere almeno 6 caratteri.");
-      return;
-    }
-
-    setSubmitting(true);
+    setErr("");
+    setBusy(true);
     try {
-      // 1) registra
-      await register(form.email, form.password, form.username);
-      // 2) auto-login (comodo per l’utente)
-      await login(form.email, form.password);
-      // 3) redirect
-      navigate("/challenges");
-    } catch (err) {
-      console.error(err);
-      setError("Registrazione non riuscita. Verifica i dati o riprova più tardi.");
+      await register({
+        email: form.email,
+        password: form.password,
+        name: form.name,
+      });
+      // Se la registrazione non restituisce accessToken,
+      // AuthContext fa auto-login. A questo punto siamo autenticati.
+      navigate("/dashboard/challenges/create"); // rotta protetta
+    } catch (error) {
+      console.error(error);
+      setErr("Registrazione non riuscita. Controlla i dati e riprova.");
     } finally {
-      setSubmitting(false);
+      setBusy(false);
     }
   };
 
   return (
-    <section className="registration-section">
-      <div className="container">
-        <FormNotice />
+    <section className="page-section page-text">
+      <div className="container" style={{ maxWidth: 520 }}>
+        <h1 className="page-title">Registrati</h1>
+        {err && <div className="callout error">{err}</div>}
 
-        <form onSubmit={handleSubmit} className="registration-form">
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
+        <form onSubmit={onSubmit}>
+          <label>
+            Nome
             <input
-              id="username"
-              name="username"
-              type="text"
-              placeholder="sostenitore123"
-              value={form.username}
-              onChange={handleChange}
+              className="control control-pill"
+              name="name"
+              value={form.name}
+              onChange={onChange}
+              placeholder="Il tuo nome"
               required
-              autoComplete="username"
             />
-          </div>
+          </label>
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
+          <label>
+            Email
             <input
-              id="email"
-              name="email"
+              className="control control-pill"
               type="email"
-              placeholder="name@example.com"
+              name="email"
               value={form.email}
-              onChange={handleChange}
+              onChange={onChange}
+              placeholder="nome@esempio.it"
               required
-              autoComplete="email"
             />
-          </div>
+          </label>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
+          <label>
+            Password
             <input
-              id="password"
+              className="control control-pill"
+              type="password"
               name="password"
-              type="password"
-              placeholder="Password"
               value={form.password}
-              onChange={handleChange}
+              onChange={onChange}
+              placeholder="Minimo 8 caratteri"
               required
-              autoComplete="new-password"
             />
+          </label>
+
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+            <button className="btn btn-primary" type="submit" disabled={busy} aria-busy={busy}>
+              Crea account
+            </button>
+            <Link className="btn btn-outline" to="/login">Hai già un account?</Link>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Conferma Password</label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder="Conferma password"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              required
-              autoComplete="new-password"
-            />
-          </div>
-
-          {error && (
-            <p style={{ color: "salmon", marginTop: 8 }}>
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            className="submit-button"
-            disabled={submitting}
-            aria-busy={submitting}
-          >
-            {submitting ? "Registrazione in corso…" : "Registrati"}
-          </button>
-
-          <p style={{ marginTop: 12, textAlign: "center", opacity: 0.9 }}>
-            Hai già un account?{" "}
-            <Link to="/login" style={{ textDecoration: "underline" }}>
-              Accedi
-            </Link>
-          </p>
         </form>
       </div>
     </section>

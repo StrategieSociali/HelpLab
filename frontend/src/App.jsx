@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import HomepageStatic from './pages/HomepageStatic';
 import '@/styles/styles.css';
 import Challenges from './pages/Challenges';
+import CreateChallenge from "@/pages/challenges/CreateChallenge";
 import LearningPaths from './pages/LearningPaths.jsx';
 import UserProfile from './pages/UserProfile'; //-> attivare quando si parte con la registrazione
 import Header from './components/common/Header';
@@ -48,6 +49,14 @@ export default function App() {
         </ProtectedRoute>
       }
     />
+    <Route
+  path={routes.dashboard.challengeCreate}
+  element={
+    <ProtectedRoute>
+      <CreateChallenge />
+    </ProtectedRoute>
+  }
+/>
 
     {/* Fallback 404 */}
     <Route path="*" element={<NotFound />} />
