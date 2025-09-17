@@ -18,6 +18,7 @@ export const routes = {
     proposals: '/dashboard/admin/proposals',
     // in futuro: assignJudge: '/dashboard/admin/assign-judge/:id'
   },
+  business: '/business',
   home: '/',
   joinHelpLab: '/unisciti',
   notFound: '*',
