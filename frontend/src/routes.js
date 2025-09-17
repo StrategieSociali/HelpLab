@@ -1,15 +1,25 @@
+// src/routes.js
 export const routes = {
   auth: {
     login: '/login',
     register: '/register',
   },
   dashboard: {
+    // pubbliche (liste)
     challenges: '/challenges',
     learningPaths: '/learning-paths',
-    userProfile: '/userprofile',
-    challengeCreate: "/challenges/new",
+
+    // protette
+    userProfile: '/dashboard/profile',
+    challengeCreate: '/dashboard/challenges/create',
+  },
+  // sezione admin (protetta + role=admin)
+  admin: {
+    proposals: '/dashboard/admin/proposals',
+    // in futuro: assignJudge: '/dashboard/admin/assign-judge/:id'
   },
   home: '/',
-  joinHelpLab: '/unisciti', // Cambiare in community con il backend
-  notFound: '*', // Gestione della 404 pagina
+  joinHelpLab: '/unisciti',
+  notFound: '*',
 };
+

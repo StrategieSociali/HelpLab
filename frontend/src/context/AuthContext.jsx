@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { api } from "@/api/client";
 import { setAccessToken as wireAxiosToken } from "@/api/client";
 
-// Chiave per storage locale del token in dev
 const LS_TOKEN_KEY = "hl_access_token";
 
 const AuthContext = createContext(null);
@@ -10,19 +9,47 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true); // inizialmente “checking...”
+  const [loading, setLoading] = useState(true);
 
-  // Ripristina token da localStorage (utile in dev: VITE_USE_REFRESH=false)
-  useEffect(() => {
+  // Bootstrap auth: restore da localStorage (dev) + refresh silenzioso (prod, se abilitato)
+useEffect(() => {
+  const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || "false") === "true";
+
+  (async () => {
+    let saved = null;
     try {
-      const saved = localStorage.getItem(LS_TOKEN_KEY);
+      saved = localStorage.getItem(LS_TOKEN_KEY);
       if (saved) {
         setToken(saved);
-        wireAxiosToken(saved); // imposta header Authorization sull’istanza Axios
+        wireAxiosToken(saved);
       }
     } catch {}
-    setLoading(false);
-  }, []);
+
+    // In produzione: valida sempre lo stato via refresh anche se hai un token salvato.
+    if (USE_REFRESH) {
+      try {
+        const { data } = await api.post("auth/refresh");
+        const t = data?.accessToken;
+        if (t) {
+          setToken(t);
+          wireAxiosToken(t);
+          try { localStorage.setItem(LS_TOKEN_KEY, t); } catch {}
+        } else {
+          // niente token nuovo → considera non autenticato
+          setToken(null);
+          setUser(null);
+          try { localStorage.removeItem(LS_TOKEN_KEY); } catch {}
+        }
+      } catch {
+        // refresh fallito → stato non autenticato (evita "falsi login")
+        setToken(null);
+        setUser(null);
+        try { localStorage.removeItem(LS_TOKEN_KEY); } catch {}
+      }
+    }
+  })().finally(() => setLoading(false));
+}, []);
+
 
   // Ogni volta che cambia token → aggiorna axios + storage
   useEffect(() => {
@@ -34,7 +61,6 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   const login = async (email, password) => {
-    // POST auth/login deve restituire { accessToken, user }
     const { data } = await api.post("auth/login", { email, password });
     const accessToken = data?.accessToken;
     if (!accessToken) throw new Error("Nessun accessToken nella risposta di login");
@@ -44,14 +70,12 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (payload) => {
-    // POST auth/register: se NON ritorna accessToken, facciamo login subito dopo
     const { data } = await api.post("auth/register", payload);
     if (data?.accessToken) {
       setToken(data.accessToken);
       setUser(data?.user || null);
       return data;
     }
-    // fallback: auto-login con le credenziali appena create
     if (payload?.email && payload?.password) {
       return login(payload.email, payload.password);
     }
@@ -62,6 +86,7 @@ export function AuthProvider({ children }) {
     try { await api.post("auth/logout"); } catch {}
     setToken(null);
     setUser(null);
+    try { localStorage.removeItem(LS_TOKEN_KEY); } catch {}
   };
 
   const value = useMemo(
@@ -74,7 +99,7 @@ export function AuthProvider({ children }) {
       register,
       logout,
       setUser,
-      setToken, // esposto per casi particolari
+      setToken,
     }),
     [user, token, loading]
   );

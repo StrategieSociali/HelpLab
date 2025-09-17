@@ -1,37 +1,71 @@
-import axios from 'axios';
+import axios from "axios";
 
 const RAW = import.meta.env.VITE_API_URL;
-const BASE_URL = (RAW && RAW.trim() ? RAW : 'https://api.helplab.space/api').replace(/\/+$/, '');
-const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || 'false') === 'true';
+// In dev metti /api nel tuo .env.development.local; in prod l'URL pieno.
+// Rimuoviamo eventuali slash finali.
+const BASE_URL = (RAW && RAW.trim() ? RAW : "/api").replace(/\/+$/, "");
+const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || "false") === "true";
 
 export const api = axios.create({
   baseURL: BASE_URL,
-  withCredentials: true, // serve per cookie httpOnly del refresh in prod
+  withCredentials: true, // necessario per inviare il cookie httpOnly di refresh
 });
 
+// Log utile anche in PROD (temporaneo): vedi dove stai puntando davvero
 if (import.meta.env.DEV) {
-  console.log('[API] baseURL =', api.defaults.baseURL, 'USE_REFRESH =', USE_REFRESH);
+  console.log("[API] baseURL =", api.defaults.baseURL, "USE_REFRESH =", USE_REFRESH);
+}
+if (import.meta.env.PROD) {
+  console.log("[API-PROD] baseURL =", api.defaults.baseURL, "USE_REFRESH =", USE_REFRESH);
 }
 
+// Token in memoria + setter esportato per AuthContext
 let accessToken = null;
-export const setAccessToken = (t) => { accessToken = t; };
+export const setAccessToken = (t) => {
+  accessToken = t || null;
+};
 
-api.interceptors.request.use(cfg => {
-  if (accessToken) cfg.headers.Authorization = `Bearer ${accessToken}`;
+// Authorization header su ogni richiesta se abbiamo il token
+api.interceptors.request.use((cfg) => {
+  if (accessToken) {
+    cfg.headers = cfg.headers || {};
+    cfg.headers.Authorization = `Bearer ${accessToken}`;
+  }
   return cfg;
 });
 
-// Interceptor 401→refresh: abilitarlo solo quando USE_REFRESH=true (prod o dev con CORS ok)
+// 401 -> refresh (solo se abilitato)
 if (USE_REFRESH) {
   api.interceptors.response.use(
-    r => r,
+    (r) => r,
     async (err) => {
       const orig = err?.config;
-      if (!orig || orig.__retry) throw err;
-      if (err?.response?.status !== 401) throw err;
-      await api.post('auth/refresh'); // niente slash iniziale
-      orig.__retry = true;
-      return api(orig);
+      const status = err?.response?.status;
+
+      if (!orig || orig.__retry) {
+        // niente retry o già ritentata
+        throw err;
+      }
+
+      if (status !== 401) {
+        throw err;
+      }
+
+      try {
+        // prova refresh: il BE prende il cookie httpOnly e ritorna { accessToken }
+        const { data } = await api.post("auth/refresh");
+        const newToken = data?.accessToken;
+        if (newToken) {
+          setAccessToken(newToken);
+          orig.__retry = true;
+          // ritenta la richiesta originale con il nuovo token
+          return api(orig);
+        }
+      } catch (e) {
+        // fallito il refresh: propaga l’errore 401
+      }
+
+      throw err;
     }
   );
 }

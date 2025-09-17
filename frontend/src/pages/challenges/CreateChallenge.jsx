@@ -25,6 +25,46 @@ export default function CreateChallenge() {
       return { ...EMPTY_CHALLENGE };
     }
   });
+  
+  //Pulsante Anteprima punteggio sfide
+  const [serverScore, setServerScore] = useState(null);
+const [scoringBusy, setScoringBusy] = useState(false);
+
+const previewServerScoring = async () => {
+  setScoringBusy(true);
+  setServerScore(null);
+  try {
+    // usa lo stesso payload normalizzato del submit
+    const body = (() => {
+      const copy = JSON.parse(JSON.stringify(draft));
+      // forza XOR: se hai difficulty, rimuovi co2e e viceversa
+      const hasCo2 = copy.co2e_estimate_kg !== undefined && copy.co2e_estimate_kg !== null && String(copy.co2e_estimate_kg).trim() !== "";
+      const hasDiff = typeof copy.difficulty === "string" && copy.difficulty.trim() !== "";
+      if (hasCo2 && hasDiff) copy.difficulty = null;
+      if (!hasCo2 && !hasDiff) { delete copy.co2e_estimate_kg; delete copy.difficulty; }
+      // tasks safe defaults
+      if (Array.isArray(copy.tasks)) {
+        copy.tasks = copy.tasks.map(t => ({
+          ...(t.id ? { id: t.id } : {}),
+          label: (t.label || "").trim(),
+          evidence_required: !!t.evidence_required,
+          evidence_types: (Array.isArray(t.evidence_types) && t.evidence_types.length) ? t.evidence_types : ["photo"],
+          verification: t.verification || "judge",
+        }));
+      }
+      return copy;
+    })();
+
+    const { data } = await api.post("v1/challenges/preview-scoring", body);
+    setServerScore(data); // { version, points_estimate_total, breakdown, notes }
+  } catch (e) {
+    console.error("preview-scoring failed", e?.response || e);
+    alert("Anteprima punteggio non disponibile al momento.");
+  } finally {
+    setScoringBusy(false);
+  }
+};
+
 
   // Autosave bozza
   useEffect(() => {
@@ -58,6 +98,36 @@ export default function CreateChallenge() {
     setDraft({ ...EMPTY_CHALLENGE });
     setStep(1);
   };
+  
+    // Preview punti UI
+  <div className="points-preview" style={{ marginTop: 10 }}>
+  Punti stimati (client): <strong className="points-value">{pointsPreview}</strong>
+  <button
+    className="btn btn-outline btn-small"
+    onClick={previewServerScoring}
+    disabled={scoringBusy}
+    style={{ marginLeft: 8 }}
+  >
+    {scoringBusy ? "Calcolo…" : "Calcola punteggio server"}
+  </button>
+</div>
+
+{serverScore && (
+  <div className="card" style={{ marginTop: 8, padding: 10 }}>
+    <div><strong>Server:</strong> {serverScore.points_estimate_total}</div>
+    {Array.isArray(serverScore.breakdown) && serverScore.breakdown.length > 0 && (
+      <ul style={{ margin: "6px 0 0 16px" }}>
+        {serverScore.breakdown.map((b, i) => (
+          <li key={i}>{b.label}: {b.value}</li>
+        ))}
+      </ul>
+    )}
+    {Array.isArray(serverScore.notes) && serverScore.notes.length > 0 && (
+      <small className="muted">Note: {serverScore.notes.join("; ")}</small>
+    )}
+  </div>
+)}
+
 
   // =========================
   // SUBMIT (contratto BE v1)

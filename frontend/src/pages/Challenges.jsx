@@ -4,6 +4,28 @@ import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import axios from 'axios';
 
+// === Config ===
+const USE_REAL_CHALLENGES = (import.meta.env.VITE_USE_REAL_CHALLENGES || "true") === "true";
+const PAGE_SIZE = 12;
+
+// === Adapter: normalizza lo shape del BE v1 alle card esistenti ===
+const normalizeChallengeItem = (c) => ({
+  id: c.id,
+  slug: c.slug || c.id,
+  title: c.title,
+  type: c.type || "generic",
+  location: c.location || null,
+  rules: c.rules || "",
+  deadline: c.deadline || null, // ISO date o null
+  status: c.status || "open",
+  budget: c.budget ?? null,
+  sponsor: c.sponsor ?? null,
+  judge: c.judge ?? null,
+  target: c.target ?? null,     // JSON passthrough
+  scoreboard: c.scoreboard ?? [],
+  updatedAt: c.updatedAt,
+});
+
 // === Env (una sola volta) ===
 const API_URL = import.meta.env.VITE_API_URL;               // es.: https://api.helplab.space/api
 const USE_API = import.meta.env.VITE_USE_API === 'true';
@@ -19,7 +41,6 @@ const CH_LEADERBOARD_URL = (id)    => USE_API ? `${API_BASE}/challenges/${id}/le
 const CH_JOIN_URL        = (id)    => USE_API ? `${API_BASE}/challenges/${id}/join`        : null;
 const CH_SUBMIT_URL      = (id)    => USE_API ? `${API_BASE}/challenges/${id}/submit`      : null;
 
-// === Component ===
 export default function Challenges() {
   // Path RELATIVI da usare con l'istanza `api` (che ha baseURL = '/api')
   const CH_JOIN_PATH   = (id) => `challenges/${id}/join`;    // niente leading slash
@@ -32,41 +53,69 @@ export default function Challenges() {
   // STATE
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [challenges, setChallenges] = useState([]);
   const [leaderboards, setLeaderboards] = useState({});
   const [busyJoin, setBusyJoin] = useState({});
   const [busySubmit, setBusySubmit] = useState({});
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
 
+  // nuovo feed v1 (con paginazione a cursore)
+  const [items, setItems] = useState([]);
+  const [nextCursor, setNextCursor] = useState(null);
+
+  // alias per non toccare il resto del render
+  const challenges = items;
+
   // Per evitare richieste duplicate di leaderboard
   const prefetchedIdsRef = useRef(new Set());
 
-  // Fetch lista sfide (esposta anche per “Riprova”) — GET SENZA CREDENZIALI
-  const fetchChallenges = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await axios.get(CH_LIST_URL); // ← rimosso { withCredentials: true }
-      const list = Array.isArray(res.data) ? res.data : [];
-      setChallenges(list);
-    } catch (err) {
-      console.error('Errore nel recupero sfide:', err);
-      const status = err?.response?.status;
-      setError(
-        status === 429
-          ? 'Troppe richieste. Attendi qualche secondo e ricarica.'
-          : 'Errore nel caricamento delle sfide. Riprova più tardi.'
-      );
-      setChallenges([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Fetch lista sfide (GET pubblico, senza credenziali)
+  const fetchPage = useCallback(
+    async ({ append = false } = {}) => {
+      setLoading(true);
+      setError("");
+      try {
+        if (USE_REAL_CHALLENGES) {
+          // ⚠️ niente leading slash nel path
+          const { data } = await api.get("v1/challenges", {
+            params: { limit: PAGE_SIZE, cursor: append ? nextCursor : undefined },
+          });
+          const mapped = Array.isArray(data?.items) ? data.items.map(normalizeChallengeItem) : [];
+          setItems((prev) => (append ? [...prev, ...mapped] : mapped));
+          setNextCursor(data?.nextCursor ?? null);
+        } else {
+          // feed demo v0 (fallback esplicito)
+          const { data } = await api.get("challenges");
+          setItems(Array.isArray(data) ? data : []);
+          setNextCursor(null);
+        }
+      } catch (err) {
+        // fallback automatico al feed demo se l'endpoint reale non risponde
+        if (USE_REAL_CHALLENGES) {
+          try {
+            const { data } = await api.get("challenges");
+            setItems(Array.isArray(data) ? data : []);
+            setNextCursor(null);
+          } catch (err2) {
+            setError(err2?.response?.data?.error || err2?.message || "Errore nel caricamento");
+            setItems([]);
+            setNextCursor(null);
+          }
+        } else {
+          setError(err?.response?.data?.error || err?.message || "Errore nel caricamento");
+          setItems([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [nextCursor]
+  );
 
+  // Primo caricamento
   useEffect(() => {
-    fetchChallenges();
-  }, [fetchChallenges]);
+    fetchPage({ append: false });
+  }, [fetchPage]);
 
   // Prefetch leaderboard per le sfide visibili (una volta per id) — GET SENZA CREDENZIALI
   useEffect(() => {
@@ -82,7 +131,9 @@ export default function Challenges() {
       try {
         await Promise.all(
           toLoad.map(async (id) => {
-            const { data } = await axios.get(CH_LEADERBOARD_URL(id)); // ← rimosso { withCredentials: true }
+            const url = CH_LEADERBOARD_URL(id);
+            if (!url) return;
+            const { data } = await axios.get(url); // GET senza credenziali
             prefetchedIdsRef.current.add(id);
             setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
           })
@@ -97,7 +148,7 @@ export default function Challenges() {
     })();
   }, [challenges]);
 
-  // Azioni (join/submit) con anti-spam — via `api.post` (Bearer + cookie/refresh)
+  // Azioni (join/submit) — via `api.post` (Bearer + cookie/refresh)
   const joinChallenge = async (id) => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -114,7 +165,7 @@ export default function Challenges() {
         alert('Partecipazione registrata (demo).');
         return;
       }
-      await api.post(CH_JOIN_PATH(id), { userId }); // usa istanza `api` con withCredentials abilitato
+      await api.post(CH_JOIN_PATH(id), { userId }); // usa istanza `api`
       alert('Partecipazione registrata!');
     } catch (err) {
       const status = err?.response?.status;
@@ -146,8 +197,11 @@ export default function Challenges() {
       }
 
       await api.post(CH_SUBMIT_PATH(id), { userId, delta, payload }); // usa istanza `api`
-      const { data } = await axios.get(CH_LEADERBOARD_URL(id)); // GET senza credenziali
-      setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
+      const url = CH_LEADERBOARD_URL(id);
+      if (url) {
+        const { data } = await axios.get(url); // GET senza credenziali
+        setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
+      }
       alert('Punteggio aggiornato!');
     } catch (err) {
       const status = err?.response?.status;
@@ -205,17 +259,6 @@ export default function Challenges() {
   return (
     <section className="page-section page-bg page-text">
       <div className="container">
-        {/* DEBUG DEV ONLY — commentato per la release
-        {import.meta.env.DEV && (
-          <div style={{
-            background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.2)',
-            borderRadius: 8, padding: '6px 10px', marginBottom: 10, fontSize: 13
-          }}>
-            <strong>DEBUG</strong> – USE_API: {String(USE_API)} · CH_LIST_URL: <code>{CH_LIST_URL}</code>
-          </div>
-        )}
-        */}
-
         <header className="page-header">
           <h1 className="page-title">Sfide della Community</h1>
           <p className="page-subtitle">Partecipa a sfide locali con obiettivi misurabili.</p>
@@ -225,7 +268,9 @@ export default function Challenges() {
         {error && !loading && (
           <div className="callout error">
             {error}{' '}
-            <button className="btn btn-small" onClick={fetchChallenges}>Riprova</button>
+            <button className="btn btn-small" onClick={() => fetchPage({ append: false })}>
+              Riprova
+            </button>
           </div>
         )}
         {!loading && !error && challenges.length === 0 && (
@@ -366,6 +411,15 @@ export default function Challenges() {
             </article>
           ))}
         </div>
+
+        {/* PAGINAZIONE */}
+        {nextCursor && !loading && (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+            <button className="btn btn-outline" onClick={() => fetchPage({ append: true })}>
+              Carica altri
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

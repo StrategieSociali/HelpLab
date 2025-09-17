@@ -16,6 +16,7 @@ import JoinHelpLab from './pages/JoinHelpLab';
 import './App.css';
 import { routes } from './routes';
 import { AuthProvider } from './context/AuthContext';
+import { AdminProposals } from './pages/admin/AdminProposals';
 
 export default function App() {
   return (
@@ -54,6 +55,14 @@ export default function App() {
   element={
     <ProtectedRoute>
       <CreateChallenge />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path={routes.admin.proposals}
+  element={
+    <ProtectedRoute>
+      <AdminProposals />
     </ProtectedRoute>
   }
 />
