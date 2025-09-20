@@ -17,7 +17,7 @@ import './App.css';
 import { routes } from './routes';
 import { AuthProvider } from './context/AuthContext';
 import { AdminProposals } from './pages/admin/AdminProposals';
-import BusinessPackages from '@/pages/BusinessPackages.jsx';
+import { BusinessPackages} from './pages/BusinessPackages.jsx';
 
 export default function App() {
   return (
