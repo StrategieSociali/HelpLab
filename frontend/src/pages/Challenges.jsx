@@ -1,93 +1,123 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useNavigate } from "react-router-dom";
+import { api } from "@/api/client";
+import { useAuth } from "@/context/AuthContext";
 import axios from 'axios';
-import { useAuth } from '@/context/AuthContext';
-import { api } from '@/api/client';
-import { useNavigate } from 'react-router-dom';
+
+// === Config ===
+const USE_REAL_CHALLENGES = (import.meta.env.VITE_USE_REAL_CHALLENGES || "true") === "true";
+const PAGE_SIZE = 12;
+
+// === Adapter: normalizza lo shape del BE v1 alle card esistenti ===
+const normalizeChallengeItem = (c) => ({
+  id: c.id,
+  slug: c.slug || c.id,
+  title: c.title,
+  type: c.type || "generic",
+  location: c.location || null,
+  rules: c.rules || "",
+  deadline: c.deadline || null, // ISO date o null
+  status: c.status || "open",
+  budget: c.budget ?? null,
+  sponsor: c.sponsor ?? null,
+  judge: c.judge ?? null,
+  target: c.target ?? null,     // JSON passthrough
+  scoreboard: c.scoreboard ?? [],
+  updatedAt: c.updatedAt,
+});
 
 // === Env (una sola volta) ===
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL;               // es.: https://api.helplab.space/api
 const USE_API = import.meta.env.VITE_USE_API === 'true';
 
-// Base API: aggiunge sempre /api ed evita doppi slash
-const API_BASE = `${(API_URL || '').replace(/\/$/, '')}/api`;
+// Usa VITE_API_URL così com’è (GIÀ con /api), niente /api aggiunto qui.
+const API_BASE = (API_URL && API_URL.trim()
+  ? API_URL.trim().replace(/\/+$/, '')
+  : 'https://api.helplab.space/api');
 
-// Path RELATIVI per l'istanza `api` (baseURL = /api)
-const CH_JOIN_PATH   = (id) => `/challenges/${id}/join`;
-const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
-
+// URL helper (API vs JSON)
+const CH_LIST_URL        = USE_API ? `${API_BASE}/challenges`                 : '/data/challenges.json';
+const CH_LEADERBOARD_URL = (id)    => USE_API ? `${API_BASE}/challenges/${id}/leaderboard` : null;
+const CH_JOIN_URL        = (id)    => USE_API ? `${API_BASE}/challenges/${id}/join`        : null;
+const CH_SUBMIT_URL      = (id)    => USE_API ? `${API_BASE}/challenges/${id}/submit`      : null;
 
 export default function Challenges() {
-  // Stato UI
-  const [challenges, setChallenges] = useState([]);
-  const [leaderboards, setLeaderboards] = useState({}); // { [id]: [{user,score}, ...] }
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // Path RELATIVI da usare con l'istanza `api` (che ha baseURL = '/api')
+  const CH_JOIN_PATH   = (id) => `challenges/${id}/join`;    // niente leading slash
+  const CH_SUBMIT_PATH = (id) => `challenges/${id}/submit`;  // niente leading slash
 
-  // Anti-spam pulsanti
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth?.() || {};
+  const userId = user?.id;
+
+  // STATE
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [leaderboards, setLeaderboards] = useState({});
   const [busyJoin, setBusyJoin] = useState({});
   const [busySubmit, setBusySubmit] = useState({});
+  const [query, setQuery] = useState('');
+  const [sortBy, setSortBy] = useState('recent');
 
-  // Filtri UX
-  const [query, setQuery]   = useState('');
-  const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'title' | 'deadline'
+  // nuovo feed v1 (con paginazione a cursore)
+  const [items, setItems] = useState([]);
+  const [nextCursor, setNextCursor] = useState(null);
 
-  // Auth: prendo l’utente dal Context (v0.3), fallback a localStorage per la demo
- const { user, isAuthenticated } = useAuth(); 
- const navigate = useNavigate();              
-
-  const userId = user?.id ?? Number(localStorage.getItem('userId') || 3);
-
-  // Oggetti stabili per evitare loop
-  const token  = null; // non usiamo più il token da localStorage qui
-  const authHeaders = useMemo(
-    () => (token ? { Authorization: `Bearer ${token}` } : {}),
-    [token]
-  );
-  const axiosConfig = useMemo(
-    () => (USE_API ? { headers: authHeaders } : undefined),
-    [USE_API, authHeaders]
-  );
-
-  // URL helper (API vs JSON)
-  const CH_LIST_URL        = USE_API ? `${API_BASE}/challenges` : '/data/challenges.json';
-  const CH_LEADERBOARD_URL = (id)    => USE_API ? `${API_BASE}/challenges/${id}/leaderboard` : null;
-  const CH_JOIN_URL        = (id)    => USE_API ? `${API_BASE}/challenges/${id}/join` : null;
-  const CH_SUBMIT_URL      = (id)    => USE_API ? `${API_BASE}/challenges/${id}/submit` : null;
-  
-  // Path RELATIVI da usare con l'istanza `api` (che ha baseURL = '/api')
-const CH_JOIN_PATH   = (id) => `/challenges/${id}/join`;
-const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
+  // alias per non toccare il resto del render
+  const challenges = items;
 
   // Per evitare richieste duplicate di leaderboard
   const prefetchedIdsRef = useRef(new Set());
 
-  // Fetch lista sfide (esposta anche per “Riprova”)
-  const fetchChallenges = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await axios.get(CH_LIST_URL, axiosConfig);
-      const list = Array.isArray(res.data) ? res.data : [];
-      setChallenges(list);
-    } catch (err) {
-      console.error('Errore nel recupero sfide:', err);
-      const status = err?.response?.status;
-      setError(
-        status === 429
-          ? 'Troppe richieste. Attendi qualche secondo e ricarica.'
-          : 'Errore nel caricamento delle sfide. Riprova più tardi.'
-      );
-      setChallenges([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [CH_LIST_URL, axiosConfig]);
+  // Fetch lista sfide (GET pubblico, senza credenziali)
+  const fetchPage = useCallback(
+    async ({ append = false } = {}) => {
+      setLoading(true);
+      setError("");
+      try {
+        if (USE_REAL_CHALLENGES) {
+          // ⚠️ niente leading slash nel path
+          const { data } = await api.get("v1/challenges", {
+            params: { limit: PAGE_SIZE, cursor: append ? nextCursor : undefined },
+          });
+          const mapped = Array.isArray(data?.items) ? data.items.map(normalizeChallengeItem) : [];
+          setItems((prev) => (append ? [...prev, ...mapped] : mapped));
+          setNextCursor(data?.nextCursor ?? null);
+        } else {
+          // feed demo v0 (fallback esplicito)
+          const { data } = await api.get("challenges");
+          setItems(Array.isArray(data) ? data : []);
+          setNextCursor(null);
+        }
+      } catch (err) {
+        // fallback automatico al feed demo se l'endpoint reale non risponde
+        if (USE_REAL_CHALLENGES) {
+          try {
+            const { data } = await api.get("challenges");
+            setItems(Array.isArray(data) ? data : []);
+            setNextCursor(null);
+          } catch (err2) {
+            setError(err2?.response?.data?.error || err2?.message || "Errore nel caricamento");
+            setItems([]);
+            setNextCursor(null);
+          }
+        } else {
+          setError(err?.response?.data?.error || err?.message || "Errore nel caricamento");
+          setItems([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [nextCursor]
+  );
 
+  // Primo caricamento
   useEffect(() => {
-    fetchChallenges();
-  }, [fetchChallenges]);
+    fetchPage({ append: false });
+  }, [fetchPage]);
 
-  // Prefetch leaderboard per le sfide visibili (una volta per id)
+  // Prefetch leaderboard per le sfide visibili (una volta per id) — GET SENZA CREDENZIALI
   useEffect(() => {
     if (!USE_API || !challenges.length) return;
 
@@ -101,7 +131,9 @@ const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
       try {
         await Promise.all(
           toLoad.map(async (id) => {
-            const { data } = await axios.get(CH_LEADERBOARD_URL(id), axiosConfig);
+            const url = CH_LEADERBOARD_URL(id);
+            if (!url) return;
+            const { data } = await axios.get(url); // GET senza credenziali
             prefetchedIdsRef.current.add(id);
             setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
           })
@@ -114,14 +146,14 @@ const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
         }
       }
     })();
-  }, [USE_API, challenges, axiosConfig]);
+  }, [challenges]);
 
-  // Azioni (join/submit) con anti-spam — ora via `api.post` (Bearer + cookie/refresh)
+  // Azioni (join/submit) — via `api.post` (Bearer + cookie/refresh)
   const joinChallenge = async (id) => {
-  if (!isAuthenticated) {
-    navigate('/login');
-    return;
-  }
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
     if (busyJoin[id]) return;
     setBusyJoin(prev => ({ ...prev, [id]: true }));
     try {
@@ -133,7 +165,7 @@ const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
         alert('Partecipazione registrata (demo).');
         return;
       }
-      await api.post(CH_JOIN_PATH(id), { userId }); // <— api.post
+      await api.post(CH_JOIN_PATH(id), { userId }); // usa istanza `api`
       alert('Partecipazione registrata!');
     } catch (err) {
       const status = err?.response?.status;
@@ -151,37 +183,40 @@ const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
   };
 
   const submitResult = async (id, delta = 2, payload = {}) => {
-  if (!isAuthenticated) {
-    navigate('/login');
-    return;
-  }
-  if (busySubmit[id]) return;
-  setBusySubmit(prev => ({ ...prev, [id]: true }));
-
-  try {
-    if (!USE_API) {
-      alert('Risultato inviato (demo).');
+    if (!isAuthenticated) {
+      navigate('/login');
       return;
     }
+    if (busySubmit[id]) return;
+    setBusySubmit(prev => ({ ...prev, [id]: true }));
 
-    await api.post(CH_SUBMIT_PATH(id), { userId, delta, payload });
-    const { data } = await axios.get(CH_LEADERBOARD_URL(id), axiosConfig);
-    setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
-    alert('Punteggio aggiornato!');
-  } catch (err) {
-    const status = err?.response?.status;
-    if (status === 429) {
-      alert('Troppe richieste. Riprova fra qualche secondo.');
-    } else if (status === 401) {
-      alert('Devi eseguire l’accesso per inviare risultati.');
-    } else {
-      alert('Errore durante l’invio. Riprova.');
+    try {
+      if (!USE_API) {
+        alert('Risultato inviato (demo).');
+        return;
+      }
+
+      await api.post(CH_SUBMIT_PATH(id), { userId, delta, payload }); // usa istanza `api`
+      const url = CH_LEADERBOARD_URL(id);
+      if (url) {
+        const { data } = await axios.get(url); // GET senza credenziali
+        setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
+      }
+      alert('Punteggio aggiornato!');
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 429) {
+        alert('Troppe richieste. Riprova fra qualche secondo.');
+      } else if (status === 401) {
+        alert('Devi eseguire l’accesso per inviare risultati.');
+      } else {
+        alert('Errore durante l’invio. Riprova.');
+      }
+      console.error('Submit error:', err);
+    } finally {
+      setTimeout(() => setBusySubmit(prev => ({ ...prev, [id]: false })), 1500);
     }
-    console.error('Submit error:', err);
-  } finally {
-    setTimeout(() => setBusySubmit(prev => ({ ...prev, [id]: false })), 1500);
-  }
-};
+  };
 
   // Helpers
   const formatBudget = (b) => {
@@ -224,17 +259,6 @@ const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
   return (
     <section className="page-section page-bg page-text">
       <div className="container">
-        {/* DEBUG DEV ONLY — commentato per la release
-        {import.meta.env.DEV && (
-          <div style={{
-            background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.2)',
-            borderRadius: 8, padding: '6px 10px', marginBottom: 10, fontSize: 13
-          }}>
-            <strong>DEBUG</strong> – USE_API: {String(USE_API)} · CH_LIST_URL: <code>{CH_LIST_URL}</code>
-          </div>
-        )}
-        */}
-
         <header className="page-header">
           <h1 className="page-title">Sfide della Community</h1>
           <p className="page-subtitle">Partecipa a sfide locali con obiettivi misurabili.</p>
@@ -244,7 +268,9 @@ const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
         {error && !loading && (
           <div className="callout error">
             {error}{' '}
-            <button className="btn btn-small" onClick={fetchChallenges}>Riprova</button>
+            <button className="btn btn-small" onClick={() => fetchPage({ append: false })}>
+              Riprova
+            </button>
           </div>
         )}
         {!loading && !error && challenges.length === 0 && (
@@ -347,35 +373,35 @@ const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
               </div>
 
               <div className="card-actions">
-  {isAuthenticated ? (
-    <>
-      <button
-        className="btn btn-primary"
-        disabled={!!busyJoin[ch.id]}
-        aria-busy={!!busyJoin[ch.id]}
-        onClick={() => joinChallenge(ch.id)}
-      >
-        Partecipa
-      </button>
-      <button
-        className="btn btn-ghost"
-        disabled={!!busySubmit[ch.id]}
-        aria-busy={!!busySubmit[ch.id]}
-        onClick={() => submitResult(ch.id, 2, { note: 'azione demo' })}
-      >
-        Invia risultato (+2)
-      </button>
-    </>
-  ) : (
-    <button
-      className="btn btn-outline"
-      onClick={() => navigate('/login')}
-      title="Accedi per partecipare alle sfide"
-    >
-      Accedi per partecipare
-    </button>
-  )}
-</div>
+                {isAuthenticated ? (
+                  <>
+                    <button
+                      className="btn btn-primary"
+                      disabled={!!busyJoin[ch.id]}
+                      aria-busy={!!busyJoin[ch.id]}
+                      onClick={() => joinChallenge(ch.id)}
+                    >
+                      Partecipa
+                    </button>
+                    <button
+                      className="btn btn-ghost"
+                      disabled={!!busySubmit[ch.id]}
+                      aria-busy={!!busySubmit[ch.id]}
+                      onClick={() => submitResult(ch.id, 2, { note: 'azione demo' })}
+                    >
+                      Invia risultato (+2)
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => navigate('/login')}
+                    title="Accedi per partecipare alle sfide"
+                  >
+                    Accedi per partecipare
+                  </button>
+                )}
+              </div>
 
               <div className="card-footer">
                 <span className="small muted">
@@ -385,6 +411,15 @@ const CH_SUBMIT_PATH = (id) => `/challenges/${id}/submit`;
             </article>
           ))}
         </div>
+
+        {/* PAGINAZIONE */}
+        {nextCursor && !loading && (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+            <button className="btn btn-outline" onClick={() => fetchPage({ append: true })}>
+              Carica altri
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

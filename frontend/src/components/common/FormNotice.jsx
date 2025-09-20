@@ -7,10 +7,10 @@ export default function FormNotice({ className = "" }) {
       role="status"
       aria-live="polite"
     >
-      <span className="notice__icon" aria-hidden="true">ℹ️</span>
+      <span className="notice__icon" aria-hidden="true"></span>
       <div className="notice__content">
-        <strong>Demo:</strong> questo form è dimostrativo e al momento non è attivo. <br />
-        Per restare informato o contribuire, cerca 
+       <p> <strong>Registrati</strong> oggi stesso. <br /></p>
+        Per seguire lo sviluppo visita
         {" "}
         <a
           href="https://github.com/StrategieSociali/HelpLab"

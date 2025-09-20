@@ -1,70 +1,38 @@
-// frontend/src/pages/LearningPaths.jsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { resetDemo } from "@/utils/demoStorage";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
-// (import { api } from "@/api/client";) // non necessario qui: usiamo axios con URL assoluti
 
-// === Env ===
-const API_URL  = import.meta.env.VITE_API_URL;
-const USE_API  = import.meta.env.VITE_USE_API === "true";
-const API_BASE = `${(API_URL || "").replace(/\/$/, "")}/api`;
+const USE_API = (import.meta.env.VITE_USE_API || "true") === "true";
 
 export default function LearningPaths() {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+
   const [paths, setPaths] = useState([]);
   const [userProgress, setUserProgress] = useState({});
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Filtri UX
-  const [query, setQuery] = useState("");
-  const [level, setLevel] = useState("");
-  const [sortBy, setSortBy] = useState("recent");
-
-  const navigate = useNavigate();
-
-  // ✅ Usa l’Auth context “ufficiale”
-  const { user, isAuthenticated } = useAuth();
-  const token  = user?.accessToken || user?.token || null; // compatibile con vecchie/nuove versioni
-  const userId = isAuthenticated && user?.id ? user.id : null; // ← se non loggato: niente userId
-
-  // Header Authorization SOLO se c’è il token
-  const authHeaders = useMemo(
-    () => (token ? { Authorization: `Bearer ${token}` } : {}),
-    [token]
-  );
-  const axiosConfig = useMemo(
-    () => (USE_API ? { headers: authHeaders } : undefined),
-    [USE_API, authHeaders]
-  );
-
-  // Endpoints
-  const LP_LIST_URL       = USE_API ? `${API_BASE}/learning-paths` : "/data/learningpaths.json";
-  const LP_PROGRESS_URL   = (uid)    => (USE_API ? `${API_BASE}/learning-paths/progress?userId=${uid}` : null);
-  const LP_MARK_DONE_URL  = (pathId) => (USE_API ? `${API_BASE}/learning-paths/${pathId}/progress` : null);
-
-  // === Fetch: lista percorsi ==================================================
-  const reloadPaths = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  // === Fetch: lista corsi / learning paths ===
+  const loadPaths = useCallback(async () => {
     try {
-      const { data } = await axios.get(LP_LIST_URL, axiosConfig);
-      setPaths(Array.isArray(data) ? data : []);
+      setError("");
+      if (USE_API) {
+        const { data } = await api.get("learning-paths");
+        setPaths(Array.isArray(data) ? data : []);
+      } else {
+        // fallback demo
+        setPaths([]);
+      }
     } catch (err) {
-      console.error("Errore nel recupero dei percorsi:", err);
-      const status = err?.response?.status;
-      setError(
-        status === 429
-          ? "Troppe richieste. Attendi qualche secondo e ricarica."
-          : "Errore nel caricamento dei percorsi. Riprova più tardi."
-      );
+      console.error("LP list error:", err?.response || err);
+      setError("Impossibile caricare i percorsi.");
       setPaths([]);
-    } finally {
-      setLoading(false);
     }
-  }, [LP_LIST_URL, axiosConfig]);
+  }, []);
 
+<<<<<<< HEAD
   useEffect(() => {
     reloadPaths();
   }, [reloadPaths]);
@@ -93,224 +61,206 @@ useEffect(() => {
   loadProgress();
 }, [loadProgress]);
 
+=======
+  // === Fetch: progressi utente (solo se loggato) ===
+  const loadProgress = useCallback(async () => {
+    if (!userId) {
+      setUserProgress({});
+      return;
+    }
+    try {
+      if (USE_API) {
+        const { data } = await api.get("learning-paths/progress", { params: { userId } });
+        const obj =
+          data && typeof data.progress === "object" && !Array.isArray(data.progress)
+            ? data.progress
+            : {};
+        setUserProgress(obj);
+      } else {
+        const raw = localStorage.getItem("demo_lp_progress");
+        setUserProgress(raw ? JSON.parse(raw) : {});
+      }
+    } catch (err) {
+      console.warn("LP progress error:", err?.response?.status || err?.message);
+      setUserProgress({});
+    }
+  }, [userId]);
 
-  // KPI riassuntivi
+  // inizializzazione
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await loadPaths();
+      await loadProgress();
+      setLoading(false);
+    })();
+  }, [loadPaths, loadProgress]);
+>>>>>>> release/v0.4.1
+
+  // === Stats globali ===
   const stats = useMemo(() => {
     const totalPaths = paths.length;
     const totalModules = paths.reduce((sum, p) => sum + (p.modules?.length || 0), 0);
-    const completedModules = paths.reduce(
-      (sum, p) => sum + ((userProgress[p.id]?.length) || 0),
-      0
-    );
+    const completedModules = paths.reduce((sum, p) => {
+      const arr = userProgress[p.id];
+      return sum + (Array.isArray(arr) ? arr.length : 0);
+    }, 0);
     const pct = totalModules ? Math.round((completedModules / totalModules) * 100) : 0;
     return { totalPaths, totalModules, completedModules, pct };
   }, [paths, userProgress]);
 
-  // Filtri/ordinamento
-  const filteredPaths = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    let list = Array.isArray(paths) ? [...paths] : [];
+  // === Helpers progress ===
+  const hasDone = (pathId, moduleId) => {
+    const arr = userProgress[pathId];
+    return Array.isArray(arr) && arr.includes(moduleId);
+  };
 
-    if (q) {
-      list = list.filter((p) =>
-        [p.title, p.description, ...(p.tags || [])]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(q)
-      );
-    }
-    if (level) {
-      list = list.filter((p) => (p.level || "").toLowerCase() === level);
-    }
-    list.sort((a, b) => {
-      if (sortBy === "title")     return (a.title || "").localeCompare(b.title || "");
-      if (sortBy === "duration")  return (a.estimatedMinutes || 0) - (b.estimatedMinutes || 0);
-      const da = new Date(a.updatedAt || a.createdAt || 0).getTime();
-      const db = new Date(b.updatedAt || b.createdAt || 0).getTime();
-      return db - da;
+  const markLocalDone = (pathId, moduleId) => {
+    setUserProgress(prev => {
+      const next = { ...prev };
+      const arr = Array.isArray(next[pathId]) ? [...next[pathId]] : [];
+      if (!arr.includes(moduleId)) arr.push(moduleId);
+      next[pathId] = arr;
+      return next;
     });
-    return list;
-  }, [paths, query, level, sortBy]);
+  };
 
-  // Marca modulo come completato
-  const updateProgress = async (pathId, moduleId) => {
+  // === Azione: completa modulo (ottimistico + POST idempotente) ===
+  const completeModule = async (pathId, moduleId) => {
+    if (!userId) {
+      alert("Devi accedere per tracciare i progressi.");
+      return;
+    }
+    if (hasDone(pathId, moduleId)) return; // già fatto
+
+    // update ottimistico
+    markLocalDone(pathId, moduleId);
+
+    // POST idempotente
     try {
-      if (!USE_API) {
-        const raw = localStorage.getItem("demo_lp_progress");
-        const progress = raw ? JSON.parse(raw) : {};
-        const set = new Set(progress[pathId] || []);
-        set.add(moduleId);
-        progress[pathId] = Array.from(set);
-        localStorage.setItem("demo_lp_progress", JSON.stringify(progress));
-        setUserProgress(progress);
-        return;
-      }
-
-      if (!userId) {
-        // se non loggato: invito ad accedere
-        navigate("/login");
-        return;
-      }
-
-      await axios.post(LP_MARK_DONE_URL(pathId), { userId, moduleId }, axiosConfig);
-      loadProgress(); // ricarica progressi
-    } catch (err) {
-      const status = err.response?.status;
-      if (status === 429) {
-        alert("Stai facendo troppe richieste. Attendi qualche secondo e riprova.");
+      setSaving(true);
+      if (USE_API) {
+        await api.post(`learning-paths/${pathId}/progress`, { userId, moduleId });
       } else {
-        alert("Errore nell'aggiornamento del progresso. Riprova.");
+        const raw = localStorage.getItem("demo_lp_progress");
+        const obj = raw ? JSON.parse(raw) : {};
+        const arr = Array.isArray(obj[pathId]) ? obj[pathId] : [];
+        if (!arr.includes(moduleId)) arr.push(moduleId);
+        obj[pathId] = arr;
+        localStorage.setItem("demo_lp_progress", JSON.stringify(obj));
       }
-      console.error("Errore updateProgress:", err?.response?.data || err.message);
+      await loadProgress(); // riallineo dal server
+    } catch (err) {
+      console.error("LP save error:", err?.response || err);
+      alert("Salvataggio progresso non riuscito. Riprova.");
+      // rollback
+      setUserProgress(prev => {
+        const next = { ...prev };
+        const arr = Array.isArray(next[pathId]) ? next[pathId].filter(id => id !== moduleId) : [];
+        next[pathId] = arr;
+        return next;
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const short = (t = "", max = 160) => (t.length > max ? t.slice(0, max - 1) + "…" : t);
+  if (loading) {
+    return (
+      <section className="page-section page-text">
+        <div className="container">
+          <h1 className="page-title">Percorsi di apprendimento</h1>
+          <p>Caricamento…</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="page-section page-bg page-text">
+    <section className="page-section page-text">
       <div className="container">
-
-        {/* DEBUG (solo in dev) — lascia commentato in prod */}
-        {/*
-        {import.meta.env.DEV && (
-          <div
-            style={{
-              background: "rgba(255,255,255,.08)",
-              border: "1px solid rgba(255,255,255,.2)",
-              borderRadius: 8,
-              padding: "6px 10px",
-              marginBottom: 10,
-              fontSize: 13,
-            }}
-          >
-            <strong>DEBUG</strong> – USE_API: {String(USE_API)} · LP_LIST_URL: <code>{LP_LIST_URL}</code>
-          </div>
-        )}
-        */}
-
-        {/* Header pagina */}
         <div className="page-header">
-          <h2 className="page-title">Percorsi di Apprendimento</h2>
-          <div className="page-actions">
-            <button
-              className="btn btn-outline btn-pill"
-              onClick={() => {
-                resetDemo();
-                loadProgress();
-              }}
-            >
-              Reimposta demo
-            </button>
+          <h1 className="page-title">Percorsi di apprendimento</h1>
+
+          {/* Badge statistiche globali */}
+          <div className="chip" title={`${stats.completedModules}/${stats.totalModules} moduli`}>
+            Completamento totale: {stats.pct}%
           </div>
         </div>
 
-        {/* KPI compatti */}
-        <div className="hero-stats" style={{ justifyContent: 'flex-start', gap: '1rem', margin: '0 0 12px' }}>
-          <div className="stat"><div className="stat-number">{stats.totalPaths}</div><div className="stat-label">Percorsi</div></div>
-          <div className="stat"><div className="stat-number">{stats.totalModules}</div><div className="stat-label">Moduli</div></div>
-          <div className="stat"><div className="stat-number">{stats.completedModules}</div><div className="stat-label">Completati</div></div>
-          <div className="stat"><div className="stat-number">{stats.pct}%</div><div className="stat-label">Avanzamento</div></div>
-        </div>
+        {error && <div className="callout error" style={{ marginBottom: 12 }}>{error}</div>}
 
-        {/* Filtri rapidi */}
-        <div className="filters-row">
-          <input
-            type="search"
-            className="control control-small control-pill"
-            placeholder="Cerca percorso o tag…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            enterKeyHint="search"
-          />
-          <select
-            className="control control-small control-pill"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            aria-label="Ordina per"
-          >
-            <option value="recent">Più recenti</option>
-            <option value="title">Titolo A–Z</option>
-            <option value="duration">Durata</option>
-          </select>
-        </div>
+        {/* griglia dei percorsi */}
+        <div className="lp-grid">
+          {paths.map((p) => {
+            const modules = Array.isArray(p.modules) ? p.modules : [];
+            const doneCount = Array.isArray(userProgress[p.id]) ? userProgress[p.id].length : 0;
+            const pct = modules.length ? Math.round((doneCount / modules.length) * 100) : 0;
 
-        {loading ? (
-          <div className="callout neutral">Caricamento corsi…</div>
-        ) : error ? (
-          <div className="callout error">
-            {error}{" "}
-            <button className="btn btn-small" onClick={reloadPaths}>Riprova</button>
-          </div>
-        ) : filteredPaths.length === 0 ? (
-          <div className="callout neutral">Nessun percorso disponibile.</div>
-        ) : (
-          <div className="grid-cards lp-grid">
-            {filteredPaths.map((path) => {
-              const done = userProgress[path.id] || [];
-              const total = path.modules?.length || 0;
-              const doneCount = Array.isArray(done) ? done.length : 0;
-              const pct = total ? Math.round((doneCount / total) * 100) : 0;
+            return (
+              <article key={p.id} className="lp-card">
+                <header className="lp-card__header">
+                  <h2 className="lp-card__title">{p.title || "Percorso"}</h2>
+                  {/* Badge per-card */}
+                  <span className="chip" title={`${doneCount}/${modules.length} moduli`}>{pct}%</span>
+                </header>
 
-              return (
-                <article key={path.id} className="card lp-card">
-                  <h3 className="card-title">{path.title}</h3>
-                  <p className="card-description">{short(path.description)}</p>
+                {/* 🔵 Progress bar per-card (solo inline styles, nessun CSS globale) */}
+                <div
+                  style={{
+                    margin: "6px 0 10px",
+                    height: 8,
+                    background: "rgba(255,255,255,0.15)",
+                    borderRadius: 9999,
+                    overflow: "hidden",
+                  }}
+                  aria-label={`Avanzamento ${pct}%`}
+                  role="progressbar"
+                  aria-valuenow={pct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <div
+                    style={{
+                      width: `${pct}%`,
+                      height: "100%",
+                      background:
+                        "linear-gradient(90deg, rgba(34,197,94,1) 0%, rgba(16,185,129,1) 100%)",
+                    }}
+                  />
+                </div>
+                <small className="muted" style={{ display: "block", marginBottom: 8 }}>
+                  {doneCount}/{modules.length} moduli completati
+                </small>
 
-                  {/* meta */}
-                  <div className="lp-meta">
-                    {path.level && <span>Livello: {path.level}</span>}
-                    {typeof path.estimatedMinutes === "number" && <span>• {path.estimatedMinutes} min</span>}
-                  </div>
+                {p.description && <p className="lp-card__desc">{p.description}</p>}
 
-                  {/* tag */}
-                  {(path.tags || []).length > 0 && (
-                    <div style={{ marginBottom: 8 }}>
-                      {(path.tags || []).map((t) => (
-                        <span key={t} className="chip">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* progresso */}
-                  {total > 0 && (
-                    <div style={{ margin: "8px 0 12px" }}>
-                      <div className="progress" aria-label={`Progresso ${pct}%`}>
-                        <span style={{ width: `${pct}%` }} />
-                      </div>
-                      <small className="muted">
-                        {doneCount}/{total} moduli completati
-                      </small>
-                    </div>
-                  )}
-
-                  {/* moduli */}
-                  <ul style={{ marginTop: 12 }}>
-                    {(path.modules || []).map((m) => (
-                      <li key={m.id} style={{ marginBottom: 6 }}>
-                        {m.title}{" "}
-                        {Array.isArray(done) && done.includes(m.id) ? (
-                          <span>✅</span>
-                        ) : isAuthenticated ? (
-                          <button className="btn btn-small" onClick={() => updateProgress(path.id, m.id)}>
-                            Completa
+                <ul className="lp-list">
+                  {modules.map((m) => {
+                    const done = hasDone(p.id, m.id);
+                    return (
+                      <li key={m.id} className={`lp-list__item ${done ? "is-done" : ""}`}>
+                        <div className="lp-list__label">
+                          {m.title || `Modulo ${m.id}`}
+                          {done && <span className="pill success" style={{ marginLeft: 8 }}>Completato</span>}
+                        </div>
+                        <div className="lp-list__actions">
+                          <button
+                            className={`btn btn-small ${done ? "btn-outline" : "btn-primary"}`}
+                            onClick={() => completeModule(p.id, m.id)}
+                            disabled={done || saving}
+                          >
+                            {done ? "Fatto" : "Segna completato"}
                           </button>
-                        ) : (
-                          <button className="btn btn-small btn-outline" onClick={() => navigate("/login")}>
-                            Accedi per completare
-                          </button>
-                        )}
+                        </div>
                       </li>
-                    ))}
-                  </ul>
-                </article>
-              );
-            })}
-          </div>
-        )}
+                    );
+                  })}
+                </ul>
+              </article>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { routes } from "@/routes";
@@ -5,8 +6,16 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Header() {
   const { isAuthenticated } = useAuth();
-  const [open, setOpen] = useState(false);
+=======
+import React, { useState, useContext } from "react";
+import { NavLink, Link } from "react-router-dom";
+import { routes } from "@/routes";
+import { useAuth } from '@/context/AuthContext';
 
+export default function Header() {
+  const { isAuthenticated, user, logout } = useAuth();
+>>>>>>> release/v0.4.1
+  const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   const navClass = ({ isActive }) => "nav-link" + (isActive ? " active" : "");
 
@@ -34,6 +43,7 @@ export default function Header() {
           <NavLink to={routes.home} end className={navClass} onClick={close}>
             Home
           </NavLink>
+<<<<<<< HEAD
 
           <NavLink
             to={routes.dashboard.challenges}
@@ -41,6 +51,9 @@ export default function Header() {
             className={navClass}
             onClick={close}
           >
+=======
+          <NavLink to={routes.dashboard.challenges} end className={navClass} onClick={close}>
+>>>>>>> release/v0.4.1
             Sfide
           </NavLink>
 
@@ -63,6 +76,7 @@ export default function Header() {
           </NavLink>
         </nav>
 
+<<<<<<< HEAD
         {/* Azioni a destra */}
         <div className="auth-actions" style={{ display: "flex", gap: 8 }}>
           {isAuthenticated ? (
@@ -104,6 +118,55 @@ export default function Header() {
             </>
           )}
         </div>
+=======
+     <div className="auth-actions">
+  {isAuthenticated ? (
+    <>
+      <NavLink to={routes.dashboard.challengeCreate} className="btn" onClick={close}>
+        Crea Sfida
+      </NavLink>
+
+      <NavLink to={routes.dashboard.userProfile} className="btn" onClick={close}>
+        Profilo
+      </NavLink>
+
+      {/* Solo admin: Dashboard Admin */}
+      {isAuthenticated && user?.role === "admin" && (
+  <NavLink
+    to={routes.admin.proposals}
+    className="btn btn-outline"
+    onClick={close}
+  >
+    Dashboard Admin
+  </NavLink>
+)}
+
+
+      {/* Logout: vero bottone (non un link) */}
+      <button
+        type="button"
+        className="btn"
+        onClick={() => {
+          logout();
+          close?.();
+        }}
+      >
+        Esci
+      </button>
+    </>
+  ) : (
+    <>
+      <NavLink to={routes.auth.login} className="btn" onClick={close}>
+        Accedi
+      </NavLink>
+      <NavLink to={routes.auth.register} className="btn btn-outline" onClick={close}>
+        Registrati
+      </NavLink>
+    </>
+  )}
+</div>
+
+>>>>>>> release/v0.4.1
       </div>
     </header>
   );

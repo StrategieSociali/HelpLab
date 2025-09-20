@@ -4,9 +4,20 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+<<<<<<< HEAD
 
 import { routes } from './routes';
 
+=======
+import Login from './pages/Login';
+import Register from './pages/Register';
+import HomepageStatic from './pages/HomepageStatic';
+import '@/styles/styles.css';
+import Challenges from './pages/Challenges';
+import CreateChallenge from "@/pages/challenges/CreateChallenge";
+import LearningPaths from './pages/LearningPaths.jsx';
+import UserProfile from './pages/UserProfile'; //-> attivare quando si parte con la registrazione
+>>>>>>> release/v0.4.1
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 
@@ -25,6 +36,13 @@ import CreateChallenge from './pages/challenges/CreateChallenge';
 
 import '@/styles/styles.css';
 import './App.css';
+<<<<<<< HEAD
+=======
+import { routes } from './routes';
+import { AuthProvider } from './context/AuthContext';
+import { AdminProposals } from './pages/admin/AdminProposals';
+import BusinessPackages from '@/pages/BusinessPackages.jsx';
+>>>>>>> release/v0.4.1
 
 export default function App() {
   return (
@@ -33,6 +51,22 @@ export default function App() {
         <div className="App">
           {/* Header globale */}
           <Header />
+<<<<<<< HEAD
+=======
+        <main>
+  <Routes>
+    {/* Pubbliche */}
+    <Route path={routes.home} element={<HomepageStatic />} />
+    <Route path={routes.auth.login} element={<Login />} />
+    <Route path={routes.auth.register} element={<Register />} />
+    <Route path={routes.joinHelpLab} element={<JoinHelpLab />} />
+    <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
+    <Route path={routes.business} element={<BusinessPackages />} />
+    <Route
+      path="/learningpaths"
+      element={<Navigate to={routes.dashboard.learningPaths} replace />}
+    />
+>>>>>>> release/v0.4.1
 
           {/* Contenuto principale */}
           <main>
@@ -43,10 +77,38 @@ export default function App() {
               <Route path={routes.auth.register} element={<Register />} />
               <Route path={routes.joinHelpLab} element={<JoinHelpLab />} />
 
+<<<<<<< HEAD
               {/* Corsi pubblici (progressi salvati solo se loggato) */}
               <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
               {/* Alias senza trattino */}
               <Route path="/learningpaths" element={<Navigate to={routes.dashboard.learningPaths} replace />} />
+=======
+    {/* Protette */}
+    <Route
+      path={routes.dashboard.userProfile}
+      element={
+        <ProtectedRoute>
+          <UserProfile />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+  path={routes.dashboard.challengeCreate}
+  element={
+    <ProtectedRoute>
+      <CreateChallenge />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path={routes.admin.proposals}
+  element={
+    <ProtectedRoute>
+      <AdminProposals />
+    </ProtectedRoute>
+  }
+/>
+>>>>>>> release/v0.4.1
 
               {/* Sfide — pagina pubblica; le azioni (join/submit) sono protette nella pagina */}
               <Route path={routes.dashboard.challenges} element={<Challenges />} />

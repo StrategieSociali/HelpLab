@@ -4,6 +4,7 @@ export default function StepImpact({ value = {}, onChange, pointsPreview }) {
   const v = value || {};
   const set = (patch) => onChange(patch);
 
+<<<<<<< HEAD
   // modalità selezionata (mutuamente esclusiva)
   const mode =
     v.co2e_estimate_kg != null && !v.difficulty
@@ -17,6 +18,30 @@ export default function StepImpact({ value = {}, onChange, pointsPreview }) {
 
   const selectDiff = () =>
     set({ co2e_estimate_kg: null, difficulty: v.difficulty || "low" });
+=======
+  // 🔧 Modalità: resta su "co2e" anche quando l'input è temporaneamente vuoto ("")
+  // - Se c'è difficulty -> "diff"
+  // - Altrimenti, se la chiave co2e_estimate_kg ESISTE (anche "" o 0) -> "co2e"
+  // - Altrimenti null
+  const mode = v.difficulty
+    ? "diff"
+    : Object.prototype.hasOwnProperty.call(v, "co2e_estimate_kg")
+    ? "co2e"
+    : null;
+
+  const selectCO2e = () =>
+    set({
+      difficulty: null,
+      // se già definito, lascia il valore; altrimenti parti da 0
+      co2e_estimate_kg:
+        v.co2e_estimate_kg !== undefined ? v.co2e_estimate_kg : 0,
+    });
+
+  const selectDiff = () =>
+    set({ co2e_estimate_kg: undefined, difficulty: v.difficulty || "low" });
+
+  const modeOk = !!mode;
+>>>>>>> release/v0.4.1
 
   return (
     <>
@@ -25,11 +50,15 @@ export default function StepImpact({ value = {}, onChange, pointsPreview }) {
       <div className="card" style={{ padding: 12, marginBottom: 12 }}>
         <div className="impact-options">
           <label className="impact-option">
+<<<<<<< HEAD
             <input
               type="checkbox"
               checked={mode === "co2e"}
               onChange={selectCO2e}
             />
+=======
+            <input type="checkbox" checked={mode === "co2e"} onChange={selectCO2e} />
+>>>>>>> release/v0.4.1
             <span>Stima basata su CO₂e</span>
           </label>
 
@@ -41,6 +70,7 @@ export default function StepImpact({ value = {}, onChange, pointsPreview }) {
                   type="number"
                   className="control control-pill"
                   min={0}
+<<<<<<< HEAD
                   value={v.co2e_estimate_kg ?? ""}
                   onChange={(e) =>
                     set({
@@ -48,17 +78,39 @@ export default function StepImpact({ value = {}, onChange, pointsPreview }) {
                         e.target.value === "" ? null : Number(e.target.value) || 0,
                     })
                   }
+=======
+                  // ✔️ manteniamo la stringa "" durante l'editing: niente “collapse” dello step
+                  value={
+                    v.co2e_estimate_kg === undefined
+                      ? ""
+                      : v.co2e_estimate_kg
+                  }
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    // se l'utente cancella tutto → tieni "" (non null) per non uscire dalla modalità
+                    if (raw === "") {
+                      set({ co2e_estimate_kg: "" });
+                    } else {
+                      const n = Number(raw);
+                      set({ co2e_estimate_kg: isNaN(n) ? "" : n });
+                    }
+                  }}
+>>>>>>> release/v0.4.1
                 />
               </label>
             </div>
           )}
 
           <label className="impact-option" style={{ marginTop: 10 }}>
+<<<<<<< HEAD
             <input
               type="checkbox"
               checked={mode === "diff"}
               onChange={selectDiff}
             />
+=======
+            <input type="checkbox" checked={mode === "diff"} onChange={selectDiff} />
+>>>>>>> release/v0.4.1
             <span>Stima basata su difficoltà</span>
           </label>
 
@@ -89,15 +141,26 @@ export default function StepImpact({ value = {}, onChange, pointsPreview }) {
             </div>
           )}
         </div>
+<<<<<<< HEAD
+=======
+
+        <div className={`hint ${modeOk ? 'ok' : 'warn'}`} style={{ marginTop: 8 }}>
+          {modeOk ? 'OK' : 'Seleziona una sola modalità: CO₂e oppure Difficoltà'}
+        </div>
+>>>>>>> release/v0.4.1
       </div>
 
       <div className="points-preview">
         Punti stimati (preview, lato client):{" "}
         <strong className="points-value">{pointsPreview}</strong>
       </div>
+<<<<<<< HEAD
       <small className="muted">
         Il calcolo ufficiale avverrà lato server in fase di revisione.
       </small>
+=======
+      <small className="muted">Il calcolo ufficiale avverrà lato server in fase di revisione.</small>
+>>>>>>> release/v0.4.1
     </>
   );
 }

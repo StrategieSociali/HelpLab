@@ -5,6 +5,16 @@ export default function StepSponsor({ value = {}, onChange, pointsPreview }) {
   const vis = v.visibility_options || {};
   const set = (patch) => onChange(patch);
 
+<<<<<<< HEAD
+=======
+  const termsOk = !!v.terms_consent;
+  
+   // ✅ validazione pitch: min 50 caratteri per far diventare verde il font
+  const PITCH_MIN = 50;
+  const pitchLen = (v.sponsor_pitch || "").trim().length;
+  const pitchOk  = pitchLen >= PITCH_MIN;
+
+>>>>>>> release/v0.4.1
   return (
     <>
       <h3>4) Sponsor & revisione</h3>
@@ -21,12 +31,22 @@ export default function StepSponsor({ value = {}, onChange, pointsPreview }) {
       {v.sponsor_interest && (
         <div className="form-grid" style={{ marginTop: 8 }}>
           <label>
+<<<<<<< HEAD
             Pitch (50–500)
             <textarea
               className="control"
               rows={4}
               value={v.sponsor_pitch || ""}
               onChange={(e) => set({ sponsor_pitch: e.target.value })}
+=======
+            Presentati allo sponsor (50–500)
+            <textarea
+              className={`control ${pitchOk ? 'input-valid' : (pitchLen ? 'input-invalid' : '')}`}
+              rows={4}
+              value={v.sponsor_pitch || ""}
+              onChange={(e) => set({ sponsor_pitch: e.target.value })}
+              placeholder="Racconta chi siete, cosa farete, perché dovrebbero sostenervi…"
+>>>>>>> release/v0.4.1
             />
           </label>
 
@@ -83,6 +103,7 @@ export default function StepSponsor({ value = {}, onChange, pointsPreview }) {
 
       <div className="card" style={{ padding: 12, marginTop: 12 }}>
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+<<<<<<< HEAD
           <div>
             <strong>Punti stimati:</strong> {pointsPreview}
           </div>
@@ -95,6 +116,12 @@ export default function StepSponsor({ value = {}, onChange, pointsPreview }) {
           <div>
             <strong>Luogo:</strong> {v.location?.address || "—"}
           </div>
+=======
+          <div><strong>Punti stimati:</strong> {pointsPreview}</div>
+          <div><strong>Target:</strong> {v.target?.amount ?? "—"} {v.target?.unit || ""}</div>
+          <div><strong>Durata:</strong> {v.start_date || "?"} → {v.deadline || "?"}</div>
+          <div><strong>Luogo:</strong> {v.location?.address || "—"}</div>
+>>>>>>> release/v0.4.1
         </div>
       </div>
 
@@ -106,6 +133,12 @@ export default function StepSponsor({ value = {}, onChange, pointsPreview }) {
         />{" "}
         Confermo termini e diritti sui media (obbligatorio)
       </label>
+<<<<<<< HEAD
+=======
+      <div className={`hint ${termsOk ? 'ok' : 'warn'}`}>
+        {termsOk ? 'OK' : 'Devi confermare i termini per inviare la proposta'}
+      </div>
+>>>>>>> release/v0.4.1
     </>
   );
 }

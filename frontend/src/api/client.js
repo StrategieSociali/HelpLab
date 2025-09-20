@@ -1,83 +1,72 @@
-// src/api/client.js
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "";
-const USE_API = import.meta.env.VITE_USE_API === "true";
-const USE_REFRESH = import.meta.env.VITE_USE_REFRESH === "true";
+const RAW = import.meta.env.VITE_API_URL;
+// In dev metti /api nel tuo .env.development.local; in prod l'URL pieno.
+// Rimuoviamo eventuali slash finali.
+const BASE_URL = (RAW && RAW.trim() ? RAW : "/api").replace(/\/+$/, "");
+const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || "false") === "true";
 
-const baseURL = USE_API ? `${API_URL.replace(/\/$/, "")}/api` : "/api";
-
-// Istanza principale per TUTTE le API
 export const api = axios.create({
-  baseURL,
-  withCredentials: USE_REFRESH, // cookie solo se abilitato (prod)
+  baseURL: BASE_URL,
+  withCredentials: true, // necessario per inviare il cookie httpOnly di refresh
 });
 
-// --- Token in memoria (niente localStorage) ---
+// Log utile anche in PROD (temporaneo): vedi dove stai puntando davvero
+if (import.meta.env.DEV) {
+  console.log("[API] baseURL =", api.defaults.baseURL, "USE_REFRESH =", USE_REFRESH);
+}
+if (import.meta.env.PROD) {
+  console.log("[API-PROD] baseURL =", api.defaults.baseURL, "USE_REFRESH =", USE_REFRESH);
+}
+
+// Token in memoria + setter esportato per AuthContext
 let accessToken = null;
-export const setAccessToken = (t) => { accessToken = t || null; };
-export const getAccessToken = () => accessToken;
+export const setAccessToken = (t) => {
+  accessToken = t || null;
+};
 
-// Iniettiamo il Bearer se c’è
-api.interceptors.request.use((config) => {
-  const t = getAccessToken();
-  if (t) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${t}`;
+// Authorization header su ogni richiesta se abbiamo il token
+api.interceptors.request.use((cfg) => {
+  if (accessToken) {
+    cfg.headers = cfg.headers || {};
+    cfg.headers.Authorization = `Bearer ${accessToken}`;
   }
-  return config;
+  return cfg;
 });
 
-// Istanza separata per le chiamate di auth (evitiamo ricorsioni)
-const auth = axios.create({ baseURL, withCredentials: USE_REFRESH });
+// 401 -> refresh (solo se abilitato)
+if (USE_REFRESH) {
+  api.interceptors.response.use(
+    (r) => r,
+    async (err) => {
+      const orig = err?.config;
+      const status = err?.response?.status;
 
-// Refresh-once per richiesta (evita loop)
-let refreshing = null;
+      if (!orig || orig.__retry) {
+        // niente retry o già ritentata
+        throw err;
+      }
 
-api.interceptors.response.use(
-  (res) => res,
-  async (error) => {
-    const { config, response } = error || {};
-    const status = response?.status;
+      if (status !== 401) {
+        throw err;
+      }
 
-    const isAuthPath =
-      config?.url?.includes("/auth/login") ||
-      config?.url?.includes("/auth/register") ||
-      config?.url?.includes("/auth/refresh") ||
-      config?.url?.includes("/auth/logout");
-
-    // Prova il refresh SOLO se abilitato
-    if (USE_REFRESH && status === 401 && !isAuthPath && !config.__isRetryRequest) {
       try {
-        if (!refreshing) {
-          refreshing = auth.post("/auth/refresh", {}); // cookie httpOnly
-        }
-        const { data } = await refreshing;
-        refreshing = null;
-
+        // prova refresh: il BE prende il cookie httpOnly e ritorna { accessToken }
+        const { data } = await api.post("auth/refresh");
         const newToken = data?.accessToken;
         if (newToken) {
           setAccessToken(newToken);
-          config.__isRetryRequest = true;
-          config.headers = config.headers || {};
-          config.headers.Authorization = `Bearer ${newToken}`;
-          return api.request(config);
+          orig.__retry = true;
+          // ritenta la richiesta originale con il nuovo token
+          return api(orig);
         }
       } catch (e) {
-        refreshing = null;
-        // refresh fallito → prosegui col 401
+        // fallito il refresh: propaga l’errore 401
       }
+
+      throw err;
     }
-
-    return Promise.reject(error);
-  }
-);
-
-// helper per auth API
-export const authApi = {
-  register: (payload) => auth.post("/auth/register", payload),
-  login: (payload)    => auth.post("/auth/login",    payload),
-  refresh: ()         => auth.post("/auth/refresh",  {}),   // usato solo se USE_REFRESH
-  logout: ()          => auth.post("/auth/logout",   {}),   // usato solo se USE_REFRESH
-};
+  );
+}
 

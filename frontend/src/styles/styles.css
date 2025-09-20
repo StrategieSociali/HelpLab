@@ -416,6 +416,7 @@ select.control {
 /* opzionale: per farli “respirare” dentro contenitori scuri */
 .page-section .filters-row .control { background: rgba(255,255,255,0.08); }
 
+<<<<<<< HEAD
 /* ========== Create Challenge: layout leggibile ========== */
 .create-challenge .card {
   background: rgba(255,255,255,0.06);
@@ -629,5 +630,144 @@ select.control {
 .create-challenge .impact-option span {
   color: #e5e7eb;                   /* testo chiaro */
   font-weight: 600;
+=======
+/* =========================================
+   CreateChallenge — fix mirati (non invasivi)
+   ========================================= */
+
+/* 1) TESTO VERDE quando valido (oltre al bordo) */
+.create-challenge .input-valid {
+  color: #059669 !important; /* verde font */
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16,185,129,.35) !important;
+}
+.create-challenge .input-valid::placeholder {
+  color: #10b981 !important;
+}
+
+/* 2) Campi non-textarea più compatti (no full width) */
+.create-challenge select,
+.create-challenge input[type="text"],
+.create-challenge input[type="number"],
+.create-challenge input[type="date"],
+.create-challenge input[type="email"],
+.create-challenge input[type="url"] {
+  width: max-content;                 /* si adatta al testo */
+  min-width: 240px;                   /* ma non troppo piccolo */
+  max-width: 480px;                   /* e non enorme */
+}
+
+/* 3) Select: altezza corretta, testo sempre visibile (scuro su chiaro) */
+.create-challenge select {
+  font-size: 16px;
+  line-height: 1.2;
+  padding: 8px 36px 8px 12px;         /* spazio per freccia */
+  height: auto;                       /* evita clipping */
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #0f172a 50%),
+    linear-gradient(135deg, #0f172a 50%, transparent 50%),
+    linear-gradient(to right, #ffffff, #ffffff);
+  background-position:
+    calc(100% - 18px) 52%,
+    calc(100% - 12px) 52%,
+    0 0;
+  background-size: 6px 6px, 6px 6px, 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* 4) Checkbox allineati al testo sulla stessa riga */
+.create-challenge input[type="checkbox"] {
+  vertical-align: middle;
+  margin-right: 8px;
+}
+/* se il label è adiacente al checkbox, portalo in linea */
+.create-challenge input[type="checkbox"] + label {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px 0;                 /* lieve spazio sotto blocco */
+  vertical-align: middle;
+  color: #fff;                        /* leggibile su sfondo scuro */
+  text-align: left;
+}
+/* se hai messo il testo del checkbox in un <span> dopo l'input */
+.create-challenge input[type="checkbox"] + span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  vertical-align: middle;
+}
+
+/* 5) Indirizzo: label a capo + campo largo, leggibile */
+.create-challenge label[for*="address"],
+.create-challenge label[for*="indirizzo"] {
+  display: block;
+}
+.create-challenge input[name*="address"],
+.create-challenge textarea[name*="address"],
+.create-challenge input[id*="address"],
+.create-challenge textarea[id*="address"] {
+  width: 100%;
+}
+
+/* 6) Textarea più alte e confortevoli (descrizione, note, pitch) */
+.create-challenge textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+.create-challenge textarea[name*="description"],
+.create-challenge textarea[id*="description"],
+.create-challenge textarea[name*="note"],
+.create-challenge textarea[id*="note"],
+.create-challenge textarea[name*="pitch"],
+.create-challenge textarea[id*="pitch"],
+.create-challenge textarea[name*="presentati"],
+.create-challenge textarea[id*="presentati"] {
+  min-height: 220px;
+}
+
+/* 7) Spaziature mirate */
+.create-challenge input[name*="co2"],
+.create-challenge input[id*="co2"],
+.create-challenge input[name*="co2e"],
+.create-challenge input[id*="co2e"] {
+  display: inline-block;
+  width: 160px;             /* compatto ma leggibile */
+  margin-right: 16px;       /* spazio prima del checkbox successivo */
+}
+.create-challenge textarea[name*="pitch"],
+.create-challenge textarea[id*="pitch"],
+.create-challenge textarea[name*="presentati"],
+.create-challenge textarea[id*="presentati"] {
+  margin-bottom: 16px;      /* aria prima del budget */
+}
+.create-challenge input[name*="budget"],
+.create-challenge input[id*="budget"],
+.create-challenge select[name*="budget"],
+.create-challenge select[id*="budget"] {
+  margin-top: 10px;         /* stacca dal pitch */
+}
+/* =========================================
+   CreateChallenge — fix finali
+   ========================================= */
+
+/* 1) Textarea con angoli più morbidi (non "a pillola") */
+.create-challenge textarea {
+  border-radius: 6px !important; /* raggio ridotto, rettangolare */
+}
+
+/* 2) Bottoni primari sempre verdi, anche in hover */
+.create-challenge .btn-primary {
+  background: linear-gradient(135deg, var(--accent-green-1), var(--accent-green-2)) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+.create-challenge .btn-primary:hover {
+  background: linear-gradient(135deg, var(--accent-green-1), var(--accent-green-2)) !important;
+  color: #fff !important; /* niente bianco su hover */
+>>>>>>> release/v0.4.1
 }
 

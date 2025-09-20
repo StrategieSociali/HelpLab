@@ -6,21 +6,22 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   plugins: [react()],
 
-  // 👇 ALIAS: abilita import tipo "@/..."
+  // 👇 ALIAS: import "@/..."
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 
-  // 👇 DEV SERVER su 8080 + PROXY verso la produzione (evita CORS)
+  // 👇 DEV SERVER su 5173 + PROXY verso produzione (evita CORS)
   server: {
-    port: 8080,
+    port: 5173,
     proxy: {
       '/api': {
         target: 'https://api.helplab.space',
         changeOrigin: true,
         secure: true,
+        // nessuna rewrite: l'API reale espone già /api/...
       },
     },
   },
