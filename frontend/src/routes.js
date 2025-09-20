@@ -7,7 +7,6 @@ export const routes = {
   dashboard: {
     // pubbliche (liste)
     challenges: '/challenges',
-    createChallenge: '/challenges/new',
     learningPaths: '/learning-paths',
 
     // protette
@@ -21,12 +20,7 @@ export const routes = {
   },
   business: '/business',
   home: '/',
-<<<<<<< HEAD
-  joinHelpLab: '/unisciti', //usata come Community
-  notFound: '*', // Gestione della pagina 404
-=======
   joinHelpLab: '/unisciti',
   notFound: '*',
->>>>>>> release/v0.4.1
 };
 

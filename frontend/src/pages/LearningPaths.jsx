@@ -32,36 +32,6 @@ export default function LearningPaths() {
     }
   }, []);
 
-<<<<<<< HEAD
-  useEffect(() => {
-    reloadPaths();
-  }, [reloadPaths]);
-
-// === Fetch: progressi utente (semplificato, BE stabile) ==========
-const loadProgress = useCallback(async () => {
-  // Se non loggato, non chiamare (evita 400) e azzera localmente
-  if (!userId) {
-    setUserProgress({});
-    return;
-  }
-
-  try {
-    const { data } = await axios.get(LP_PROGRESS_URL(userId), axiosConfig);
-    // BE garantisce { progress: {...} } (anche vuoto)
-    setUserProgress(data?.progress ?? {});
-  } catch (err) {
-    // Errore inaspettato: fallback a {}
-    console.error("LP progress error:", err?.response?.status || err?.message);
-    setUserProgress({});
-  }
-}, [userId, axiosConfig]);
-
-// Effettua UNA sola fetch quando cambia userId
-useEffect(() => {
-  loadProgress();
-}, [loadProgress]);
-
-=======
   // === Fetch: progressi utente (solo se loggato) ===
   const loadProgress = useCallback(async () => {
     if (!userId) {
@@ -95,7 +65,6 @@ useEffect(() => {
       setLoading(false);
     })();
   }, [loadPaths, loadProgress]);
->>>>>>> release/v0.4.1
 
   // === Stats globali ===
   const stats = useMemo(() => {

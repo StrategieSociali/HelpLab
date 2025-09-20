@@ -28,13 +28,10 @@ export default function StepTargets({ value = {}, onChange }) {
     set({ tasks: copy });
   };
 
-<<<<<<< HEAD
-=======
   // vincoli schema
   const amountOk = (target.amount || 0) > 0;
   const tasksOk  = tasks.length >= 2 && tasks.some(t => t?.evidence_required);
 
->>>>>>> release/v0.4.1
   return (
     <>
       <h3>2) Obiettivi & verifica</h3>
@@ -65,43 +62,25 @@ export default function StepTargets({ value = {}, onChange }) {
             Quantità
             <input
               type="number"
-<<<<<<< HEAD
-              className="control control-pill"
-=======
               className={`control control-pill ${amountOk ? 'input-valid' : (target.amount != null ? 'input-invalid' : '')}`}
->>>>>>> release/v0.4.1
               min={0}
               value={target.amount ?? ""}
               onChange={(e) =>
                 setTarget({ amount: e.target.value === "" ? null : Number(e.target.value) || 0 })
               }
             />
-<<<<<<< HEAD
-=======
             <div className={`hint ${amountOk ? 'ok' : 'warn'}`}>
               {amountOk ? 'OK' : 'Indica una quantità > 0'}
             </div>
->>>>>>> release/v0.4.1
           </label>
         </div>
 
         <div style={{ marginTop: 8 }}>
-<<<<<<< HEAD
-          <h4>Task (2–10)</h4>
-=======
           <h4>Task (min 2, almeno 1 con evidenze)</h4>
->>>>>>> release/v0.4.1
 
           {tasks.map((t, i) => (
             <div key={t.id} className="card" style={{ padding: 8, marginBottom: 6 }}>
               <input
-<<<<<<< HEAD
-                className="control control-pill"
-                placeholder="Descrizione task"
-                value={t.label || ""}
-                onChange={(e) => updTask(i, { label: e.target.value })}
-              />
-=======
   className={`control control-pill ${ (t.label || '').trim().length >= 3 ? 'input-valid' : (t.label ? 'input-invalid' : '') }`}
   placeholder="Descrizione task (min 3)"
   value={t.label || ""}
@@ -110,7 +89,6 @@ export default function StepTargets({ value = {}, onChange }) {
 <div className={`hint ${ (t.label || '').trim().length >= 3 ? 'ok' : 'warn'}`}>
   { (t.label || '').trim().length >= 3 ? 'OK' : 'Minimo 3 caratteri' }
 </div>
->>>>>>> release/v0.4.1
 
               <div className="form-row" style={{ marginTop: 6 }}>
                 <label>
@@ -135,17 +113,11 @@ export default function StepTargets({ value = {}, onChange }) {
             </div>
           ))}
 
-<<<<<<< HEAD
-          <button className="btn btn-outline btn-small" onClick={addTask}>
-            + Aggiungi task
-          </button>
-=======
           <button className="btn btn-outline btn-small" onClick={addTask}>+ Aggiungi task</button>
 
           <div className={`hint ${tasksOk ? 'ok' : 'warn'}`} style={{ marginTop: 6 }}>
             {tasksOk ? 'OK' : `Aggiungi ${Math.max(0, 2 - tasks.length)} task e assicurati che almeno uno richieda evidenze`}
           </div>
->>>>>>> release/v0.4.1
         </div>
 
         <label>
