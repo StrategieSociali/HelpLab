@@ -8,6 +8,7 @@ import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import cookie from '@fastify/cookie'
 
+
 // v0 routes
 import { challengesRoutes } from './routes/challenges.js'
 import { learningPathsRoutes } from './routes/learningPaths.js'
@@ -17,6 +18,8 @@ import { scoringV1Routes } from './routes/v1/scoring.js'
 import { proposalsV1Routes } from './routes/v1/proposals.js'
 import { judgesV1Routes } from './routes/v1/judges.js'
 import { challengesV1Routes } from './routes/v1/challenges.js'
+import { adminJudgesV1Routes } from './routes/v1/adminJudges.js'
+
 
 // auth
 import { authRoutes } from './routes/auth.js'
@@ -95,6 +98,8 @@ async function start() {
   await server.register(proposalsV1Routes, { prefix: '/api/v1' })
   await server.register(judgesV1Routes,    { prefix: '/api/v1' })
   await server.register(challengesV1Routes, { prefix: '/api/v1' })
+  await server.register(adminJudgesV1Routes, { prefix: '/api/v1' })
+ 
 
   // auth
   await server.register(authRoutes, { prefix: '/api/auth' })

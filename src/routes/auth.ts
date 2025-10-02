@@ -105,23 +105,28 @@ app.post('/login', async (req, reply) => {
     return reply.code(200).send({ ok: true })
   })
 
-  // ME (ritorna profilo completo incl. role)
+// /auth/me — ritorna profilo completo incl. role
 app.get('/me', async (req, reply) => {
   const auth = (req.headers?.authorization || '').toString()
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
   if (!token) return reply.code(401).send({ error: 'missing token' })
+
   try {
     const payload = verifyAccessToken(token) as any
     const user = await prisma.users.findUnique({
       where: { id: BigInt(String(payload.sub)) } as any,
       select: { id: true, email: true, username: true, role: true }
     })
+
     if (!user) return reply.code(401).send({ error: 'invalid token' })
+
     return reply.send({
-      id: Number(user.id),
-      email: user.email ?? '',                    // <— 🟢 normalizzato in uscita
-      username: user.username,
-      role: user.role ?? 'user'
+      user: {
+        id: Number(user.id),
+        email: user.email ?? '',
+        username: user.username,
+        role: user.role ?? 'user'
+      }
     })
   } catch {
     return reply.code(401).send({ error: 'invalid token' })
