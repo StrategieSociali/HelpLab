@@ -10,8 +10,9 @@ import cookie from '@fastify/cookie'
 
 
 // v0 routes
-import { challengesRoutes } from './routes/challenges.js'
 import { learningPathsRoutes } from './routes/learningPaths.js'
+
+//legacy bridge
 
 // v1 routes
 import { scoringV1Routes } from './routes/v1/scoring.js'
@@ -65,7 +66,6 @@ async function start() {
       servers: [{ url: '/api' }],
       tags: [
         { name: 'Auth', description: 'Registrazione, login e gestione sessione' },
-        { name: 'Challenges', description: 'Sfide e leaderboard' },
         { name: 'Learning', description: 'Percorsi formativi' },
         { name: 'Scoring v1', description: 'Config e preview scoring v1' },
         { name: 'Proposals v1', description: 'Proposte di challenge (v1)' },
@@ -90,8 +90,9 @@ async function start() {
   server.get('/api/health', async () => ({ status: 'ok' }))
 
   // v0
-  await server.register(challengesRoutes,    { prefix: '/api/challenges' })
   await server.register(learningPathsRoutes, { prefix: '/api/learning-paths' })
+  
+  // Bridge legacy -> risponde col feed v1
 
   // v1
   await server.register(scoringV1Routes,   { prefix: '/api/v1' })
