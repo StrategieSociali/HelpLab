@@ -12,8 +12,6 @@ import cookie from '@fastify/cookie'
 // v0 routes
 import { learningPathsRoutes } from './routes/learningPaths.js'
 
-//legacy bridge
-
 // v1 routes
 import { scoringV1Routes } from './routes/v1/scoring.js'
 import { proposalsV1Routes } from './routes/v1/proposals.js'
@@ -92,7 +90,6 @@ async function start() {
   // v0
   await server.register(learningPathsRoutes, { prefix: '/api/learning-paths' })
   
-  // Bridge legacy -> risponde col feed v1
 
   // v1
   await server.register(scoringV1Routes,   { prefix: '/api/v1' })
