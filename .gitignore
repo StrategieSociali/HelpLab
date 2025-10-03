@@ -26,3 +26,8 @@ prisma/dev.db-journal
 # Misc
 .DS_Store
 
+
+# Build & cache
+node_modules/
+dist/
+.vite/
