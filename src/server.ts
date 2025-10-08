@@ -8,66 +8,76 @@ import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import cookie from '@fastify/cookie'
 
-
-// v0 routes
+// Routes
+import { authRoutes } from './routes/auth.js'
 import { learningPathsRoutes } from './routes/learningPaths.js'
 
-// v1 routes
+// v1
 import { scoringV1Routes } from './routes/v1/scoring.js'
 import { proposalsV1Routes } from './routes/v1/proposals.js'
 import { judgesV1Routes } from './routes/v1/judges.js'
-import { challengesV1Routes } from './routes/v1/challenges.js'
 import { adminJudgesV1Routes } from './routes/v1/adminJudges.js'
-
-
-// auth
-import { authRoutes } from './routes/auth.js'
-
-// guardia di bootstrap
-let BOOTED = false
+import { challengesV1Routes } from './routes/v1/challenges.js'
 
 dotenv.config()
 
-// istanza fastify singola
-const server = Fastify({ logger: true })
-
 async function start() {
-  if (BOOTED) {
-    server.log.warn('start() called twice — ignoring second call')
-    return
-  }
-  BOOTED = true
+  const server = Fastify({ logger: true })
 
-  // Sicurezza & CORS
+  // Sicurezza
   await server.register(helmet)
+
+  // CORS
+  const origins = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
   await server.register(cors, {
-    origin: (process.env.CORS_ORIGIN || '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean),
+    origin: origins.length ? origins : false,
     credentials: true
   })
 
-  // Rate limit globale
-  await server.register(rateLimit, { max: 60, timeWindow: '1 minute' })
+  // Rate limit globale (con messaggio JSON coerente)
+  await server.register(rateLimit, {
+    max: 60,
+    timeWindow: '1 minute',
+    hook: 'onRequest',
+    addHeaders: {
+      'x-ratelimit-limit': true,
+      'x-ratelimit-remaining': true,
+      'x-ratelimit-reset': true
+    },
+    errorResponseBuilder: (_req, ctx: any) => ({
+  error: 'too_many_requests',
+  message: 'Troppe richieste, riprova più tardi',
+  statusCode: 429,
+  limit: ctx?.max ?? null
+   })
+  })
 
   // Cookie (prima delle route che li usano)
   await server.register(cookie, {
     secret: process.env.COOKIE_SECRET || process.env.JWT_SECRET || 'changeme',
-    parseOptions: { httpOnly: true, sameSite: 'none', secure: true }
+    parseOptions: {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: true
+    }
   })
 
-  // Swagger
+  // Swagger (opzionale ma utile)
   await server.register(swagger, {
     openapi: {
-      info: { title: 'HelpLab API', version: '0.3.0' },
+      info: { title: 'HelpLab API', version: process.env.npm_package_version || '0.5.0' },
       servers: [{ url: '/api' }],
       tags: [
-        { name: 'Auth', description: 'Registrazione, login e gestione sessione' },
+        { name: 'Auth', description: 'Registrazione, login, sessione' },
         { name: 'Learning', description: 'Percorsi formativi' },
         { name: 'Scoring v1', description: 'Config e preview scoring v1' },
         { name: 'Proposals v1', description: 'Proposte di challenge (v1)' },
-        { name: 'Judges v1', description: 'Coda e decisioni dei giudici' }
+        { name: 'Judges v1', description: 'Coda e decisioni giudici' },
+        { name: 'Admin v1', description: 'Operazioni amministrative' },
+        { name: 'Challenges v1', description: 'Feed pubblico sfide (da proposals approvate)' }
       ],
       components: {
         securitySchemes: {
@@ -87,28 +97,27 @@ async function start() {
   // Health
   server.get('/api/health', async () => ({ status: 'ok' }))
 
-  // v0
+  // v0 (solo learning paths; feed challenges legacy è stato rimosso)
   await server.register(learningPathsRoutes, { prefix: '/api/learning-paths' })
-  
 
   // v1
-  await server.register(scoringV1Routes,   { prefix: '/api/v1' })
-  await server.register(proposalsV1Routes, { prefix: '/api/v1' })
-  await server.register(judgesV1Routes,    { prefix: '/api/v1' })
-  await server.register(challengesV1Routes, { prefix: '/api/v1' })
+  await server.register(scoringV1Routes,     { prefix: '/api/v1' })
+  await server.register(proposalsV1Routes,   { prefix: '/api/v1' })
+  await server.register(judgesV1Routes,      { prefix: '/api/v1' })
   await server.register(adminJudgesV1Routes, { prefix: '/api/v1' })
- 
+  await server.register(challengesV1Routes,  { prefix: '/api/v1' })
 
-  // auth
+  // Auth
   await server.register(authRoutes, { prefix: '/api/auth' })
 
   // Avvio
   const port = Number(process.env.PORT || 3001)
-  await server.listen({ host: '127.0.0.1', port })
-  server.log.info(`API listening on http://127.0.0.1:${port}`)
+  const host = process.env.HOST || '127.0.0.1'
+  await server.listen({ host, port })
+  server.log.info(`API listening on http://${host}:${port}`)
 }
 
-// Avvio “single entrypoint”: evita doppie esecuzioni in caso di import accidentali
+// Entry point
 start().catch((err) => {
   console.error('Fatal startup error:', err)
   process.exit(1)
