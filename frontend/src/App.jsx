@@ -17,7 +17,8 @@ import './App.css';
 import { routes } from './routes';
 import { AuthProvider } from './context/AuthContext';
 import { AdminProposals } from './pages/admin/AdminProposals';
-import BusinessPackages from '@/pages/BusinessPackages.jsx';
+import BusinessPackages from './pages/BusinessPackages.jsx';
+import StepAssignJudge from './pages/admin/steps/StepAssignJudge';
 
 export default function App() {
   return (
@@ -34,7 +35,7 @@ export default function App() {
     <Route path={routes.auth.register} element={<Register />} />
     <Route path={routes.joinHelpLab} element={<JoinHelpLab />} />
     <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
-    <Route path={routes.business} element={<BusinessPackages />} />
+    <Route path={routes.business.packages} element={<BusinessPackages />} />
     <Route
       path="/learningpaths"
       element={<Navigate to={routes.dashboard.learningPaths} replace />}
@@ -68,6 +69,11 @@ export default function App() {
     </ProtectedRoute>
   }
 />
+<Route path={routes.admin.assignJudge} element={
+  <ProtectedRoute requireAdmin>
+    <StepAssignJudge />
+  </ProtectedRoute>
+} />
 
     {/* Fallback 404 */}
     <Route path="*" element={<NotFound />} />

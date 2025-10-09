@@ -5,20 +5,29 @@ export const routes = {
     register: '/register',
   },
   dashboard: {
-    // pubbliche (liste)
+    // pubbliche
     challenges: '/challenges',
     learningPaths: '/learning-paths',
 
-    // protette
+    // protette (utenti loggati)
     userProfile: '/dashboard/profile',
     challengeCreate: '/dashboard/challenges/create',
   },
+  
+   // sezione business
+  business: {
+    root: '/business',
+    packages: '/business/packages', // ✅ sezione impresei
+  },
+
   // sezione admin (protetta + role=admin)
   admin: {
-    proposals: '/dashboard/admin/proposals',
-    // in futuro: assignJudge: '/dashboard/admin/assign-judge/:id'
+    proposals: '/dashboard/admin/proposals',      // gestione proposte
+    assignJudge: '/dashboard/admin/assign-judge', // ✅ assegnazione giudici
   },
-  business: '/business',
+
+  // sezione business e home
+  //business: '/business',
   home: '/',
   joinHelpLab: '/unisciti',
   notFound: '*',

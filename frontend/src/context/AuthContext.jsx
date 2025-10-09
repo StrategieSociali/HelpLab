@@ -2,56 +2,74 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { api } from "@/api/client";
 import { setAccessToken as wireAxiosToken } from "@/api/client";
 
+// Storage dev/local
 const LS_TOKEN_KEY = "hl_access_token";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);       // { id, email, username, role } | null
+  const [token, setToken] = useState(null);     // accessToken (JWT) | null
+  const [loading, setLoading] = useState(true); // bootstrap in corso
 
-  // Bootstrap auth: restore da localStorage (dev) + refresh silenzioso (prod, se abilitato)
-useEffect(() => {
-  const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || "false") === "true";
-
-  (async () => {
-    let saved = null;
+  // --- helpers ---
+  const saveToken = (t) => {
+    setToken(t || null);
+    wireAxiosToken(t || null);
     try {
-      saved = localStorage.getItem(LS_TOKEN_KEY);
-      if (saved) {
-        setToken(saved);
-        wireAxiosToken(saved);
-      }
+      if (t) localStorage.setItem(LS_TOKEN_KEY, t);
+      else localStorage.removeItem(LS_TOKEN_KEY);
     } catch {}
+  };
 
-    // In produzione: valida sempre lo stato via refresh anche se hai un token salvato.
-    if (USE_REFRESH) {
+  const fetchMe = async () => {
+    // GET /auth/me → { user: {...} }
+    const { data } = await api.get("auth/me");
+    if (data?.user) setUser(data.user);
+    return data?.user || null;
+  };
+
+  // Bootstrap auth: restore token (dev), refresh (prod), quindi /auth/me
+  useEffect(() => {
+    const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || "false") === "true";
+
+    (async () => {
+      let restored = null;
       try {
-        const { data } = await api.post("auth/refresh");
-        const t = data?.accessToken;
-        if (t) {
-          setToken(t);
-          wireAxiosToken(t);
-          try { localStorage.setItem(LS_TOKEN_KEY, t); } catch {}
-        } else {
-          // niente token nuovo → considera non autenticato
-          setToken(null);
-          setUser(null);
-          try { localStorage.removeItem(LS_TOKEN_KEY); } catch {}
+        restored = localStorage.getItem(LS_TOKEN_KEY);
+        if (restored) {
+          // token da sessione precedente (utile in dev)
+          saveToken(restored);
         }
-      } catch {
-        // refresh fallito → stato non autenticato (evita "falsi login")
-        setToken(null);
+      } catch {}
+
+      try {
+        if (USE_REFRESH) {
+          // prova refresh: se esiste cookie httpOnly lato BE, restituisce un nuovo accessToken
+          const { data } = await api.post("auth/refresh");
+          if (data?.accessToken) {
+            saveToken(data.accessToken);
+          }
+        }
+
+        // se abbiamo un token valido a questo punto, chiediamo il profilo/ruolo
+        if (restored || USE_REFRESH) {
+          if (token || restored) {
+            await fetchMe();
+          }
+        }
+      } catch (err) {
+        // refresh o /me falliti → stato non autenticato
+        saveToken(null);
         setUser(null);
-        try { localStorage.removeItem(LS_TOKEN_KEY); } catch {}
+      } finally {
+        setLoading(false);
       }
-    }
-  })().finally(() => setLoading(false));
-}, []);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-
-  // Ogni volta che cambia token → aggiorna axios + storage
+  // Ogni volta che cambia token sincronizza axios + storage
   useEffect(() => {
     wireAxiosToken(token || null);
     try {
@@ -60,22 +78,34 @@ useEffect(() => {
     } catch {}
   }, [token]);
 
+  // --- azioni public API del context ---
   const login = async (email, password) => {
+    // POST /auth/login → { user, accessToken }
     const { data } = await api.post("auth/login", { email, password });
     const accessToken = data?.accessToken;
     if (!accessToken) throw new Error("Nessun accessToken nella risposta di login");
-    setToken(accessToken);
+
+    saveToken(accessToken);
+    // Imposta subito l’utente ritornato dalla login (ha già il role)
     setUser(data?.user || null);
+
+    // Per robustezza, riallinea con /auth/me (evita desincronizzazioni)
+    try { await fetchMe(); } catch {}
     return data;
   };
 
   const register = async (payload) => {
+    // POST /auth/register → 201 { user } (niente token); poi login
     const { data } = await api.post("auth/register", payload);
+
     if (data?.accessToken) {
-      setToken(data.accessToken);
+      // In caso il BE restituisse anche token (non standard qui), gestiamolo
+      saveToken(data.accessToken);
       setUser(data?.user || null);
+      try { await fetchMe(); } catch {}
       return data;
     }
+
     if (payload?.email && payload?.password) {
       return login(payload.email, payload.password);
     }
@@ -84,9 +114,8 @@ useEffect(() => {
 
   const logout = async () => {
     try { await api.post("auth/logout"); } catch {}
-    setToken(null);
+    saveToken(null);
     setUser(null);
-    try { localStorage.removeItem(LS_TOKEN_KEY); } catch {}
   };
 
   const value = useMemo(
@@ -98,8 +127,8 @@ useEffect(() => {
       login,
       register,
       logout,
-      setUser,
-      setToken,
+      setUser,   // esposto per eventuali aggiornamenti profilo
+      setToken: saveToken, // espone già la logica di sync axios/localStorage
     }),
     [user, token, loading]
   );

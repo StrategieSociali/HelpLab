@@ -4,27 +4,66 @@ import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import axios from 'axios';
 
+// Helper per mostrare in modo robusto il nome del giudice
+function getJudgeLabel(j) {
+  if (!j) return "—";
+  // Se arriva annidato come { user: {...} } estraiamolo
+  if (j.user && typeof j.user === "object") j = j.user;
+
+  if (typeof j === "string") return j;
+
+  const fromEmail = (em) =>
+    typeof em === "string" ? em.split("@")[0] : null;
+
+  return (
+    j.name ||
+    j.username ||
+    j.full_name ||
+    fromEmail(j.email) ||
+    (j.id ? `#${j.id}` : "—")
+  );
+}
+
+
+
+
+
 // === Config ===
-const USE_REAL_CHALLENGES = (import.meta.env.VITE_USE_REAL_CHALLENGES || "true") === "true";
 const PAGE_SIZE = 12;
 
 // === Adapter: normalizza lo shape del BE v1 alle card esistenti ===
-const normalizeChallengeItem = (c) => ({
-  id: c.id,
-  slug: c.slug || c.id,
-  title: c.title,
-  type: c.type || "generic",
-  location: c.location || null,
-  rules: c.rules || "",
-  deadline: c.deadline || null, // ISO date o null
-  status: c.status || "open",
-  budget: c.budget ?? null,
-  sponsor: c.sponsor ?? null,
-  judge: c.judge ?? null,
-  target: c.target ?? null,     // JSON passthrough
-  scoreboard: c.scoreboard ?? [],
-  updatedAt: c.updatedAt,
-});
+const normalizeChallengeItem = (c) => {
+  // Prova varie forme comuni restituite dal BE
+  let judge =
+    c.judge ??
+    c.judgeUser ??
+    c.judge_user ??
+    c.judge_profile ??
+    (c.judgeId ? { id: c.judgeId } : null);
+
+  // Se il BE annida dentro { user: {...} } portiamo su quell'oggetto
+  if (judge && judge.user && typeof judge.user === 'object') {
+    judge = judge.user;
+  }
+
+  return {
+    id: c.id,
+    slug: c.slug || c.id,
+    title: c.title,
+    type: c.type || "generic",
+    location: c.location || null,
+    rules: c.rules || "",
+    deadline: c.deadline || null,
+    status: c.status || "open",
+    budget: c.budget ?? null,
+    sponsor: c.sponsor ?? null,
+    judge: judge ?? null,            // 👈 ora copriamo i vari shape
+    target: c.target ?? null,
+    scoreboard: c.scoreboard ?? [],
+    updatedAt: c.updatedAt,
+  };
+};
+
 
 // === Env (una sola volta) ===
 const API_URL = import.meta.env.VITE_API_URL;               // es.: https://api.helplab.space/api
@@ -35,11 +74,8 @@ const API_BASE = (API_URL && API_URL.trim()
   ? API_URL.trim().replace(/\/+$/, '')
   : 'https://api.helplab.space/api');
 
-// URL helper (API vs JSON)
-const CH_LIST_URL        = USE_API ? `${API_BASE}/challenges`                 : '/data/challenges.json';
+// URL helper (API vs JSON legacy)
 const CH_LEADERBOARD_URL = (id)    => USE_API ? `${API_BASE}/challenges/${id}/leaderboard` : null;
-const CH_JOIN_URL        = (id)    => USE_API ? `${API_BASE}/challenges/${id}/join`        : null;
-const CH_SUBMIT_URL      = (id)    => USE_API ? `${API_BASE}/challenges/${id}/submit`      : null;
 
 export default function Challenges() {
   // Path RELATIVI da usare con l'istanza `api` (che ha baseURL = '/api')
@@ -69,41 +105,35 @@ export default function Challenges() {
   // Per evitare richieste duplicate di leaderboard
   const prefetchedIdsRef = useRef(new Set());
 
-  // Fetch lista sfide (GET pubblico, senza credenziali)
+  // Fetch lista sfide (GET pubblico, senza credenziali) — v1 con fallback legacy
   const fetchPage = useCallback(
     async ({ append = false } = {}) => {
       setLoading(true);
       setError("");
       try {
-        if (USE_REAL_CHALLENGES) {
-          // ⚠️ niente leading slash nel path
-          const { data } = await api.get("v1/challenges", {
-            params: { limit: PAGE_SIZE, cursor: append ? nextCursor : undefined },
-          });
-          const mapped = Array.isArray(data?.items) ? data.items.map(normalizeChallengeItem) : [];
-          setItems((prev) => (append ? [...prev, ...mapped] : mapped));
-          setNextCursor(data?.nextCursor ?? null);
-        } else {
-          // feed demo v0 (fallback esplicito)
+        // ✅ feed reale (proposals approvate)
+        const { data } = await api.get("v1/challenges", {
+          params: { limit: PAGE_SIZE, cursor: append ? nextCursor : undefined },
+        });
+
+        const mapped = Array.isArray(data?.items)
+          ? data.items.map(normalizeChallengeItem)
+          : [];
+
+        setItems(prev => (append ? [...prev, ...mapped] : mapped));
+        setNextCursor(data?.nextCursor ?? null);
+      } catch (err) {
+        console.warn("Errore fetch v1/challenges:", err);
+
+        // 🔁 fallback automatico sul feed demo legacy (compat impegnata)
+        try {
           const { data } = await api.get("challenges");
           setItems(Array.isArray(data) ? data : []);
           setNextCursor(null);
-        }
-      } catch (err) {
-        // fallback automatico al feed demo se l'endpoint reale non risponde
-        if (USE_REAL_CHALLENGES) {
-          try {
-            const { data } = await api.get("challenges");
-            setItems(Array.isArray(data) ? data : []);
-            setNextCursor(null);
-          } catch (err2) {
-            setError(err2?.response?.data?.error || err2?.message || "Errore nel caricamento");
-            setItems([]);
-            setNextCursor(null);
-          }
-        } else {
-          setError(err?.response?.data?.error || err?.message || "Errore nel caricamento");
+        } catch (err2) {
+          setError(err2?.response?.data?.error || err2?.message || "Errore nel caricamento");
           setItems([]);
+          setNextCursor(null);
         }
       } finally {
         setLoading(false);
@@ -148,7 +178,7 @@ export default function Challenges() {
     })();
   }, [challenges]);
 
-  // Azioni (join/submit) — via `api.post` (Bearer + cookie/refresh)
+  // Azioni (join/submit) — via `api.post` (Bearer con interceptor)
   const joinChallenge = async (id) => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -165,7 +195,7 @@ export default function Challenges() {
         alert('Partecipazione registrata (demo).');
         return;
       }
-      await api.post(CH_JOIN_PATH(id), { userId }); // usa istanza `api`
+      await api.post(CH_JOIN_PATH(id), { userId });
       alert('Partecipazione registrata!');
     } catch (err) {
       const status = err?.response?.status;
@@ -196,7 +226,7 @@ export default function Challenges() {
         return;
       }
 
-      await api.post(CH_SUBMIT_PATH(id), { userId, delta, payload }); // usa istanza `api`
+      await api.post(CH_SUBMIT_PATH(id), { userId, delta, payload });
       const url = CH_LEADERBOARD_URL(id);
       if (url) {
         const { data } = await axios.get(url); // GET senza credenziali
@@ -234,13 +264,23 @@ export default function Challenges() {
     const q = query.trim().toLowerCase();
 
     if (q) {
-      list = list.filter(ch =>
-        [ch.title, ch.location, ch.rules, ch.type, ch.sponsor?.name, ch.judge?.name]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
-          .includes(q)
-      );
+     list = list.filter(ch =>
+  [
+    ch.title,
+    ch.location,
+    ch.rules,
+    ch.type,
+    ch.sponsor?.name,
+    ch.judge?.name,
+    ch.judge?.username,
+    ch.judge?.email
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+    .includes(q)
+);
+
     }
 
     if (sortBy === 'title') {
@@ -351,9 +391,11 @@ export default function Challenges() {
                   <div className="mini-value">{ch.sponsor?.name || '—'}</div>
                 </div>
                 <div className="mini-box">
-                  <div className="mini-label">Giudice</div>
-                  <div className="mini-value">{ch.judge?.name || '—'}</div>
-                </div>
+  <div className="mini-label">Giudice</div>
+  <span className="mini-value">{getJudgeLabel(ch.judge)}</span>
+
+</div>
+
               </div>
 
               <div className="scoreboard">

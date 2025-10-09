@@ -1,93 +1,89 @@
-import React, { useState, useContext } from "react";
-import { NavLink, Link } from "react-router-dom";
+// src/components/common/Header.jsx
+import React from "react";
+import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes";
-import { useAuth } from '@/context/AuthContext';
 
 export default function Header() {
   const { isAuthenticated, user, logout } = useAuth();
-  const [open, setOpen] = useState(false);
-  const close = () => setOpen(false);
-  const navClass = ({ isActive }) => "nav-link" + (isActive ? " active" : "");
+  const isAdmin = user?.role === "admin";
+  const isJudge = user?.role === "judge"; // (se ti serve più avanti)
 
   return (
     <header className="site-header">
-      <div className="container header-inner">
-        <Link to={routes.home} className="brand" onClick={close}>
-          <span className="brand-text">HelpLab</span>
-          <span className="claim">Humanity Empowered for Local Progress</span>
+      <div className="container header-row">
+        {/* Brand */}
+        <Link to={routes.home} className="brand-link">
+          <strong>HelpLab</strong>
+          <span className="muted small">Humanity Empowered for Local Progress</span>
         </Link>
 
-        <button
-          className="burger"
-          aria-label="Apri menu"
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
-        >
-          ☰
-        </button>
-
-        <nav className={"main-nav" + (open ? " open" : "")} role="navigation">
-          <NavLink to={routes.home} end className={navClass} onClick={close}>
-            Home
-          </NavLink>
-          <NavLink to={routes.dashboard.challenges} end className={navClass} onClick={close}>
+        {/* Nav principale */}
+        <nav className="main-nav" aria-label="Primary">
+          <NavLink to={routes.dashboard.challenges} className="nav-link">
             Sfide
           </NavLink>
-          <NavLink to={routes.dashboard.learningPaths} end className={navClass} onClick={close}>
+          <NavLink to={routes.dashboard.learningPaths} className="nav-link">
             Corsi
           </NavLink>
-          <NavLink to={routes.joinHelpLab} end className={navClass} onClick={close}>
+          <NavLink to={routes.joinHelpLab} className="nav-link">
             Community
           </NavLink>
+          {/* “Imprese” -> pacchetti business */}
+          <NavLink to={routes.business.packages} className="nav-link">
+  Imprese
+</NavLink>
+
         </nav>
 
-     <div className="auth-actions">
-  {isAuthenticated ? (
-    <>
-      <NavLink to={routes.dashboard.challengeCreate} className="btn" onClick={close}>
-        Crea Sfida
-      </NavLink>
+        {/* Azioni auth */}
+        <div className="auth-actions">
+          {isAuthenticated ? (
+            <>
+              {/* Menù Admin compatto */}
+              {isAdmin && (
+                <details className="admin-menu">
+                  <summary className="btn btn-ghost btn-pill">Admin</summary>
+                  <div className="admin-menu__list">
+                    <NavLink
+                      to={routes.admin.proposals}
+                      className="btn btn-ghost btn-pill"
+                      onClick={(e) => e.currentTarget.closest("details")?.removeAttribute("open")}
+                    >
+                      Gestione Proposte
+                    </NavLink>
+                    <NavLink
+                      to={routes.admin.assignJudge}
+                      className="btn btn-ghost btn-pill"
+                      onClick={(e) => e.currentTarget.closest("details")?.removeAttribute("open")}
+                    >
+                      Assegna Giudici
+                    </NavLink>
+                  </div>
+                </details>
+              )}
 
-      <NavLink to={routes.dashboard.userProfile} className="btn" onClick={close}>
-        Profilo
-      </NavLink>
-
-      {/* Solo admin: Dashboard Admin */}
-      {isAuthenticated && user?.role === "admin" && (
-  <NavLink
-    to={routes.admin.proposals}
-    className="btn btn-outline"
-    onClick={close}
-  >
-    Dashboard Admin
-  </NavLink>
-)}
-
-
-      {/* Logout: vero bottone (non un link) */}
-      <button
-        type="button"
-        className="btn"
-        onClick={() => {
-          logout();
-          close?.();
-        }}
-      >
-        Esci
-      </button>
-    </>
-  ) : (
-    <>
-      <NavLink to={routes.auth.login} className="btn" onClick={close}>
-        Accedi
-      </NavLink>
-      <NavLink to={routes.auth.register} className="btn btn-outline" onClick={close}>
-        Registrati
-      </NavLink>
-    </>
-  )}
-</div>
-
+              <NavLink to={routes.dashboard.challengeCreate} className="btn btn-ghost btn-pill">
+                Crea Sfida
+              </NavLink>
+              <NavLink to={routes.dashboard.userProfile} className="btn btn-ghost btn-pill">
+                Profilo
+              </NavLink>
+              <button type="button" className="btn btn-outline btn-pill" onClick={logout}>
+                Esci
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink to={routes.auth.login} className="btn btn-ghost btn-pill">
+                Accedi
+              </NavLink>
+              <NavLink to={routes.auth.register} className="btn btn-outline btn-pill">
+                Registrati
+              </NavLink>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );
