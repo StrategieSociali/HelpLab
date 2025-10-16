@@ -1,8 +1,9 @@
 // src/components/common/Footer.jsx
 import React from "react";
+import { APP_VERSION } from '@/config/constants';
 
 export default function Footer() {
-  const year = new Date().getFullYear();
+ const year = new Date().getFullYear();
   return (
     <footer className="site-footer">
       <div className="container footer-inner">
@@ -24,6 +25,7 @@ export default function Footer() {
         <div className="footer-copy">
           © {year} HelpLab — Tutti i diritti riservati
         </div>
+        <div>Versione attuale: {APP_VERSION}</div>
       </div>
     </footer>
   );

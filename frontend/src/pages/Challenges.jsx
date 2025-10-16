@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
-import { api } from "@/api/client";
+import { api, API_PATHS } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import axios from 'axios';
 
@@ -75,12 +75,10 @@ const API_BASE = (API_URL && API_URL.trim()
   : 'https://api.helplab.space/api');
 
 // URL helper (API vs JSON legacy)
-const CH_LEADERBOARD_URL = (id)    => USE_API ? `${API_BASE}/challenges/${id}/leaderboard` : null;
+const CH_LEADERBOARD_URL = (id)    => USE_API ? `${API_BASE}/v1/challenges/${id}` : null;
 
 export default function Challenges() {
-  // Path RELATIVI da usare con l'istanza `api` (che ha baseURL = '/api')
-  const CH_JOIN_PATH   = (id) => `challenges/${id}/join`;    // niente leading slash
-  const CH_SUBMIT_PATH = (id) => `challenges/${id}/submit`;  // niente leading slash
+
 
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth?.() || {};
@@ -112,9 +110,10 @@ export default function Challenges() {
       setError("");
       try {
         // ✅ feed reale (proposals approvate)
-        const { data } = await api.get("v1/challenges", {
-          params: { limit: PAGE_SIZE, cursor: append ? nextCursor : undefined },
-        });
+       const q = new URLSearchParams();
+	q.set("limit", String(PAGE_SIZE));
+	if (append && nextCursor) q.set("cursor", nextCursor);
+	const { data } = await api.get(API_PATHS.challenges(`?${q.toString()}`));
 
         const mapped = Array.isArray(data?.items)
           ? data.items.map(normalizeChallengeItem)
@@ -123,7 +122,7 @@ export default function Challenges() {
         setItems(prev => (append ? [...prev, ...mapped] : mapped));
         setNextCursor(data?.nextCursor ?? null);
       } catch (err) {
-        console.warn("Errore fetch v1/challenges:", err);
+        console.warn("Errore fetch /v1/challenges:", err);
 
         // 🔁 fallback automatico sul feed demo legacy (compat impegnata)
         try {
@@ -146,107 +145,6 @@ export default function Challenges() {
   useEffect(() => {
     fetchPage({ append: false });
   }, [fetchPage]);
-
-  // Prefetch leaderboard per le sfide visibili (una volta per id) — GET SENZA CREDENZIALI
-  useEffect(() => {
-    if (!USE_API || !challenges.length) return;
-
-    const toLoad = challenges
-      .map(ch => ch.id)
-      .filter(id => !prefetchedIdsRef.current.has(id));
-
-    if (!toLoad.length) return;
-
-    (async () => {
-      try {
-        await Promise.all(
-          toLoad.map(async (id) => {
-            const url = CH_LEADERBOARD_URL(id);
-            if (!url) return;
-            const { data } = await axios.get(url); // GET senza credenziali
-            prefetchedIdsRef.current.add(id);
-            setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
-          })
-        );
-      } catch (err) {
-        if (err?.response?.status === 429) {
-          console.warn('Rate limit leaderboard: riprova più tardi');
-        } else {
-          console.warn('Prefetch leaderboard error:', err?.message || err);
-        }
-      }
-    })();
-  }, [challenges]);
-
-  // Azioni (join/submit) — via `api.post` (Bearer con interceptor)
-  const joinChallenge = async (id) => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-    if (busyJoin[id]) return;
-    setBusyJoin(prev => ({ ...prev, [id]: true }));
-    try {
-      if (!USE_API) {
-        const raw = localStorage.getItem('demo_ch_joins');
-        const joins = raw ? JSON.parse(raw) : {};
-        joins[id] = true;
-        localStorage.setItem('demo_ch_joins', JSON.stringify(joins));
-        alert('Partecipazione registrata (demo).');
-        return;
-      }
-      await api.post(CH_JOIN_PATH(id), { userId });
-      alert('Partecipazione registrata!');
-    } catch (err) {
-      const status = err?.response?.status;
-      if (status === 429) {
-        alert('Stai facendo troppe richieste. Attendi e riprova.');
-      } else if (status === 401) {
-        alert('Devi eseguire l’accesso per partecipare.');
-      } else {
-        alert('Errore durante la partecipazione. Riprova.');
-      }
-      console.error('Join error:', err);
-    } finally {
-      setTimeout(() => setBusyJoin(prev => ({ ...prev, [id]: false })), 1500);
-    }
-  };
-
-  const submitResult = async (id, delta = 2, payload = {}) => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-    if (busySubmit[id]) return;
-    setBusySubmit(prev => ({ ...prev, [id]: true }));
-
-    try {
-      if (!USE_API) {
-        alert('Risultato inviato (demo).');
-        return;
-      }
-
-      await api.post(CH_SUBMIT_PATH(id), { userId, delta, payload });
-      const url = CH_LEADERBOARD_URL(id);
-      if (url) {
-        const { data } = await axios.get(url); // GET senza credenziali
-        setLeaderboards(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }));
-      }
-      alert('Punteggio aggiornato!');
-    } catch (err) {
-      const status = err?.response?.status;
-      if (status === 429) {
-        alert('Troppe richieste. Riprova fra qualche secondo.');
-      } else if (status === 401) {
-        alert('Devi eseguire l’accesso per inviare risultati.');
-      } else {
-        alert('Errore durante l’invio. Riprova.');
-      }
-      console.error('Submit error:', err);
-    } finally {
-      setTimeout(() => setBusySubmit(prev => ({ ...prev, [id]: false })), 1500);
-    }
-  };
 
   // Helpers
   const formatBudget = (b) => {

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from "react-router-dom";
 import FormNotice from "@/components/common/FormNotice.jsx";
 import { Wrench, Gift, Users } from "lucide-react";
+import heroBg from '@/assets/sustainability-hero.jpg';
 
 const HomepageStatic = () => {
   const navigate = useNavigate();
@@ -9,13 +10,22 @@ const HomepageStatic = () => {
   return (
     <>
       {/* 1) HERO */}
-      <section className="hero-section">
+      <section
+      className="hero-section"
+ 	 style={{
+  	  backgroundImage: `url(${heroBg})`,
+  	  backgroundSize: 'cover',
+  	  backgroundPosition: 'center',
+ 	 }}
+>
         <div className="hero-overlay"></div>
         <div className="hero-content">
           <div className="hero-text">
             <h1>Trasforma il tuo impegno ESG in azioni concrete e misurabili</h1>
             <p className="page-subtitle" style={{maxWidth: 860}}>
               HelpLab collega aziende, PA e cittadini per generare impatto locale misurabile, con dati e prove verificabili.
+            </p><p className="page-subtitle" style={{maxWidth: 860}}>
+              <strong>Nota Bene:</strong> Questa è una versione in sviluppo, sono possibili interruzioni o malfunzionamenti. Consulta la Roadmap nel menu in alto.
             </p>
 
             {/* CTA doppia: aziende/PA vs cittadini */}

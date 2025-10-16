@@ -1,72 +1,41 @@
+// src/api/client.js
 import axios from "axios";
 
-const RAW = import.meta.env.VITE_API_URL;
-// In dev metti /api nel tuo .env.development.local; in prod l'URL pieno.
-// Rimuoviamo eventuali slash finali.
-const BASE_URL = (RAW && RAW.trim() ? RAW : "/api").replace(/\/+$/, "");
-const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || "false") === "true";
+const API_BASE = (import.meta.env.VITE_API_URL || "").trim().replace(/\/+$/, "");
 
 export const api = axios.create({
-  baseURL: BASE_URL,
-  withCredentials: true, // necessario per inviare il cookie httpOnly di refresh
+  baseURL: API_BASE,   // es. "/api" in dev, "https://api.helplab.space/api" in prod
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
 });
 
-// Log utile anche in PROD (temporaneo): vedi dove stai puntando davvero
-if (import.meta.env.DEV) {
-  console.log("[API] baseURL =", api.defaults.baseURL, "USE_REFRESH =", USE_REFRESH);
-}
-if (import.meta.env.PROD) {
-  console.log("[API-PROD] baseURL =", api.defaults.baseURL, "USE_REFRESH =", USE_REFRESH);
+export function attachToken(getToken) {
+  api.interceptors.request.use((config) => {
+    const t = getToken?.();
+    if (t) config.headers.Authorization = `Bearer ${t}`;
+    return config;
+  });
 }
 
-// Token in memoria + setter esportato per AuthContext
-let accessToken = null;
-export const setAccessToken = (t) => {
-  accessToken = t || null;
+// 🔁 NOTA: da qui in giù ESPORTIAMO SOLO PATH (niente API_BASE davanti)
+export const API_PATHS = {
+  // pubblico (v1)
+  challenges: (q = "") => `/v1/challenges${q}`,        // ?limit=&cursor=
+  challengeDetail: (id) => `/v1/challenges/${id}`,
+
+  // admin – proposals (v1)
+  adminProposals: (q = "") => `/v1/admin/proposals${q}`,
+  approveProposal: (id) => `/v1/challenge-proposals/${id}/approve`,
+  rejectProposal:  (id) => `/v1/challenge-proposals/${id}/reject`,
+
+  // admin – judges (v1)
+  adminJudges: (q = "") => `/v1/admin/judges${q}`,
+  unassigned:  (q = "") => `/v1/challenges/unassigned${q}`,
+  assignJudge: (id) => `/v1/challenges/${id}/assign-judge`,
+
+  // auth
+  login:   `/auth/login`,
+  refresh: `/auth/refresh`,
+  me:      `/auth/me`,
 };
-
-// Authorization header su ogni richiesta se abbiamo il token
-api.interceptors.request.use((cfg) => {
-  if (accessToken) {
-    cfg.headers = cfg.headers || {};
-    cfg.headers.Authorization = `Bearer ${accessToken}`;
-  }
-  return cfg;
-});
-
-// 401 -> refresh (solo se abilitato)
-if (USE_REFRESH) {
-  api.interceptors.response.use(
-    (r) => r,
-    async (err) => {
-      const orig = err?.config;
-      const status = err?.response?.status;
-
-      if (!orig || orig.__retry) {
-        // niente retry o già ritentata
-        throw err;
-      }
-
-      if (status !== 401) {
-        throw err;
-      }
-
-      try {
-        // prova refresh: il BE prende il cookie httpOnly e ritorna { accessToken }
-        const { data } = await api.post("auth/refresh");
-        const newToken = data?.accessToken;
-        if (newToken) {
-          setAccessToken(newToken);
-          orig.__retry = true;
-          // ritenta la richiesta originale con il nuovo token
-          return api(orig);
-        }
-      } catch (e) {
-        // fallito il refresh: propaga l’errore 401
-      }
-
-      throw err;
-    }
-  );
-}
 

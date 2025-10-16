@@ -1,19 +1,14 @@
+// src/pages/admin/AdminProposals.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { api } from "@/api/client";
+import { api, API_PATHS } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
-import StepAssignJudge from "./steps/StepAssignJudge";
 
 const PAGE_SIZE = 20;
 
 export function AdminProposals() {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
-  // TAB: "proposals" | "judges"
-  const [tab, setTab] = useState("proposals");
-
-  // Stato lista PROPOSTE (tab: proposals)
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("pending_review");
   const [cursor, setCursor] = useState(null);
@@ -21,18 +16,19 @@ export function AdminProposals() {
   const [busy, setBusy] = useState({});
   const [error, setError] = useState("");
 
-  // Carica proposte
   const load = async ({ append = false } = {}) => {
     if (!isAdmin) return;
     setLoading(true);
     setError("");
     try {
-      const { data } = await api.get("v1/challenge-proposals", {
-        params: { status, limit: PAGE_SIZE, cursor: append ? cursor : undefined },
-        headers,
-      });
+      const q = new URLSearchParams();
+      q.set("status", status);
+      q.set("limit", String(PAGE_SIZE));
+      if (append && cursor) q.set("cursor", cursor);
+
+      const { data } = await api.get(API_PATHS.adminProposals(`?${q.toString()}`));
       const list = Array.isArray(data?.items) ? data.items : [];
-      setItems((prev) => (append ? [...prev, ...list] : list));
+      setItems(prev => (append ? [...prev, ...list] : list));
       setCursor(data?.nextCursor ?? null);
     } catch (err) {
       const msg = err?.response?.data?.error || err?.message || "Errore caricamento";
@@ -44,30 +40,21 @@ export function AdminProposals() {
     }
   };
 
-  // Ricarica proposte quando cambia filtro o si torna al tab "proposals"
   useEffect(() => {
-    if (!isAdmin) return;
-    if (tab !== "proposals") return;
     setCursor(null);
     load({ append: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, tab, isAdmin]);
+  }, [status]);
 
-  // Azione approva/respinge proposta
-  const act = async (id, kind /* 'approve' | 'reject' */, body = null) => {
-    if (!isAdmin) return alert("Permessi insufficienti (serve admin).");
-    setBusy((b) => ({ ...b, [id]: true }));
+  const act = async (id, kind /* 'approve'|'reject' */, body = null) => {
+    if (!isAdmin) return alert("Permessi insufficienti (admin).");
+    setBusy(b => ({ ...b, [id]: true }));
     try {
-      // 🔁 ora è PATCH, non POST
-      const { data } = await api.patch(
-        `v1/challenge-proposals/${id}/${kind}`,
-        body,
-        { headers: { ...headers, "Content-Type": "application/json" } }
-      );
-      // Se l’azione va a buon fine, rimuovi l’item dalla lista corrente
-      setItems((list) => list.filter((x) => x.id !== id));
+      const url = kind === "approve" ? API_PATHS.approveProposal(id) : API_PATHS.rejectProposal(id);
+      await api.patch(url, body);
+      // ottimistic: rimuovi la riga dalla lista corrente
+      setItems(list => list.filter(x => x.id !== id));
       alert(`Proposta ${kind === "approve" ? "approvata" : "respinta"} ✅`);
-      return data;
     } catch (err) {
       const st = err?.response?.status;
       const msg = err?.response?.data?.error || err?.message || "Errore";
@@ -79,7 +66,7 @@ export function AdminProposals() {
       else alert(`Errore: ${msg}`);
       console.error("AdminProposals action error:", err);
     } finally {
-      setBusy((b) => ({ ...b, [id]: false }));
+      setBusy(b => ({ ...b, [id]: false }));
     }
   };
 
@@ -97,38 +84,13 @@ export function AdminProposals() {
   return (
     <section className="page-section page-text admin-proposals">
       <div className="container">
-
-        {/* Header con TAB */}
-        <div className="page-header" style={{ marginBottom: 12 }}>
-          <h2 className="page-title">Dashboard Admin</h2>
-          <div className="wizard-steps" style={{ gap: 8 }}>
-            <div
-              className={`chip ${tab === "proposals" ? "chip--active" : ""}`}
-              onClick={() => setTab("proposals")}
-              role="button"
-              aria-label="Vai a Gestione Proposte"
-            >
-              Proposte
-            </div>
-            <div
-              className={`chip ${tab === "judges" ? "chip--active" : ""}`}
-              onClick={() => setTab("judges")}
-              role="button"
-              aria-label="Vai ad Assegna Giudici"
-            >
-              Assegna giudici
-            </div>
-          </div>
-        </div>
-
-        {/* Azioni/filtri in base al TAB */}
-        {tab === "proposals" && (
-          <div className="page-actions" style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <div className="page-header">
+          <h2 className="page-title">Proposte sfide</h2>
+          <div className="page-actions" style={{ display: "flex", gap: 8 }}>
             <select
-              className="control control-pill admin-select"
+              className="control control-pill select--light"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              title="Filtra per stato proposta"
             >
               <option value="pending_review">In revisione</option>
               <option value="approved">Approvate</option>
@@ -138,66 +100,59 @@ export function AdminProposals() {
               Aggiorna
             </button>
           </div>
-        )}
+        </div>
 
-        {/* Contenuto dei TAB */}
-        {tab === "proposals" ? (
-          <>
-            {loading && <div className="callout neutral">Caricamento…</div>}
-            {error && !loading && <div className="callout error">{error}</div>}
+        {loading && <div className="callout neutral">Caricamento…</div>}
+        {error && !loading && <div className="callout error">{error}</div>}
 
-            <ul style={{ listStyle: "none", padding: 0 }}>
-              {items.map((p) => (
-                <li key={p.id} className="card" style={{ padding: 12, marginBottom: 10 }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 220px", gap: 12, alignItems: "center" }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{p.title || "(senza titolo)"}</div>
-                      <div className="muted small">
-                        ID: {p.id} • Stato: {p.status} • {p.user ? `Utente #${p.user.id}` : ""}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right", display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                      {p.status === "pending_review" ? (
-                        <>
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => act(p.id, "approve")}
-                            disabled={!!busy[p.id]}
-                          >
-                            Approva
-                          </button>
-                          <button
-                            className="btn btn-outline"
-                            onClick={() => {
-                              const reason = prompt("Motivo (opzionale):") || undefined;
-                              act(p.id, "reject", reason ? { reason } : null);
-                            }}
-                            disabled={!!busy[p.id]}
-                          >
-                            Respingi
-                          </button>
-                        </>
-                      ) : p.status === "approved" ? (
-                        <span className="chip chip-status">Già approvata</span>
-                      ) : (
-                        <span className="chip chip-status">Respinta</span>
-                      )}
-                    </div>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {items.map((p) => (
+            <li key={p.id} className="card" style={{ padding: 12, marginBottom: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 12, alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{p.title || "(senza titolo)"}</div>
+                  <div className="muted small">
+                    ID: {p.id} • Stato: {p.status} • {p.user ? `Utente #${p.user.id}` : ""}
                   </div>
-                </li>
-              ))}
-            </ul>
-
-            {cursor && !loading && (
-              <div style={{ textAlign: "center", marginTop: 8 }}>
-                <button className="btn btn-outline" onClick={() => load({ append: true })}>
-                  Carica altri
-                </button>
+                </div>
+                <div style={{ textAlign: "right", display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                  {p.status === "pending_review" ? (
+                    <>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => act(p.id, "approve")}
+                        disabled={!!busy[p.id]}
+                      >
+                        Approva
+                      </button>
+                      <button
+                        className="btn btn-outline"
+                        onClick={() => {
+                          const reason = prompt("Motivo (opzionale):") || undefined;
+                          act(p.id, "reject", reason ? { reason } : null);
+                        }}
+                        disabled={!!busy[p.id]}
+                      >
+                        Respingi
+                      </button>
+                    </>
+                  ) : p.status === "approved" ? (
+                    <span className="chip chip-status">Già approvata</span>
+                  ) : (
+                    <span className="chip chip-status">Respinta</span>
+                  )}
+                </div>
               </div>
-            )}
-          </>
-        ) : (
-          <StepAssignJudge />
+            </li>
+          ))}
+        </ul>
+
+        {cursor && !loading && (
+          <div style={{ textAlign: "center", marginTop: 8 }}>
+            <button className="btn btn-outline" onClick={() => load({ append: true })}>
+              Carica altri
+            </button>
+          </div>
         )}
       </div>
     </section>

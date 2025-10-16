@@ -55,7 +55,7 @@ const previewServerScoring = async () => {
       return copy;
     })();
 
-    const { data } = await api.post("v1/challenges/preview-scoring", body);
+    const { data } = await api.post("/v1/challenges/preview-scoring", body);
     setServerScore(data); // { version, points_estimate_total, breakdown, notes }
   } catch (e) {
     console.error("preview-scoring failed", e?.response || e);
@@ -187,7 +187,7 @@ const previewServerScoring = async () => {
       // Se l’interceptor di api/client è cablato col token, basterebbe questa riga.
       // Aggiungo comunque l’header Authorization se abbiamo il token a portata di mano.
       const { data } = await api.post(
-        "v1/challenge-proposals",
+        "/v1/challenge-proposals",
         payload,
         token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
       );

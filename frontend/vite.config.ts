@@ -20,7 +20,7 @@ export default defineConfig({
       '/api': {
         target: 'https://api.helplab.space',
         changeOrigin: true,
-        secure: true,
+        secure: false,
         // nessuna rewrite: l'API reale espone già /api/...
       },
     },

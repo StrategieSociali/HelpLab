@@ -17,8 +17,10 @@ export const routes = {
    // sezione business
   business: {
     root: '/business',
-    packages: '/business/packages', // ✅ sezione impresei
+    packages: '/business/packages', // ✅ sezione imprese
   },
+  
+   roadmap: '/roadmap',
 
   // sezione admin (protetta + role=admin)
   admin: {

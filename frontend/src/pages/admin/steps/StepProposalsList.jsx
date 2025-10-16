@@ -66,7 +66,7 @@ export default function StepProposalsList({ token, value, onChange }) {
     setItems((prev) => prev.map((p) => (p.id === id ? optimistic : p)));
 
     try {
-      const url = "v1/challenge-proposals/" + id + "/" + action; // ⚠︎ niente leading slash
+      const url = "/v1/challenge-proposals/" + id + "/" + action; // ⚠︎ niente leading slash
       const jsonBody = body ?? {}; // sempre JSON (anche vuoto)
       const { data } = await api.patch(url, jsonBody, {
       headers: { ...headers, "Content-Type": "application/json" },

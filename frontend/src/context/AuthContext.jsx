@@ -1,65 +1,64 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { api } from "@/api/client";
-import { setAccessToken as wireAxiosToken } from "@/api/client";
+import { api, attachToken, API_PATHS } from "@/api/client";
 
-// Storage dev/local
 const LS_TOKEN_KEY = "hl_access_token";
+const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || "false") === "true";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);       // { id, email, username, role } | null
-  const [token, setToken] = useState(null);     // accessToken (JWT) | null
-  const [loading, setLoading] = useState(true); // bootstrap in corso
+  const [user, setUser] = useState(null);        // { id, email, username, role }
+  const [token, setToken] = useState(null);      // accessToken (solo login)
+  const [loading, setLoading] = useState(true);  // init app/auth in corso
 
-  // --- helpers ---
-  const saveToken = (t) => {
-    setToken(t || null);
-    wireAxiosToken(t || null);
-    try {
-      if (t) localStorage.setItem(LS_TOKEN_KEY, t);
-      else localStorage.removeItem(LS_TOKEN_KEY);
-    } catch {}
-  };
-
-  const fetchMe = async () => {
-    // GET /auth/me → { user: {...} }
-    const { data } = await api.get("auth/me");
-    if (data?.user) setUser(data.user);
-    return data?.user || null;
-  };
-
-  // Bootstrap auth: restore token (dev), refresh (prod), quindi /auth/me
+  // Intercetta tutte le richieste axios e attacca il Bearer se presente
   useEffect(() => {
-    const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || "false") === "true";
+    attachToken(() => token);
+  }, [token]);
 
+  // Legge profilo/ruolo corrente (richiede Bearer)
+  const fetchMe = async () => {
+    const { data } = await api.get(API_PATHS.me); // GET /auth/me
+    if (data?.user) setUser(data.user);
+    return data?.user;
+  };
+
+  // Helper: salva/azzera token nello state
+  const saveToken = (t) => setToken(t || null);
+
+  // Init: ripristino token da localStorage, refresh (solo se abilitato), e /me SOLO se c’è un token valido
+  useEffect(() => {
     (async () => {
       let restored = null;
+
+      // 1) ripristina token precedente (utile in dev)
       try {
         restored = localStorage.getItem(LS_TOKEN_KEY);
-        if (restored) {
-          // token da sessione precedente (utile in dev)
-          saveToken(restored);
-        }
+        if (restored) saveToken(restored);
       } catch {}
 
       try {
+        // 2) tenta il refresh SOLO se abilitato (in prod). In dev normalmente è false.
         if (USE_REFRESH) {
-          // prova refresh: se esiste cookie httpOnly lato BE, restituisce un nuovo accessToken
-          const { data } = await api.post("auth/refresh");
-          if (data?.accessToken) {
-            saveToken(data.accessToken);
+          try {
+            // NB: il refresh rinnova il cookie httpOnly; non ritorna accessToken nel body
+            await api.post(API_PATHS.refresh); // POST /auth/refresh
+          } catch {
+            // ok ignorare 401/429 qui: continueremo con eventuale token ripristinato
           }
         }
 
-        // se abbiamo un token valido a questo punto, chiediamo il profilo/ruolo
-        if (restored || USE_REFRESH) {
-          if (token || restored) {
-            await fetchMe();
-          }
+        // 3) chiama /me SOLO se abbiamo *un* token (dal login precedente o ripristinato)
+        const hasAnyToken = !!(restored || token);
+        if (hasAnyToken) {
+          await fetchMe();
+        } else {
+          // nessun token → utente non autenticato
+          setUser(null);
         }
-      } catch (err) {
-        // refresh o /me falliti → stato non autenticato
+      } catch {
+        // qualunque errore in init → stato non autenticato “pulito”
         saveToken(null);
         setUser(null);
       } finally {
@@ -69,43 +68,32 @@ export function AuthProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Ogni volta che cambia token sincronizza axios + storage
+  // Mantieni localStorage allineato al token
   useEffect(() => {
-    wireAxiosToken(token || null);
     try {
       if (token) localStorage.setItem(LS_TOKEN_KEY, token);
       else localStorage.removeItem(LS_TOKEN_KEY);
     } catch {}
   }, [token]);
 
-  // --- azioni public API del context ---
+  // ---- Azioni Auth ----
   const login = async (email, password) => {
-    // POST /auth/login → { user, accessToken }
-    const { data } = await api.post("auth/login", { email, password });
+    const { data } = await api.post(API_PATHS.login, { email, password }); // POST /auth/login
     const accessToken = data?.accessToken;
     if (!accessToken) throw new Error("Nessun accessToken nella risposta di login");
-
     saveToken(accessToken);
-    // Imposta subito l’utente ritornato dalla login (ha già il role)
     setUser(data?.user || null);
-
-    // Per robustezza, riallinea con /auth/me (evita desincronizzazioni)
-    try { await fetchMe(); } catch {}
     return data;
   };
 
   const register = async (payload) => {
-    // POST /auth/register → 201 { user } (niente token); poi login
-    const { data } = await api.post("auth/register", payload);
-
+    const { data } = await api.post(API_PATHS.register, payload); // POST /auth/register
     if (data?.accessToken) {
-      // In caso il BE restituisse anche token (non standard qui), gestiamolo
       saveToken(data.accessToken);
       setUser(data?.user || null);
-      try { await fetchMe(); } catch {}
       return data;
     }
-
+    // se il BE non ritorna token al register, fai login immediato con le credenziali
     if (payload?.email && payload?.password) {
       return login(payload.email, payload.password);
     }
@@ -113,7 +101,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    try { await api.post("auth/logout"); } catch {}
+    try { await api.post(API_PATHS.logout); } catch {}
     saveToken(null);
     setUser(null);
   };
@@ -124,11 +112,12 @@ export function AuthProvider({ children }) {
       token,
       loading,
       isAuthenticated: !!token,
+      role: user?.role || null,
       login,
       register,
       logout,
-      setUser,   // esposto per eventuali aggiornamenti profilo
-      setToken: saveToken, // espone già la logica di sync axios/localStorage
+      setUser,
+      setToken: saveToken, // esposto per casi particolari
     }),
     [user, token, loading]
   );

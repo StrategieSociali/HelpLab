@@ -19,6 +19,7 @@ import { AuthProvider } from './context/AuthContext';
 import { AdminProposals } from './pages/admin/AdminProposals';
 import BusinessPackages from './pages/BusinessPackages.jsx';
 import StepAssignJudge from './pages/admin/steps/StepAssignJudge';
+import Roadmap from './pages/Roadmap.jsx';
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
     <Route path={routes.joinHelpLab} element={<JoinHelpLab />} />
     <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
     <Route path={routes.business.packages} element={<BusinessPackages />} />
+    <Route path={routes.roadmap} element={<Roadmap />} />
     <Route
       path="/learningpaths"
       element={<Navigate to={routes.dashboard.learningPaths} replace />}
@@ -52,7 +54,7 @@ export default function App() {
           <UserProfile />
         </ProtectedRoute>
       }
-    />
+    /> 
     <Route
   path={routes.dashboard.challengeCreate}
   element={
