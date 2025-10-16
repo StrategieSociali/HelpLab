@@ -69,6 +69,7 @@ model challenges {
   users_challenges_created_byTousers users?                   @relation("challenges_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_ch_created_by")
   users                              users?                   @relation(fields: [judge_user_id], references: [id], onUpdate: NoAction, map: "fk_ch_judge")
   sponsors                           sponsors?                @relation(fields: [sponsor_id], references: [id], onUpdate: NoAction, map: "fk_ch_sponsor")
+  proposal_uuid String? @db.Char(36)
 
   @@index([judge_user_id], map: "fk_ch_judge")
   @@index([sponsor_id], map: "fk_ch_sponsor")
@@ -216,6 +217,10 @@ model challenge_proposals {
   sponsor_budget_requested Int?
 
   terms_consent Boolean @default(false)
+
+  challenge_id BigInt? @db.UnsignedBigInt
+  approved_at  DateTime?
+
 
   status ChallengeProposalStatus @default(pending_review)
 

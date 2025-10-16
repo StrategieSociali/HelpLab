@@ -95,17 +95,17 @@ async function start() {
   await server.register(swaggerUI, { routePrefix: '/api/docs', uiConfig: { docExpansion: 'list' } })
 
   // Health
-  server.get('/api/health', async () => ({ status: 'ok' }))
+ server.get('/api/health', async () => ({ status: 'ok' }))
 
   // v0 (solo learning paths; feed challenges legacy è stato rimosso)
   await server.register(learningPathsRoutes, { prefix: '/api/learning-paths' })
 
   // v1
-  await server.register(scoringV1Routes,     { prefix: '/api/v1' })
-  await server.register(proposalsV1Routes,   { prefix: '/api/v1' })
-  await server.register(judgesV1Routes,      { prefix: '/api/v1' })
-  await server.register(adminJudgesV1Routes, { prefix: '/api/v1' })
-  await server.register(challengesV1Routes,  { prefix: '/api/v1' })
+await server.register(scoringV1Routes,     { prefix: '/api/v1' })
+await server.register(proposalsV1Routes,   { prefix: '/api/v1' })
+await server.register(judgesV1Routes,      { prefix: '/api/v1' })
+await server.register(adminJudgesV1Routes, { prefix: '/api/v1' })
+await server.register(challengesV1Routes,  { prefix: '/api/v1' })
 
   // Auth
   await server.register(authRoutes, { prefix: '/api/auth' })
