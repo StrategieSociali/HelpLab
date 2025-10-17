@@ -1,37 +1,51 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function StepImpact({ value, onChange, pointsPreview }) {
-  // se c'è difficulty → mostro "difficulty", altrimenti "co2"
-  const mode = value?.difficulty ? "difficulty" : "co2";
+  // Modalità iniziale: se ho CO₂ uso "co2", altrimenti "difficulty"
+  const [mode, setMode] = useState(
+    value?.co2e_estimate_kg ? "co2" : "difficulty"
+  );
+  const [co2Str, setCo2Str] = useState(
+    value?.co2e_estimate_kg != null ? String(value.co2e_estimate_kg) : ""
+  );
 
-  // input sempre controllato: mai null/undefined
-  const co2Str =
-    value?.co2e_estimate_kg === null || typeof value?.co2e_estimate_kg === "undefined"
-      ? ""
-      : String(value.co2e_estimate_kg);
-
-  const handleMode = (m) => {
-    if (m === "co2") {
-      // torno a CO2 → pulisco difficulty ma NON tocco co2 (resta anche vuota)
-      onChange({ difficulty: null });
+  // --- helper: switch modalità garantendo XOR ---
+  const switchMode = (next) => {
+    setMode(next);
+    if (next === "co2") {
+      // passo a CO₂ → azzero difficulty
+      onChange?.({ difficulty: undefined });
     } else {
-      // passo a difficulty → svuoto CO2 come stringa vuota (input controllato) e setto una default
-      onChange({ co2e_estimate_kg: "", difficulty: "low" });
+      // passo a Difficoltà → azzero CO₂
+      onChange?.({ co2e_estimate_kg: undefined });
+      setCo2Str("");
     }
   };
 
+  // alias per il markup esistente
+  const handleMode = (next) => switchMode(next);
+
+  // --- handler CO₂ (XOR: azzera difficulty) ---
   const handleCo2Change = (e) => {
     const raw = e.target.value;
-    if (raw === "") {
-      onChange({ co2e_estimate_kg: "" }); // resta in modalità CO2 senza warning
-      return;
+    setCo2Str(raw);
+
+    const normalized = raw.replace(",", ".").trim();
+    const num = Number(normalized);
+    if (Number.isFinite(num) && num > 0) {
+      // imposto co2, azzero difficulty
+      onChange?.({ co2e_estimate_kg: num, difficulty: undefined });
+      if (mode !== "co2") setMode("co2");
+    } else {
+      // input non valido → tolgo il valore numerico
+      onChange?.({ co2e_estimate_kg: undefined });
     }
-    const sanitized = raw.replace(/[^\d.]/g, "");
-    onChange({ co2e_estimate_kg: sanitized });
   };
 
+  // --- handler Difficoltà (XOR: azzera co2) ---
   const handleDifficulty = (d) => {
-    onChange({ difficulty: d, co2e_estimate_kg: "" });
+    onChange?.({ difficulty: d, co2e_estimate_kg: undefined });
+    if (mode !== "difficulty") setMode("difficulty");
   };
 
   return (
@@ -70,8 +84,8 @@ export default function StepImpact({ value, onChange, pointsPreview }) {
           <div className="field">
             <label className="label">
               CO₂e (kg)
-              <span className={co2Str && Number(co2Str) > 0 ? "valid-hint" : ""}>
-                {co2Str && Number(co2Str) > 0 ? "✓ ok" : ""}
+              <span className={co2Str && Number(co2Str.replace(",", ".")) > 0 ? "valid-hint" : ""}>
+                {co2Str && Number(co2Str.replace(",", ".")) > 0 ? "✓ ok" : ""}
               </span>
             </label>
             <input
@@ -113,8 +127,8 @@ export default function StepImpact({ value, onChange, pointsPreview }) {
               className="control"
               rows={3}
               placeholder="Eventuali note sulla complessità…"
-              value={value?.complexity_notes ?? ""}    // sempre stringa
-              onChange={(e) => onChange({ complexity_notes: e.target.value })}
+              value={value?.complexity_notes ?? ""}
+              onChange={(e) => onChange?.({ complexity_notes: e.target.value })}
             />
           </div>
         </div>
