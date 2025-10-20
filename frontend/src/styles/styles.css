@@ -823,3 +823,12 @@ select.control {
   background: #eef2f7;
 }
 
+/* corpo del testo */
+.page-text-block {
+  color: #ffffff;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  opacity: 0.9;
+  margin: 1rem 0;
+}
+

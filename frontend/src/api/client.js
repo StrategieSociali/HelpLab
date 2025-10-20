@@ -4,18 +4,25 @@ import axios from "axios";
 const API_BASE = (import.meta.env.VITE_API_URL || "").trim().replace(/\/+$/, "");
 
 export const api = axios.create({
-  baseURL: API_BASE,   // es. "/api" in dev, "https://api.helplab.space/api" in prod
+  baseURL: API_BASE,
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
 
+// Variabile globale per contenere la funzione dinamica
+let getTokenFn = null;
+
 export function attachToken(getToken) {
-  api.interceptors.request.use((config) => {
-    const t = getToken?.();
-    if (t) config.headers.Authorization = `Bearer ${t}`;
-    return config;
-  });
+  getTokenFn = getToken;
 }
+
+// Aggiungiamo l'interceptor UNA sola volta
+api.interceptors.request.use((config) => {
+  const t = getTokenFn?.();
+  if (t) config.headers.Authorization = `Bearer ${t}`;
+  return config;
+});
+
 
 // 🔁 NOTA: da qui in giù ESPORTIAMO SOLO PATH (niente API_BASE davanti)
 export const API_PATHS = {

@@ -20,6 +20,8 @@ import { AdminProposals } from './pages/admin/AdminProposals';
 import BusinessPackages from './pages/BusinessPackages.jsx';
 import StepAssignJudge from './pages/admin/steps/StepAssignJudge';
 import Roadmap from './pages/Roadmap.jsx';
+import ChallengeSubmissions from './pages/challenges/ChallengeSubmissions.jsx';
+
 
 export default function App() {
   return (
@@ -60,6 +62,14 @@ export default function App() {
   element={
     <ProtectedRoute>
       <CreateChallenge />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path={routes.dashboard.challengeSubmissions}
+  element={
+    <ProtectedRoute>
+     <ChallengeSubmissions />
     </ProtectedRoute>
   }
 />

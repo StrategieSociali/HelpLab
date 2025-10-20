@@ -7,6 +7,7 @@ export const routes = {
   dashboard: {
     // pubbliche
     challenges: '/challenges',
+    challengeSubmissions: '/challenges/:challengeId/submissions',
     learningPaths: '/learning-paths',
 
     // protette (utenti loggati)

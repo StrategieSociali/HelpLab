@@ -316,13 +316,12 @@ export default function Challenges() {
                 {isAuthenticated ? (
                   <>
                     <button
-                      className="btn btn-primary"
-                      disabled={!!busyJoin[ch.id]}
-                      aria-busy={!!busyJoin[ch.id]}
-                      onClick={() => joinChallenge(ch.id)}
-                    >
-                      Partecipa
-                    </button>
+ 			 className="btn btn-primary"
+ 			 onClick={() => navigate(`/challenges/${ch.id}/submissions`)}
+		    >
+			  Partecipa
+		    </button>
+
                     <button
                       className="btn btn-ghost"
                       disabled={!!busySubmit[ch.id]}
