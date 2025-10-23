@@ -8,6 +8,7 @@ import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import cookie from '@fastify/cookie'
 
+
 // Routes
 import { authRoutes } from './routes/auth.js'
 import { learningPathsRoutes } from './routes/learningPaths.js'
@@ -18,6 +19,7 @@ import { proposalsV1Routes } from './routes/v1/proposals.js'
 import { judgesV1Routes } from './routes/v1/judges.js'
 import { adminJudgesV1Routes } from './routes/v1/adminJudges.js'
 import { challengesV1Routes } from './routes/v1/challenges.js'
+import { submissionsV1Routes } from './routes/v1/submissions.js'
 
 dotenv.config()
 
@@ -106,6 +108,8 @@ await server.register(proposalsV1Routes,   { prefix: '/api/v1' })
 await server.register(judgesV1Routes,      { prefix: '/api/v1' })
 await server.register(adminJudgesV1Routes, { prefix: '/api/v1' })
 await server.register(challengesV1Routes,  { prefix: '/api/v1' })
+await server.register(submissionsV1Routes, { prefix: '/api/v1' })
+
 
   // Auth
   await server.register(authRoutes, { prefix: '/api/auth' })
