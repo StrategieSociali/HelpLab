@@ -27,8 +27,11 @@ api.interceptors.request.use((config) => {
 // 🔁 NOTA: da qui in giù ESPORTIAMO SOLO PATH (niente API_BASE davanti)
 export const API_PATHS = {
   // pubblico (v1)
-  challenges: (q = "") => `/v1/challenges${q}`,        // ?limit=&cursor=
+  challenges: (q = "") => `/v1/challenges${q}`,
   challengeDetail: (id) => `/v1/challenges/${id}`,
+  scoringConfig: () => '/v1/scoring/config',
+  previewScoring: () => '/v1/challenges/preview-scoring',
+  challengeLeaderboard: (id, q = '') => `/v1/challenges/${id}/leaderboard${q}`,
 
   // admin – proposals (v1)
   adminProposals: (q = "") => `/v1/admin/proposals${q}`,
@@ -44,5 +47,6 @@ export const API_PATHS = {
   login:   `/auth/login`,
   refresh: `/auth/refresh`,
   me:      `/auth/me`,
+  register: `/auth/register`,
 };
 

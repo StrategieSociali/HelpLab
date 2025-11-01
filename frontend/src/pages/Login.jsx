@@ -34,7 +34,7 @@ export default function Login() {
   };
 
   return (
-    <section className="registration-section">
+    <section className="registration-form">
       <div className="container">
         <FormNotice />
 

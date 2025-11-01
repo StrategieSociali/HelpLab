@@ -4,11 +4,11 @@ import FormNotice from "@/components/common/FormNotice.jsx";
 import { api } from "@/api/client";
 
 const INTEREST_OPTIONS = [
-  { value: "platform-test",   label: "Test della piattaforma" },
-  { value: "local-projects",  label: "Proporre progetti locali" },
-  { value: "trainer",         label: "Diventare formatore" },
-  { value: "judge",           label: "Diventare giudice" },
-  { value: "sponsor",         label: "Sostenere un progetto locale" },
+  { value: "btester", label: "Test della piattaforma" },
+  { value: "proponer", label: "Proporre progetti locali" },
+  { value: "aspirante_formatore", label: "Diventare formatore" },
+  { value: "aspirante_giudice", label: "Diventare giudice" },
+  { value: "aspirante_sponsor", label: "Sostenere un progetto locale" },
 ];
 
 export default function JoinHelpLab() {
@@ -19,7 +19,7 @@ export default function JoinHelpLab() {
     newsletter: false,
   });
   const [submitting, setSubmitting] = useState(false);
-  const [ok, setOk] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
   const onChange = (e) => {
@@ -41,28 +41,26 @@ export default function JoinHelpLab() {
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setOk(false);
+    setSuccess(false);
 
     if (!form.name || !form.email) {
       setError("Compila nome ed email.");
       return;
     }
-    if (form.interests.length === 0) {
-      setError("Seleziona almeno un’area di interesse.");
-      return;
-    }
 
     setSubmitting(true);
     try {
-      await api.post("/forms/waitlist", {
+      // Invia al tuo backend che farà da proxy verso Mautic
+      await api.post("/forms/mautic-community", {
         name: form.name,
         email: form.email,
-        interests: form.interests,   // <-- array, come richiesto dal backend
-        newsletter: !!form.newsletter,
+        interests: form.interests,
+        newsletter: form.newsletter,
       });
-      setOk(true);
-      // reset soft (mantieni la spunta newsletter)
-      setForm((prev) => ({ name: "", email: "", interests: [], newsletter: prev.newsletter }));
+
+      setSuccess(true);
+      // Reset form
+      setForm({ name: "", email: "", interests: [], newsletter: false });
     } catch (err) {
       console.error(err);
       setError("Invio non riuscito. Riprova più tardi.");
@@ -72,10 +70,9 @@ export default function JoinHelpLab() {
   };
 
   return (
-    <section className="registration-section">
+    <section className="registration-form">
       <div className="container">
         <FormNotice className="notice--center" />
-
         <form className="registration-form" onSubmit={onSubmit}>
           <div className="form-group">
             <label htmlFor="name">Nome completo</label>
@@ -90,24 +87,22 @@ export default function JoinHelpLab() {
               autoComplete="name"
             />
           </div>
-
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
               id="email"
               name="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder="nome@esempio.it"
               value={form.email}
               onChange={onChange}
               required
               autoComplete="email"
             />
           </div>
-
           <div className="form-group">
             <label>Aree di interesse</label>
-            <div className="checkbox-group">
+            <div className="checkbox-grid">
               {INTEREST_OPTIONS.map((opt) => (
                 <label key={opt.value} className="checkbox-item">
                   <input
@@ -122,9 +117,8 @@ export default function JoinHelpLab() {
               ))}
             </div>
           </div>
-
-          <div className="form-group checkbox-group">
-            <label className="checkbox-item">
+          <div className="form-group">
+            <label className="checkbox-item checkbox-single">
               <input
                 type="checkbox"
                 id="newsletter"
@@ -135,10 +129,8 @@ export default function JoinHelpLab() {
               <span>Iscriviti alla newsletter per ricevere aggiornamenti</span>
             </label>
           </div>
-
-          {error && <p style={{ color: "salmon", marginTop: 6 }}>{error}</p>}
-          {ok && <p style={{ color: "lightgreen", marginTop: 6 }}>Grazie! Ti abbiamo aggiunto alla lista d’attesa.</p>}
-
+          {error && <div className="form-message form-message--error">{error}</div>}
+          {success && <div className="form-message form-message--success">Grazie! Ti abbiamo aggiunto alla lista d'attesa.</div>}
           <button
             type="submit"
             className="submit-button"
@@ -152,4 +144,3 @@ export default function JoinHelpLab() {
     </section>
   );
 }
-

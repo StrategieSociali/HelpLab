@@ -1,4 +1,5 @@
 import React from "react";
+import TextBlock from "@/components/UI/TextBlock.jsx";
 
 export default function FormNotice({ className = "" }) {
   return (
@@ -9,26 +10,23 @@ export default function FormNotice({ className = "" }) {
     >
       <span className="notice__icon" aria-hidden="true"></span>
       <div className="notice__content">
-       <p> <strong>Registrati</strong> oggi stesso. <br /></p>
-        Per seguire lo sviluppo visita
-        {" "}
-        <a
+       <TextBlock>Registrati oggi stesso. Per seguire lo sviluppo visita</TextBlock>
+       {" "}
+      <a
           href="https://github.com/StrategieSociali/HelpLab"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <em>HelpLab </em> 
+           <TextBlock>HelpLab su GitHub </TextBlock>
         </a>
-         su GitHub oppure unisciti al gruppo Telegram
         {" "}
         <a
           href="https://t.me/+h_Rh9IpYpgZjZjc0"
           target="_blank"
           rel="noopener noreferrer"
         >
-          @HelpLab
+         <TextBlock>HelpLab@Telegram</TextBlock>
         </a>
-        .
       </div>
     </div>
   );
