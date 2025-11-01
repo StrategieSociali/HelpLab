@@ -39,7 +39,7 @@ export default function Roadmap() {
             <p>I vecchi dati fake divengono deprecati e eliminati, tutte le sfide sono migrate nel database definitivo.</p>
           </div>
           <div className="benefit-card">
-            <h3>V 0.6.x Leaderboard “reale” su base submissions, non più mock.</h3>
+            <h3>⚒️ V 0.6.x 👷 Leaderboard “reale” su base submissions, non più mock.</h3>
             <p>Sviluppo sistema di scoring avanzato e sua ntegrazione su API v1.</p>
           </div>
           <div className="benefit-card">
