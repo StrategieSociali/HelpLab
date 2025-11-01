@@ -2,26 +2,32 @@
 Humanity Empowered for Local Progress
 
 ## Disclaimer
-This project is in its **early stages**, and we are currently uploading the first lines of code. Follow us if you want to stay up to date.
+This project is in its **early stages**, and we are working on core features (challenges), take a look at the roadmap for more details. Follow us if you want to stay up to date.
 
 ## 🚀 Empowering People, Transforming Communities
 
-HelpLab is an open-source platform designed to **encourage sustainable behaviors** through challenges, learning paths, and gamification. It also includes a **micro-payment system** using the Bitcoin Lightning Network to facilitate the local exchange of micro-services and second-hand products, fostering a **circular economy**.
+HelpLab is an open-source platform designed to **encourage sustainable behaviors** through challenges, learning paths, and gamification. It also includes a **micro-payment system** using the Bitcoin Lightning Network (or other solution like CashU) to facilitate the local exchange of micro-services and second-hand products, fostering a **circular economy**.
 
-## 🛠 Features
+## 🛠 Features for individuals
 - **🌱 Challenges:** Participate in sustainability-focused challenges through gamification.
 - **📚 E-Learning:** Access courses, best practices, and educational content.
 - **🛒 E-Commerce:** Buy, sell, and exchange micro-products and services.
 - **💬 Social Interaction:** Connect and communicate with other users.
 - **🎮 Engagement System:** Earn points based on your challenge participation.
 
+## 🛠 Features for companies
+- **🌱 Challenges:** Sponsor a challenge and get useful data and information for your CSRD projects in return.
+- **📚 E-Learning:** Access courses, best practices, and educational content for your employees.
+- **💬 Social Interaction:** Build a community among your employees or customers to improve environmental and social performance.
+- **🎮 Engagement System:** Offer CSR or corporate welfare solutions to whomever you want.
+
 ## 🏗 Tech Stack
-### **Frontend**
+### **Frontend** - Open Source
 - React.js
 - Tailwind CSS
 - JWT authentication
 
-### **Backend**
+### **Backend** - Closed source with open API
 - Node.js (Microservices architecture)
 - MySQL (Relational database)
 - Bitcoin Lightning Network integration
@@ -59,21 +65,16 @@ cd helplab-space
 
 # Install dependencies for frontend and backend
 cd frontend && npm install
-cd ../backend && npm install
 
 # Start the frontend
 cd ../frontend
 npm start
 
 # Start the backend
-cd ../backend
-npm run dev
-```
+Contact us for API access (freemium disposable access)
 
 ### **Database Setup**
-1. Create a new MySQL database.
-2. Run the provided SQL schema from the `database/` folder.
-3. Configure environment variables for database connection.
+- Currently only available via API (see above)
 
 ## 🤝 Contributing
 We welcome contributions! Check out our **[CONTRIBUTING.md](CONTRIBUTING.md)** for guidelines on how to get started.
