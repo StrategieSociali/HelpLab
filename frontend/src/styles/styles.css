@@ -89,6 +89,12 @@ body{
 .btn-ghost{
   background:transparent; color:#ffffff; border-color:rgba(255,255,255,.35);
 }
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.15); /* leggero velo bianco trasparente */
+  color: #ffffff; /* testo resta bianco */
+  border-color: rgba(255, 255, 255, 0.6); /* bordo un po’ più visibile */
+  transform: translateY(-1px);
+}
 .btn-small{ padding:6px 10px; font-size:.9rem; }
 .btn-pill{ border-radius:9999px; }
 
@@ -919,3 +925,88 @@ select.control {
   opacity: 0.9;
   margin: 1rem 0;
 }
+
+.join-hero {
+  background-image: url('./assets/community-hero.jpg');
+  background-size: cover;
+  background-position: center;
+  padding: 100px 0 80px;
+  color: white;
+  text-align: center;
+}
+
+.audience-section {
+  background: #f9fafb;
+  padding: 60px 0;
+}
+
+.audience-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  margin-top: 30px;
+}
+
+.audience-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 24px;
+  text-align: left;
+}
+
+.audience-card h3 {
+  color: #1e3a8a;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.cta-section {
+  padding: 60px 0 20px;
+  text-align: center;
+}
+.join-hero {
+  background-image: url('./assets/community-hero.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: flex-end; /* sposta il contenuto più in basso */
+  justify-content: center;
+  min-height: 70vh; /* più basso del 100vh, evita lo “spazio vuoto” */
+  padding-bottom: 120px; /* distanza dal bordo inferiore */
+  text-align: center;
+  color: white;
+  position: relative;
+}
+
+.join-hero .hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15,23,42,0.7) 10%, rgba(15,23,42,0.9) 90%);
+  z-index: 1;
+}
+
+.join-hero .hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  padding: 0 1rem;
+}
+
+.join-hero .section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.join-hero .section-subtitle {
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+.mauticform-textarea {
+  height: 42px;
+  resize: none;
+}
+
