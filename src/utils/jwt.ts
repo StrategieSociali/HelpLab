@@ -1,4 +1,7 @@
 import jwt, { Secret, SignOptions, JwtPayload } from 'jsonwebtoken'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const JWT_SECRET: Secret = process.env.JWT_SECRET as string
 const REFRESH_SECRET: Secret = process.env.REFRESH_SECRET as string

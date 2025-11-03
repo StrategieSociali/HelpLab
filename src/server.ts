@@ -7,6 +7,7 @@ import dotenv from 'dotenv'
 import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import cookie from '@fastify/cookie'
+// import formbody from '@fastify/formbody'
 
 
 // Routes
@@ -20,11 +21,17 @@ import { judgesV1Routes } from './routes/v1/judges.js'
 import { adminJudgesV1Routes } from './routes/v1/adminJudges.js'
 import { challengesV1Routes } from './routes/v1/challenges.js'
 import { submissionsV1Routes } from './routes/v1/submissions.js'
+import { leaderboardV1Routes } from './routes/v1/leaderboard.js'
+import { v1Routes } from './routes/v1/index.js'
+
 
 dotenv.config()
 
 async function start() {
   const server = Fastify({ logger: true })
+
+// parser per JSON e form data
+// await server.register(formbody)
 
   // Sicurezza
   await server.register(helmet)
@@ -103,16 +110,22 @@ async function start() {
   await server.register(learningPathsRoutes, { prefix: '/api/learning-paths' })
 
   // v1
-await server.register(scoringV1Routes,     { prefix: '/api/v1' })
-await server.register(proposalsV1Routes,   { prefix: '/api/v1' })
-await server.register(judgesV1Routes,      { prefix: '/api/v1' })
-await server.register(adminJudgesV1Routes, { prefix: '/api/v1' })
-await server.register(challengesV1Routes,  { prefix: '/api/v1' })
-await server.register(submissionsV1Routes, { prefix: '/api/v1' })
+// await server.register(scoringV1Routes,     { prefix: '/api/v1' })
+// await server.register(proposalsV1Routes,   { prefix: '/api/v1' })
+// await server.register(judgesV1Routes,      { prefix: '/api/v1' })
+// await server.register(adminJudgesV1Routes, { prefix: '/api/v1' })
+// await server.register(challengesV1Routes,  { prefix: '/api/v1' })
+// await server.register(submissionsV1Routes, { prefix: '/api/v1' })
+// await server.register(leaderboardV1Routes, { prefix: '/api/v1' })
+
 
 
   // Auth
   await server.register(authRoutes, { prefix: '/api/auth' })
+  await server.register(v1Routes, { prefix: '/api/v1' })
+  
+    // Alias Auth
+//  await server.register(authRoutes, { prefix: '/auth' })
 
   // Avvio
   const port = Number(process.env.PORT || 3001)

@@ -1,33 +1,9 @@
 // src/routes/v1/submissions.ts
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import { prisma } from '../../db/client.js'
+import { requireAuth } from '../../utils/requireAuth.js'
+import { onApprove } from '../../services/scoring/onApprove.js'
 
-// Auth helper locale (stile già usato altrove)
-function requireAuth(role?: 'admin' | 'judge') {
-  return async (req: any, reply: FastifyReply) => {
-    const auth = String(req.headers?.authorization || '')
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
-    if (!token) return reply.code(401).send({ error: 'unauthorized' })
-    try {
-      // NB: usa le tue funzioni reali di firma/verify
-      const { verifyAccessToken } = await import('../../utils/jwt.js')
-      const p = verifyAccessToken(token) as any
-      req.user = { id: BigInt(p.sub), email: p.email }
-      // carica il ruolo
-      const u = await prisma.users.findFirst({
-        where: { id: req.user.id as any },
-        select: { role: true }
-      })
-      if (!u) return reply.code(401).send({ error: 'unauthorized' })
-      if (role && u.role !== role && u.role !== 'admin') {
-        return reply.code(403).send({ error: 'forbidden' })
-      }
-      ;(req.user as any).role = u.role ?? 'user'
-    } catch {
-      return reply.code(401).send({ error: 'invalid token' })
-    }
-  }
-}
 
 // visibilità consentita in base al ruolo/contesto
 async function computeVisibilityFilter(opts: {
@@ -35,17 +11,10 @@ async function computeVisibilityFilter(opts: {
   user: { id: bigint | null; role: string | null }
 }) {
   const { challengeId, user } = opts
-
-  // base: pubbliche sempre visibili
   const allowed: Array<'public' | 'participants' | 'private'> = ['public']
 
-  // se loggato:
   if (user.id) {
-    // “participants”: per semplicità → visibile a tutti gli autenticati
-    // (in futuro potremo controllare challenge_participants)
     allowed.push('participants')
-
-    // se admin o giudice della challenge → tutto
     if (user.role === 'admin') {
       allowed.push('private')
     } else if (user.role === 'judge') {
@@ -79,7 +48,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         type: 'object',
         properties: {
           limit: { type: 'number' },
-          cursor: { type: 'string' } // ISO date
+          cursor: { type: 'string' }
         }
       },
       response: {
@@ -129,7 +98,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         points_awarded: true,
         created_at: true,
         reviewed_at: true,
-        users: { select: { username: true } } // autore
+        users: { select: { username: true } }
       },
       orderBy: { created_at: 'desc' },
       take: limit + 1
@@ -158,7 +127,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
   // POST /api/v1/challenges/:id/submissions (crea)
   // ================================
   app.post('/challenges/:id/submissions', {
-    preHandler: requireAuth(), // utente loggato
+    preHandler: requireAuth(),
     schema: {
       tags: ['Submissions v1'],
       summary: 'Crea una submission',
@@ -180,15 +149,14 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         201: {
           type: 'object',
           properties: { id: { type: 'number' }, status: { type: 'string' } }
-        },
-        400: { type: 'object', properties: { error: { type: 'string' } } }
+        }
       }
     }
   }, async (req: any, reply) => {
     const cid = BigInt(String((req.params as any).id))
     const body = req.body || {}
 
-    const visibility = (body.visibility ?? 'participants') as 'private'|'participants'|'public'
+    const visibility = (body.visibility ?? 'participants') as 'private' | 'participants' | 'public'
     const activity = (body.activity_description ?? '').toString().slice(0, 500)
     const payload = body.payload && typeof body.payload === 'object' ? body.payload : {}
 
@@ -197,10 +165,10 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         challenge_id: cid as any,
         user_id: req.user.id as any,
         status: 'pending',
-        visibility: visibility as any,
+        visibility,
         activity_description: activity || null,
         payload_json: payload as any
-      } as any,
+      },
       select: { id: true, status: true }
     })
 
@@ -208,10 +176,10 @@ export async function submissionsV1Routes(app: FastifyInstance) {
   })
 
   // ================================
-  // PATCH /api/v1/submissions/:id/review (approve/reject)
+  // POST /api/v1/submissions/:id/review (approve/reject)
   // ================================
-  app.patch('/submissions/:id/review', {
-    preHandler: requireAuth('judge'), // judge o admin
+  app.post('/submissions/:id/review', {
+    preHandler: requireAuth('judge'),
     schema: {
       tags: ['Submissions v1'],
       summary: 'Valuta una submission (judge/admin)',
@@ -227,33 +195,18 @@ export async function submissionsV1Routes(app: FastifyInstance) {
           points: { type: 'number' }
         },
         required: ['decision']
-      },
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            id: { type: 'number' },
-            status: { type: 'string' },
-            points: { anyOf: [{ type: 'number' }, { type: 'null' }] },
-            reviewedAt: { anyOf: [{ type: 'string' }, { type: 'null' }] }
-          }
-        },
-         401: { type: 'object', properties: { error: { type: 'string' } } },
-    	 403: { type: 'object', properties: { error: { type: 'string' } } },
-  		 404: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
   }, async (req: any, reply) => {
     const sid = BigInt(String((req.params as any).id))
-    const { decision, points } = (req.body || {}) as { decision: 'approved'|'rejected', points?: number }
+    const { decision, points } = (req.body || {}) as { decision: 'approved' | 'rejected', points?: number }
 
     const sub = await prisma.challenge_submissions.findUnique({
       where: { id: sid as any },
-      select: { id: true, challenge_id: true }
+      select: { id: true, challenge_id: true, user_id: true }
     })
     if (!sub) return reply.code(404).send({ error: 'not found' })
 
-    // se judge → deve essere il giudice assegnato alla challenge; admin bypassa
     if (req.user.role !== 'admin') {
       const ch = await prisma.challenges.findUnique({
         where: { id: sub.challenge_id as any },
@@ -272,9 +225,30 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         reviewer_user_id: req.user.id as any,
         reviewed_at: now,
         points_awarded: points != null ? Number(points) : null
-      } as any,
+      },
       select: { id: true, status: true, points_awarded: true, reviewed_at: true }
     })
+
+    if (decision === 'approved') {
+      try {
+        const delta = points != null ? Number(points) : 0
+        await onApprove({
+          submission_id: sub.id,
+          challenge_id: sub.challenge_id,
+          user_id: sub.user_id,
+          reviewer_user_id: req.user.id,
+          delta,
+          event: 'task_completed_verified',
+          version: '1.0',
+          meta: {
+            review_context: 'manual_approval',
+            judge_role: req.user.role
+          }
+        })
+      } catch (err) {
+        req.log.error({ err }, 'Errore in onApprove hook')
+      }
+    }
 
     return reply.send({
       id: Number(updated.id),
