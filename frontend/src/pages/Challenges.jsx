@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, API_PATHS } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import axios from 'axios';
+import { isJudge } from "@/utils/roles";
 
 // Helper per mostrare in modo robusto il nome del giudice
 function getJudgeLabel(j) {
@@ -92,6 +93,8 @@ export default function Challenges() {
   const [busySubmit, setBusySubmit] = useState({});
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
+  const isJudgeUser = isJudge(user?.role);
+
 
   // nuovo feed v1 (con paginazione a cursore)
   const [items, setItems] = useState([]);
@@ -312,41 +315,48 @@ export default function Challenges() {
                 </ul>
               </div>
 
-              <div className="card-actions">
-                {isAuthenticated ? (
-                  <>
-                    <button
- 			 className="btn btn-primary"
- 			 onClick={() => navigate(`/challenges/${ch.id}/submissions`)}
-		    >
-			  Partecipa
-		    </button>
+             <div className="card-actions">
+  {isAuthenticated ? (
+    <>
 
-                    <button
-                      className="btn btn-ghost"
-                      disabled={!!busySubmit[ch.id]}
-                      aria-busy={!!busySubmit[ch.id]}
-                      onClick={() => submitResult(ch.id, 2, { note: 'azione demo' })}
-                    >
-                      Invia risultato (+2)
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    className="btn btn-outline"
-                    onClick={() => navigate('/login')}
-                    title="Accedi per partecipare alle sfide"
-                  >
-                    Accedi per partecipare
-                  </button>
-                )}
-              </div>
+      {/* Pulsante invio risultato */}
+<button
+  className="btn btn-primary"
+  onClick={() => navigate(`/challenges/${ch.id}/submit`)}
+>
+  Partecipa
+</button>
 
-              <div className="card-footer">
-                <span className="small muted">
-                  Aggiornata: {ch.updatedAt ? new Date(ch.updatedAt).toLocaleString() : '—'}
-                </span>
-              </div>
+
+      {/* Nuovo pulsante: link alle mie submission */}
+{isAuthenticated && !isJudgeUser && (
+  <button
+    className="btn btn-outline"
+    onClick={() => navigate(`/challenges/${ch.id}/submissions`)}
+  >
+    Le mie submission
+  </button>
+)}
+
+
+    </>
+  ) : (
+    <button
+      className="btn btn-outline"
+      onClick={() => navigate('/login')}
+      title="Accedi per partecipare alle sfide"
+    >
+      Accedi per partecipare
+    </button>
+  )}
+</div>
+
+<div className="card-footer">
+  <span className="small muted">
+    Aggiornata: {ch.updatedAt ? new Date(ch.updatedAt).toLocaleString() : '—'}
+  </span>
+</div>
+
             </article>
           ))}
         </div>

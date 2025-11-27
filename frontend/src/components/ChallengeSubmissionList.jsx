@@ -1,11 +1,16 @@
 // src/components/ChallengeSubmissionList.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useParams } from "react-router-dom";
 import TextBlock from "@/components/UI/TextBlock";
+import { useAuth } from "@/context/AuthContext";
 
 const API_BASE = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, "");
 
-export default function ChallengeSubmissionList({ challengeId, token }) {
+export default function ChallengeSubmissionList({ challengeId: propChallengeId }) {
+  const { token } = useAuth();
+  const { id: routeChallengeId } = useParams();
+  const challengeId = propChallengeId || routeChallengeId;
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

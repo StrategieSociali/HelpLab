@@ -2,12 +2,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { api, API_PATHS } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
+import { isAdmin } from "@/utils/roles";
 
 const PAGE_SIZE = 20;
 
 export function AdminProposals() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdminUser = isAdmin(user?.role);
 
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("pending_review");
@@ -17,7 +18,7 @@ export function AdminProposals() {
   const [error, setError] = useState("");
 
   const load = async ({ append = false } = {}) => {
-    if (!isAdmin) return;
+    if (!isAdminUser) return;
     setLoading(true);
     setError("");
     try {

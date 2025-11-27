@@ -275,16 +275,42 @@ const HomepageStatic = () => {
 
 
 {/* Features Table */}
-      <section className="features-section">
-        <div className="container">
-          <h2>Confronta i Piani di Membership</h2>
-          <div className="features-table">
-            <div className="table-header">
-              <div className="feature-column">Funzionalità</div>
-              <div className="plan-column">Volontario</div>
-              <div className="plan-column premium">Giudice</div>
-              <div className="plan-column">Azienda</div>
-            </div>
+     <section className="features-section">
+  <div className="container">
+    <h2>Confronta i Piani di Membership</h2>
+
+    {/* DESKTOP TABLE */}
+    <div className="features-table desktop-table">
+      <div className="table-header">
+        <div className="feature-column">Funzionalità</div>
+        <div className="plan-column">Volontario</div>
+        <div className="plan-column premium">Giudice</div>
+        <div className="plan-column">Azienda</div>
+      </div>
+      {[
+        ['Accesso Community', '✓', '✓', '✓'],
+        ['Wallet privato', '✓', '✓', '✓'],
+        ['Progetti Mensili', '3', 'Illimitati', 'Illimitati'],
+        ['Corsi base', '✓', '✓', '✓'],
+        ['Corsi avanzati', '—', '✓', 'Per dipendenti'],
+        ['Accesso Vip Eventi', '—', '✓', '✓'],
+        ['Report CSRD/ESRS', '—', 'Base', 'Certificabili'],
+        ['Supporto personalizzato', '—', '—', '✓'],
+      ].map((row, i) => (
+        <div className="table-row" key={i}>
+          {row.map((cell, j) => (
+            <div className={j === 0 ? 'feature-cell' : 'plan-cell'} key={j}>{cell}</div>
+          ))}
+        </div>
+      ))}
+    </div>
+
+    {/* MOBILE CARDS */}
+    <div className="mobile-plan-cards">
+      {['Volontario', 'Giudice', 'Azienda'].map((plan, colIdx) => (
+        <div className="plan-card" key={colIdx}>
+          <h3 className="plan-title">{plan}</h3>
+          <ul className="plan-features">
             {[
               ['Accesso Community', '✓', '✓', '✓'],
               ['Wallet privato', '✓', '✓', '✓'],
@@ -295,55 +321,17 @@ const HomepageStatic = () => {
               ['Report CSRD/ESRS', '—', 'Base', 'Certificabili'],
               ['Supporto personalizzato', '—', '—', '✓'],
             ].map((row, i) => (
-              <div className="table-row" key={i}>
-                {row.map((cell, j) => (
-                  <div className={j === 0 ? 'feature-cell' : 'plan-cell'} key={j}>{cell}</div>
-                ))}
-              </div>
+              <li key={i}>
+                <strong>{row[0]}:</strong> {row[colIdx + 1] || '—'}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
-      </section>
+      ))}
+    </div>
+  </div>
+</section>
 
-
-      {/* (opzionale) Sezione registrazione / lista d'attesa: mantenuta */}
-      <section className="registration-section" id="registration">
-        <div className="container">
-          <h2>Inizia il Tuo Viaggio Sostenibile</h2>
-          <p>
-            Cerchiamo partner per la community di HelpLab.
-          </p>
-
-          <FormNotice />
-
-          <form className="registration-form" onSubmit={(e) => e.preventDefault()}>
-            <div className="form-group">
-              <label htmlFor="name">Nome Completo</label>
-              <input type="text" id="name" name="name" required />
-            </div>
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input type="email" id="email" name="email" required />
-            </div>
-            <div className="form-group">
-              <label htmlFor="interests">Aree di Interesse</label>
-              <select id="interests" name="interests" required>
-                <option value="">Seleziona un'area</option>
-                <option value="platform-testing">Test della piattaforma</option>
-                <option value="local-projects">Proporre progetti locali</option>
-                <option value="trainer">Diventare formatore</option>
-                <option value="judge">Diventare un giudice</option>
-                <option value="supporter">Sostenere un progetto locale</option>
-              </select>
-            </div>
-            <div className="form-group checkbox-group">
-              <input type="checkbox" id="newsletter" name="newsletter" />
-              <label htmlFor="newsletter">Iscriviti alla newsletter per ricevere aggiornamenti</label>
-            </div>
-            <button type="submit" className="submit-button">Proponiti alla Community</button>
-          </form>
-        </div>
-      </section>
     </>
   );
 };

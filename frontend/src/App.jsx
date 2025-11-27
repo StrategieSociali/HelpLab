@@ -18,9 +18,13 @@ import { routes } from './routes';
 import { AuthProvider } from './context/AuthContext';
 import { AdminProposals } from './pages/admin/AdminProposals';
 import BusinessPackages from './pages/BusinessPackages.jsx';
-import StepAssignJudge from './pages/admin/steps/StepAssignJudge';
+import StepAssignJudge from './pages/admin/steps/StepAssignJudge.jsx';
 import Roadmap from './pages/Roadmap.jsx';
 import ChallengeSubmissions from './pages/challenges/ChallengeSubmissions.jsx';
+import SubmissionsOverview from './pages/SubmissionsOverview.jsx';
+import SubmissionForm from './components/SubmissionForm.jsx';
+import ChallengeSubmitPage from "@/pages/challenges/ChallengeSubmitPage";
+import JudgeSubmissionsList from './components/JudgeSubmissionsList.jsx';
 
 
 export default function App() {
@@ -74,6 +78,48 @@ export default function App() {
   }
 />
 <Route
+  path="/challenges/:id/submit"
+  element={
+    <ProtectedRoute>
+      <ChallengeSubmitPage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/submissions"
+  element={
+    <ProtectedRoute>
+      <SubmissionsOverview />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path={routes.admin.assignJudge}
+  element={
+    <ProtectedRoute>
+      <StepAssignJudge />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path={routes.judge.moderation}
+  element={
+    <ProtectedRoute allowedRoles={['judge', 'admin']}>
+      <JudgeSubmissionsList />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path={routes.dashboard.challengeSubmissionForm}
+  element={
+    <ProtectedRoute>
+      <SubmissionForm />
+    </ProtectedRoute>
+  }
+/>
+<Route
   path={routes.admin.proposals}
   element={
     <ProtectedRoute>
@@ -81,11 +127,6 @@ export default function App() {
     </ProtectedRoute>
   }
 />
-<Route path={routes.admin.assignJudge} element={
-  <ProtectedRoute requireAdmin>
-    <StepAssignJudge />
-  </ProtectedRoute>
-} />
 
     {/* Fallback 404 */}
     <Route path="*" element={<NotFound />} />

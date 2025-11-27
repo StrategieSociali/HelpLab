@@ -63,10 +63,7 @@ body{
 .claim{ display:inline-block; font-size:.875rem; color:#475569; margin-left:8px; }
 @media (max-width:900px){ .claim{ display:none; } }
 
-.main-nav{ display:flex; gap:16px; align-items:center; }
-.nav-link{
-  text-decoration:none; color:#111827; padding:6px 10px; border-radius:8px; transition:background .2s ease, box-shadow .2s ease;
-}
+
 .nav-link:hover{ background:#f3f4f6; }
 /* Active “leggero”: niente grigio pieno persistente */
 .nav-link.active{
@@ -98,13 +95,15 @@ body{
 .btn-small{ padding:6px 10px; font-size:.9rem; }
 .btn-pill{ border-radius:9999px; }
 
+/* Menu mobile aperto */
 .burger{ display:none; background:none; border:0; font-size:22px; line-height:1; }
 @media (max-width:900px){
   .main-nav{ display:none; }
   .main-nav.open{
     display:flex; position:absolute; left:0; right:0; top:56px;
-    background:#ffffff; padding:12px 16px; border-bottom:1px solid var(--border);
+    background:#2f3237; padding:12px 16px; border-bottom:1px solid var(--border);
     flex-direction:column; gap:8px;
+    z-index: 1000;
   }
   .burger{ display:block; }
 }
@@ -782,10 +781,10 @@ select.control {
   display: none;
   width: 34px;
   height: 28px;
-  padding: 0;
   border: none;
   background: transparent;
   position: relative;
+  z-index: 60;
 }
 
 .burger span {
@@ -794,7 +793,7 @@ select.control {
   right: 4px;
   height: 2px;
   background: #fff;
-  transition: transform 0.2s ease, opacity 0.2s ease, top 0.2s ease, bottom 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .burger span:nth-child(1) { top: 7px; }
@@ -805,24 +804,91 @@ select.control {
 .burger.open span:nth-child(2) { opacity: 0; }
 .burger.open span:nth-child(3) { top: 13px; transform: rotate(-45deg); }
 
-/* Responsive: nav a scomparsa su mobile, aperta con .open */
+/* Desktop: navbar orizzontale, pulsanti visibili a destra */
+/* === NAVBAR RESPONSIVE FIX === */
+
+/* Azioni auth dentro la nav (visibili solo su mobile quando menu aperto) */
+.nav-auth-actions {
+  display: none;
+}
+
+/* Nascondi il blocco "desktop-only" su schermi piccoli */
 @media (max-width: 900px) {
-  .nav {
+  .nav-auth-actions.desktop-only {
+    display: none;
+  }
+}
+
+
+.burger {
+  display: none;
+}
+
+/* Mobile: menu a tendina */
+@media (max-width: 900px) {
+  /* Mostra il burger */
+  .burger {
+    display: block;
+  }
+
+  /* Nascondi nav di default */
+  .main-nav {
     position: absolute;
     top: 60px;
-    left: 0; right: 0;
+    left: 0;
+    right: 0;
     display: none;
     flex-direction: column;
-    gap: 8px;
-    padding: 10px;
-    background: rgba(18, 18, 20, 0.96);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: #2f3237;
+    padding: 16px;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    gap: 12px;
   }
-  .nav.open { display: flex; }
 
-  .auth-actions { display: none; } /* le azioni restano nella nav aperta se vuoi, ma per ora le teniamo a destra su desktop */
-  .burger { display: inline-block; }
+  /* Mostra le azioni auth dentro il menu mobile */
+  .nav-auth-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+  }
+  
+  /* Mantieni NASCOSTO il blocco desktop-only su mobile */
+  .nav-auth-actions.desktop-only {
+    display: none !important;
+  }
+
+  .nav-auth-actions .btn {
+    width: 100%;
+  }
+
+  .nav-auth-actions .admin-menu__list {
+    position: static;
+    margin-top: 8px;
+  }
 }
+
+/* Desktop (oltre 900px) */
+@media (min-width: 901px) {
+  /* Mostra il blocco "desktop-only" su schermi grandi */
+ @media (min-width: 901px) {
+  .nav-auth-actions.desktop-only {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+}
+
+  /* Nascondi il blocco mobile-only (dentro la nav) */
+  .main-nav .nav-auth-actions {
+    display: none;
+  }
+}
+
 /* Titoli sezione admin */
 .admin-title {
   color: #ffffff;       /* testo bianco */
@@ -830,20 +896,7 @@ select.control {
   margin-bottom: 1rem;  /* spaziatura con gli elementi sotto */
 }
 
-.site-header .header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.site-header .main-nav {
-  display: flex;
-  gap: 22px;
-}
-.site-header .auth-actions {
-  display: flex;
-  gap: 10px;
-}
+
 /* ===== Header – stile coerente dark ===== */
 .site-header {
   position: sticky; top: 0; z-index: 50;
@@ -871,11 +924,7 @@ select.control {
   text-decoration: none;
   padding: 6px 4px; border-radius: 8px;
 }
-.main-nav .nav-link:hover,
-.main-nav .nav-link.active {
-  color: #ffffff !important;
-  box-shadow: inset 0 -2px 0 0 #3b82f6; /* sottolineatura blu */
-}
+
 
 /* Pulsanti auth */
 .auth-actions { display: flex; gap: 10px; align-items: center; }
@@ -1008,5 +1057,239 @@ select.control {
 .mauticform-textarea {
   height: 42px;
   resize: none;
+}
+
+/* =========================================================
+   Responsive Layout – Mobile-first adjustments
+   Target: screens <= 768px
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  /* --- Global container & spacing --- */
+  .container {
+    width: 100%;
+    padding-inline: 16px;
+  }
+
+  body {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* --- HERO section --- */
+  .hero-section {
+    min-height: 70vh;
+    background-position: center top;
+    background-size: cover;
+    padding: 60px 16px;
+    text-align: center;
+  }
+  .hero-content {
+    padding-inline: 8px;
+  }
+  .hero-content h1,
+  .hero-content .section-title {
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    line-height: 1.3;
+  }
+  .hero-content p,
+  .hero-content .section-subtitle {
+    font-size: clamp(1rem, 4vw, 1.1rem);
+    margin-top: 12px;
+  }
+
+  /* --- CTA sections & buttons --- */
+  .cta-row,
+  .btn-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .btn,
+  .btn-primary,
+  .btn-ghost {
+    width: 100%;
+    max-width: 320px;
+    padding: 12px;
+    font-size: 1rem;
+  }
+  .btn:hover {
+    transform: none;
+  }
+
+  /* --- Buttons hover fix (white on white issue) --- */
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  /* --- Grids: benefits, support, audience --- */
+  .benefits-grid,
+  .support-grid,
+  .audience-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .benefit-card,
+  .support-card,
+  .audience-card {
+    text-align: center;
+    padding: 20px 12px;
+  }
+
+  /* --- Registration form --- */
+  .registration-form {
+    padding: 20px 16px;
+  }
+  .form-group,
+  .mauticform-row {
+    width: 100%;
+    margin-bottom: 18px;
+  }
+  .mauticform-input,
+  .mauticform-textarea,
+  .mauticform-checkboxgrp-checkbox {
+    width: 100%;
+    font-size: 1rem;
+    padding: 10px;
+  }
+
+  .checkbox-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .checkbox-item span {
+    font-size: 1rem;
+  }
+
+  /* --- CTA section text --- */
+  .cta-section {
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .cta-section h2 {
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    margin-bottom: 12px;
+  }
+  .cta-section p {
+    font-size: 1rem;
+  }
+
+  /* --- Footer --- */
+  footer {
+    text-align: center;
+    padding: 20px 16px;
+  }
+  footer .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  /* --- Responsive table fix --- */
+.pricing-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pricing-table {
+  width: 700px; /* larghezza minima per scroll */
+  min-width: 600px;
+  border-collapse: collapse;
+}
+
+.pricing-table th,
+.pricing-table td {
+  white-space: nowrap;
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+/* Impedisce che le colonne si impilino */
+.pricing-table tr {
+  display: table-row;
+}
+/* Imposta comportamento di default */
+.mobile-plan-cards {
+  display: none; /* di default è nascosta */
+}
+
+/* Nascondi la tabella su mobile, mostra le card */
+@media (max-width: 768px) {
+  .desktop-table {
+    display: none;
+  }
+
+  .mobile-plan-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 24px;
+    transition: all 0.3s ease;
+    opacity: 1;
+  }
+
+  .plan-card {
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .plan-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--brand-700);
+  }
+
+  .plan-features {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+
+  .plan-features li {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    color: #374151;
+  }
+
+  .plan-features li strong {
+    color: #111827;
+  }
+}
+
+/* Nascondi le card su desktop */
+@media (min-width: 769px) {
+  .mobile-plan-cards {
+    display: none;
+  }
+}
+
+/* Mobile cards: default = hidden */
+.mobile-plan-cards {
+  display: none !important; /* 🔒 forza l’invisibilità di default */
+}
+
+/* Mostra SOLO su mobile */
+@media (max-width: 768px) {
+  .desktop-table {
+    display: none !important; /* 🔒 forza il nascondimento tabella */
+  }
+
+  .mobile-plan-cards {
+    display: flex !important;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 24px;
+  }
+}
 }
 

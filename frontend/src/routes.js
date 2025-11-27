@@ -28,6 +28,12 @@ export const routes = {
     proposals: '/dashboard/admin/proposals',      // gestione proposte
     assignJudge: '/dashboard/admin/assign-judge', // ✅ assegnazione giudici
   },
+  
+  //rotta giudici
+ judge: {
+    moderation: '/modera',
+  },
+
 
   // sezione business e home
   //business: '/business',

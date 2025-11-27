@@ -2,12 +2,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { api, API_PATHS } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
+import { isAdmin } from "@/utils/roles";
 
 const PAGE_SIZE = 20;
 
 export default function StepAssignJudge() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdminUser = isAdmin(user?.role);
 
   const [unassigned, setUnassigned] = useState([]);
   const [judges, setJudges] = useState([]);
@@ -18,7 +19,7 @@ export default function StepAssignJudge() {
   const [error, setError] = useState("");
 
   const load = async () => {
-    if (!isAdmin) return;
+    if (!isAdminUser) return;
     setLoading(true);
     setError("");
     try {
