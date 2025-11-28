@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
@@ -21,15 +21,14 @@ model challenge_participants {
 }
 
 model challenge_scores {
-  challenge_id         BigInt    @db.UnsignedBigInt
-  user_id              BigInt    @db.UnsignedBigInt
-  score                Int       @default(0)
-  updated_at           DateTime  @default(now()) @db.DateTime(0)
-  verified_tasks_count Int       @default(0)
-  last_event_at        DateTime? @db.DateTime(0)
-
-  challenges challenges @relation(fields: [challenge_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cs_ch")
-  users      users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cs_us")
+  challenge_id         BigInt     @db.UnsignedBigInt
+  user_id              BigInt     @db.UnsignedBigInt
+  score                Int        @default(0)
+  updated_at           DateTime   @default(now()) @db.DateTime(0)
+  verified_tasks_count Int        @default(0)
+  last_event_at        DateTime?  @db.DateTime(0)
+  challenges           challenges @relation(fields: [challenge_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cs_ch")
+  users                users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cs_us")
 
   @@id([challenge_id, user_id])
   @@index([user_id], map: "fk_cs_us")
@@ -43,6 +42,7 @@ model challenge_submissions {
   challenge_id         BigInt                           @db.UnsignedBigInt
   user_id              BigInt                           @db.UnsignedBigInt
   reviewer_user_id     BigInt?                          @db.UnsignedBigInt
+  task_id              BigInt?                          @db.UnsignedBigInt
   payload_json         Json?
   activity_description String?                          @db.VarChar(500)
   status               challenge_submissions_status     @default(pending)
@@ -50,13 +50,20 @@ model challenge_submissions {
   points_awarded       Int?
   created_at           DateTime                         @default(now()) @db.DateTime(0)
   reviewed_at          DateTime?                        @db.DateTime(0)
-  challenges           challenges                       @relation(fields: [challenge_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csub_ch")
-  users                users                            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csub_us")
-  review_audit         review_audit[]
-  points_transactions  points_transactions[]
+
+  // Relazioni principali
+  challenges challenges @relation(fields: [challenge_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csub_ch")
+  users      users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csub_us")
+
+  // Nuova relazione con i task
+  task challenge_tasks? @relation(fields: [task_id], references: [id])
+
+  points_transactions points_transactions[]
+  review_audit        review_audit[]
 
   @@index([user_id], map: "fk_csub_us")
   @@index([challenge_id, created_at], map: "idx_challenge_created")
+  @@index([task_id], map: "idx_csub_task") // opzionale ma utile
 }
 
 model challenges {
@@ -81,12 +88,13 @@ model challenges {
   challenge_participants challenge_participants[]
   challenge_scores       challenge_scores[]
   challenge_submissions  challenge_submissions[]
-  points_transactions    points_transactions[]
+  challenge_tasks        challenge_tasks[]
 
-  users_challenges_created_byTousers users?               @relation("challenges_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_ch_created_by")
-  users                              users?               @relation(fields: [judge_user_id], references: [id], onUpdate: NoAction, map: "fk_ch_judge")
-  sponsors                           sponsors?            @relation(fields: [sponsor_id], references: [id], onUpdate: NoAction, map: "fk_ch_sponsor")
-  challenge_proposals                challenge_proposals? @relation(fields: [proposal_id], references: [id], onUpdate: NoAction, map: "fk_chal_proposal")
+  users_challenges_created_byTousers users?                @relation("challenges_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_ch_created_by")
+  users                              users?                @relation(fields: [judge_user_id], references: [id], onUpdate: NoAction, map: "fk_ch_judge")
+  sponsors                           sponsors?             @relation(fields: [sponsor_id], references: [id], onUpdate: NoAction, map: "fk_ch_sponsor")
+  challenge_proposals                challenge_proposals?  @relation(fields: [proposal_id], references: [id], onUpdate: NoAction, map: "fk_chal_proposal")
+  points_transactions                points_transactions[]
 
   @@index([judge_user_id], map: "fk_ch_judge")
   @@index([sponsor_id], map: "fk_ch_sponsor")
@@ -158,9 +166,9 @@ model users {
   challenge_submissions                   challenge_submissions[]
   challenges_challenges_created_byTousers challenges[]             @relation("challenges_created_byTousers")
   challenges                              challenges[]
+  points_transactions                     points_transactions[]
   review_audit                            review_audit[]
   user_module_progress                    user_module_progress[]
-  points_transactions                     points_transactions[]
 }
 
 model form_submissions {
@@ -225,6 +233,48 @@ model review_audit {
   @@index([submission_id], map: "submission_id")
 }
 
+model points_transactions {
+  id                     String                @id @db.VarChar(50)
+  user_id                BigInt                @db.UnsignedBigInt
+  challenge_id           BigInt                @db.UnsignedBigInt
+  submission_id          BigInt                @db.UnsignedBigInt
+  event                  String                @db.VarChar(80)
+  delta                  Int
+  meta_json              Json?
+  version                String                @default("1.0") @db.VarChar(10)
+  created_at             DateTime              @default(now()) @db.DateTime(0)
+  auto_base_points       Int?                  @default(0)
+  judge_points           Int?                  @default(0)
+  final_points           Int?                  @default(0)
+  consistency_bonus_pct  Float?                @default(0)
+  repetition_penalty_pct Float?                @default(0)
+  improvement_bonus_pct  Float?                @default(0)
+  scoring_config_version String?               @default("1.0")
+  challenges             challenges            @relation(fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_pt_challenge")
+  submissions            challenge_submissions @relation(fields: [submission_id], references: [id], onDelete: Cascade, map: "fk_pt_submission")
+  users                  users                 @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_pt_user")
+
+  @@unique([submission_id, event], map: "uq_pt_submission_event")
+  @@index([challenge_id, created_at], map: "idx_pt_challenge_created")
+  @@index([user_id, challenge_id], map: "idx_pt_user_challenge")
+  @@index([event], map: "idx_pt_event")
+}
+
+model challenge_tasks {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  challenge_id BigInt   @db.UnsignedBigInt
+  title        String   @db.VarChar(200)
+  description  String?  @db.Text
+  order_index  Int      @default(0)
+  created_at   DateTime @default(now()) @db.DateTime(0)
+
+  challenges            challenges              @relation(fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_task_challenge")
+  challenge_submissions challenge_submissions[]
+
+  @@unique([challenge_id, order_index], map: "uq_task_challenge_order")
+  @@index([challenge_id], map: "idx_task_challenge")
+}
+
 enum users_role {
   user
   judge
@@ -270,37 +320,4 @@ enum challenge_submissions_visibility {
   private
   participants
   public
-}
-
-// === Nuova tabella append-only ===
-model points_transactions {
-  id            String   @id @db.VarChar(50) // es. "pt_20251022_ab12cd"
-  user_id       BigInt   @db.UnsignedBigInt
-  challenge_id  BigInt   @db.UnsignedBigInt
-  submission_id BigInt   @db.UnsignedBigInt
-  event         String   @db.VarChar(80)
-  delta         Int
-  meta_json     Json?
-  version       String   @default("1.0") @db.VarChar(10)
-  created_at    DateTime @default(now()) @db.DateTime(0)
-
-  // Estensioni per log punteggio e ML
-  auto_base_points       Int?    @default(0)
-  judge_points           Int?    @default(0)
-  final_points           Int?    @default(0)
-  consistency_bonus_pct  Float?  @default(0)
-  repetition_penalty_pct Float?  @default(0)
-  improvement_bonus_pct  Float?  @default(0)
-  scoring_config_version String? @default("1.0")
-
-  // Relazioni
-  users       users                 @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_pt_user")
-  challenges  challenges            @relation(fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_pt_challenge")
-  submissions challenge_submissions @relation(fields: [submission_id], references: [id], onDelete: Cascade, map: "fk_pt_submission")
-
-  // Vincoli e indici
-  @@unique([submission_id, event], map: "uq_pt_submission_event")
-  @@index([challenge_id, created_at], map: "idx_pt_challenge_created")
-  @@index([user_id, challenge_id], map: "idx_pt_user_challenge")
-  @@index([event], map: "idx_pt_event")
 }
