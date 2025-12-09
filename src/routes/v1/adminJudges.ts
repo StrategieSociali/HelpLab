@@ -1,3 +1,4 @@
+// src/routes/v1/adminJudges.ts
 import { FastifyInstance, FastifyReply } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { verifyAccessToken } from '../../utils/jwt.js'

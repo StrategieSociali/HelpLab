@@ -1,3 +1,4 @@
+// src/routes/v1/summary.ts
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { requireAuth } from '../../utils/requireAuth.js'

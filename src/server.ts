@@ -1,4 +1,13 @@
 // src/server.ts
+
+/**
+ * Scopo: Istanziare Fastify, registrare middleware e route,
+ * abilitare Swagger, CORS, Rate Limit, Cookie e sicurezza.
+ *
+ * NOTA: Nessuna cache esterna. La cache delle leaderboard
+ *       è ora gestita in-memory via utils/memoryCache.ts
+ */
+
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
@@ -7,14 +16,11 @@ import dotenv from 'dotenv'
 import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import cookie from '@fastify/cookie'
-// import formbody from '@fastify/formbody'
 
+dotenv.config()
 
 // Routes
-import { authRoutes } from './routes/auth.js'
 import { learningPathsRoutes } from './routes/learningPaths.js'
-
-// v1
 import { scoringV1Routes } from './routes/v1/scoring.js'
 import { proposalsV1Routes } from './routes/v1/proposals.js'
 import { judgesV1Routes } from './routes/v1/judges.js'
@@ -24,29 +30,24 @@ import { submissionsV1Routes } from './routes/v1/submissions.js'
 import { leaderboardV1Routes } from './routes/v1/leaderboard.js'
 import { v1Routes } from './routes/v1/index.js'
 
-
-dotenv.config()
-
 async function start() {
   const server = Fastify({ logger: true })
 
-// parser per JSON e form data
-// await server.register(formbody)
-
-  // Sicurezza
+  // === Sicurezza
   await server.register(helmet)
 
-  // CORS
+  // === CORS
   const origins = (process.env.CORS_ORIGIN || '')
     .split(',')
-    .map(s => s.trim())
+    .map(o => o.trim())
     .filter(Boolean)
+
   await server.register(cors, {
     origin: origins.length ? origins : false,
     credentials: true
   })
 
-  // Rate limit globale (con messaggio JSON coerente)
+  // === Rate limit
   await server.register(rateLimit, {
     max: 60,
     timeWindow: '1 minute',
@@ -57,36 +58,40 @@ async function start() {
       'x-ratelimit-reset': true
     },
     errorResponseBuilder: (_req, ctx: any) => ({
-  error: 'too_many_requests',
-  message: 'Troppe richieste, riprova più tardi',
-  statusCode: 429,
-  limit: ctx?.max ?? null
-   })
+      error: 'too_many_requests',
+      message: 'Troppe richieste, riprova più tardi',
+      statusCode: 429,
+      limit: ctx?.max ?? null
+    })
   })
 
-  // Cookie (prima delle route che li usano)
+  // === Cookie
   await server.register(cookie, {
     secret: process.env.COOKIE_SECRET || process.env.JWT_SECRET || 'changeme',
     parseOptions: {
       httpOnly: true,
       sameSite: 'none',
-      secure: true
-    }
+      secure: true,
+    },
   })
 
-  // Swagger (opzionale ma utile)
+  // === Swagger
   await server.register(swagger, {
     openapi: {
-      info: { title: 'HelpLab API', version: process.env.npm_package_version || '0.5.0' },
+      info: { title: 'HelpLab API', version: process.env.npm_package_version || '0.6.4' },
       servers: [{ url: '/api' }],
       tags: [
-        { name: 'Auth', description: 'Registrazione, login, sessione' },
-        { name: 'Learning', description: 'Percorsi formativi' },
-        { name: 'Scoring v1', description: 'Config e preview scoring v1' },
-        { name: 'Proposals v1', description: 'Proposte di challenge (v1)' },
-        { name: 'Judges v1', description: 'Coda e decisioni giudici' },
+        { name: 'Auth', description: 'Registrazione, login, sessione (v1)' },
+        { name: 'Learning', description: 'Percorsi formativi (legacy)' },
+        { name: 'Scoring v1', description: 'Configurazione e anteprima punteggi sfide' },
+        { name: 'Proposals v1', description: 'Proposte utenti' },
+        { name: 'Judges v1', description: 'Revisione giudici' },
         { name: 'Admin v1', description: 'Operazioni amministrative' },
-        { name: 'Challenges v1', description: 'Feed pubblico sfide (da proposals approvate)' }
+        { name: 'Challenges v1', description: 'Sfide attive' },
+        { name: 'Submissions v1', description: 'Invio e moderazione attività' },
+        { name: 'Tasks v1', description: 'Gestione task challenge' },
+        { name: 'Summary v1', description: 'Statistiche sfide' },
+        { name: 'Leaderboard v1', description: 'Classifiche utenti' }
       ],
       components: {
         securitySchemes: {
@@ -94,48 +99,36 @@ async function start() {
           refreshCookie: {
             type: 'apiKey',
             in: 'cookie',
-            name: process.env.COOKIE_NAME || 'helplab_refresh',
-            description: 'Refresh token httpOnly impostato dal login'
+            name: process.env.COOKIE_NAME || 'helplab_refresh'
           }
         }
       }
     }
   })
-  await server.register(swaggerUI, { routePrefix: '/api/docs', uiConfig: { docExpansion: 'list' } })
 
-  // Health
- server.get('/api/health', async () => ({ status: 'ok' }))
+  await server.register(swaggerUI, {
+    routePrefix: '/api/docs',
+    uiConfig: { docExpansion: 'list' }
+  })
 
-  // v0 (solo learning paths; feed challenges legacy è stato rimosso)
+  // === Health check
+  server.get('/api/health', async () => ({ status: 'ok' }))
+
+  // === Rotte v0
   await server.register(learningPathsRoutes, { prefix: '/api/learning-paths' })
 
-  // v1
-// await server.register(scoringV1Routes,     { prefix: '/api/v1' })
-// await server.register(proposalsV1Routes,   { prefix: '/api/v1' })
-// await server.register(judgesV1Routes,      { prefix: '/api/v1' })
-// await server.register(adminJudgesV1Routes, { prefix: '/api/v1' })
-// await server.register(challengesV1Routes,  { prefix: '/api/v1' })
-// await server.register(submissionsV1Routes, { prefix: '/api/v1' })
-// await server.register(leaderboardV1Routes, { prefix: '/api/v1' })
-
-
-
-  // Auth
-  await server.register(authRoutes, { prefix: '/api/auth' })
+  // === Rotte v1
   await server.register(v1Routes, { prefix: '/api/v1' })
-  
-    // Alias Auth
-//  await server.register(authRoutes, { prefix: '/auth' })
 
-  // Avvio
+  // === Avvio server
   const port = Number(process.env.PORT || 3001)
   const host = process.env.HOST || '127.0.0.1'
+
   await server.listen({ host, port })
   server.log.info(`API listening on http://${host}:${port}`)
 }
 
-// Entry point
-start().catch((err) => {
+start().catch(err => {
   console.error('Fatal startup error:', err)
   process.exit(1)
 })

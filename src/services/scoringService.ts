@@ -1,4 +1,18 @@
 // src/services/scoringService.ts
+/**
+ * Scopo: costruire una soluzion modulare e futuro-orientato al problema della valutazione dell’impatto,
+ *
+ * Attualmente supporta:
+ *   version
+ *   co2e_coef (coefficiente moltiplicativo)
+ *   difficulty_multipliers
+ *   target_scaling
+ *   evidence_bonus
+ *  Il metodo previewScoreV1 fa:
+ *    Uso esclusivo di co2 stimata o difficulty
+ *    Calcolo dello scaling sul target (log10(1+amount)+1)
+ *    Bonus per evidenze in base a tipo di verifica
+ */
 
 export type ScoringConfigV1 = {
   version: string

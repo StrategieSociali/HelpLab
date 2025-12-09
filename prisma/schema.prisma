@@ -158,6 +158,7 @@ model users {
   username                                String                   @unique(map: "username") @db.VarChar(80)
   email                                   String?                  @unique(map: "email")
   password_hash                           String?                  @db.VarChar(255)
+  nickname                                String?                  @unique
   role                                    users_role?              @default(user)
   created_at                              DateTime                 @default(now()) @db.DateTime(0)
   challenge_participants                  challenge_participants[]

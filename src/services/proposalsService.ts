@@ -1,3 +1,14 @@
+//src/services/proposalsService.ts
+/**
+ * Scopo: passare da proposta a challenge
+ *
+ * Attualmente supporta:
+ *   Creazione di proposte di challenge
+ *   Approvazione di una proposta → crea una nuova challenge
+ */
+
+
+
 import { prisma } from '../db/client.js'
 
 // util: slug "pulito" e unico

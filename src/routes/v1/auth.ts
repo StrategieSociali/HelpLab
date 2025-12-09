@@ -1,14 +1,14 @@
-// src/routes/auth.ts
+// src/routes/v1/auth.ts
 import { FastifyInstance } from 'fastify'
-import { registerSchema, loginSchema } from '../schemas/authSchemas.js'
-import { prisma } from '../db/client.js'
+import { registerSchema, loginSchema } from '../../schemas/authSchemas.js'
+import { prisma } from '../../db/client.js'
 import argon2 from 'argon2'
-import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from '../utils/jwt.js'
+import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from '../../utils/jwt.js'
 
 const COOKIE_NAME = process.env.COOKIE_NAME || 'helplab_refresh'
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || '.helplab.space'
 
-export async function authRoutes(app: FastifyInstance) {
+export async function authV1Routes(app: FastifyInstance) {
   // REGISTER
   app.post('/register', {
     config: { rateLimit: { max: 15, timeWindow: '1 minute' } },
@@ -38,29 +38,38 @@ export async function authRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     const parse = registerSchema.safeParse((req as any).body)
     if (!parse.success) return reply.code(400).send({ error: 'invalid body' })
-    const { email, password, username } = parse.data
+    const { email, password, username, nickname } = parse.data
+
 
     const existing = await prisma.users.findFirst({ where: { email } as any })
     if (existing) return reply.code(409).send({ error: 'email already in use' })
+    
+    const existingNickname = await prisma.users.findFirst({ where: { nickname } as any })
+    if (existingNickname) return reply.code(409).send({ error: 'nickname already in use' })
+
 
     const hash = await argon2.hash(password, { type: argon2.argon2id })
     const user = await prisma.users.create({
-      data: {
-        email,
-        password_hash: hash,
-        username: username ?? email.split('@')[0].toLowerCase()
-      } as any,
-      select: { id: true, email: true, username: true, role: true }
-    })
+    data: {
+    email,
+    password_hash: hash,
+    username: username ?? email.split('@')[0].toLowerCase(),
+    nickname
+  } as any,
+  select: { id: true, email: true, username: true, role: true, nickname: true }
+})
+
 
     return reply.code(201).send({
-      user: {
-        id: Number(user.id),
-        email: user.email ?? null,
-        username: user.username,
-        role: user.role ?? 'user'
-      }
-    })
+     user: {
+       id: Number(user.id),
+       email: user.email ?? null,
+       username: user.username,
+       nickname: user.nickname,
+    role: user.role ?? 'user'
+  }
+})
+
   })
 
   // LOGIN

@@ -1,0 +1,11 @@
+server.get('/test-cache', async (req, reply) => {
+  const key = 'mytestkey'
+  const value = await req.server.cache.get(key)
+
+  if (value) {
+    return reply.send({ fromCache: true, value })
+  }
+
+  await req.server.cache.set(key, { data: 'Hello Cache' }, 5000)
+  return reply.send({ fromCache: false })
+})

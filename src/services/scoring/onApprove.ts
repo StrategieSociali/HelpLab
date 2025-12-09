@@ -1,4 +1,21 @@
 // src/services/scoring/onApprove.ts
+/**
+* 1. Controllo di idempotenza
+* Evita doppie registrazioni su stessa submission + evento
+* Questo è fondamentale per non gonfiare il punteggio per errori lato backend.
+* 
+* 2. Registra transazione audit in points_transactions
+* Crea un record completo con:
+* user_id, challenge_id, submission_id
+* delta punti
+* meta_json con reviewer e origine
+* 
+* Ottimo per trasparenza, debugging, tracciabilità.
+* 
+* 3. Aggiorna (o crea) challenge_scores
+* Somma il delta al punteggio totale per l’utente in quella challenge.
+* 
+ */
 import { prisma } from '../../db/client.js'
 
 // 🔒 Hook onApprove — registra punti e aggiorna classifica

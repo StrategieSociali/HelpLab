@@ -1,3 +1,4 @@
+// src/routes/v1/scoring.ts
 import { FastifyInstance } from 'fastify'
 import { scoringConfigV1, previewScoreV1 } from '../../services/scoringService.js'
 import { previewBodySchema } from '../../schemas/scoringSchemas.js'

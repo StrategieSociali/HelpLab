@@ -1,9 +1,15 @@
 // src/routes/v1/submissions.ts
+/**
+ * Scopo: permette l'invio delle submission,
+ *permette di convertire una submission e registrate i dati relativi
+ * 
+ */
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { requireAuth } from '../../utils/requireAuth.js'
 import { onApprove } from '../../services/scoring/onApprove.js'
-
+import { invalidateLeaderboardCache } from '../../services/leaderboardService.js'
+import { generateLeaderboardCacheKey } from '../../services/leaderboardService.js'
 
 // visibilità consentita in base al ruolo/contesto
 async function computeVisibilityFilter(opts: {
@@ -245,6 +251,13 @@ export async function submissionsV1Routes(app: FastifyInstance) {
             judge_role: req.user.role
           }
         })
+
+        //invalidazione chache se i dati cambiano
+      await invalidateLeaderboardCache(
+  generateLeaderboardCacheKey('challenge', { challenge_id: sub.challenge_id })
+)
+
+
       } catch (err) {
         req.log.error({ err }, 'Errore in onApprove hook')
       }
