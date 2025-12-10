@@ -10,6 +10,7 @@ export const routes = {
     challengeSubmissions: '/challenges/:challengeId/submissions',
     learningPaths: '/learning-paths',
 
+
     // protette (utenti loggati)
     userProfile: '/dashboard/profile',
     challengeCreate: '/dashboard/challenges/create',
@@ -35,10 +36,11 @@ export const routes = {
   },
 
 
-  // sezione business e home
-  //business: '/business',
+  // sezione home e community
   home: '/',
   joinHelpLab: '/unisciti',
   notFound: '*',
+  leaderboard: '/leaderboard',
+  info: '/benvenuto',
 };
 

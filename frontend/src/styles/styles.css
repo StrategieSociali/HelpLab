@@ -929,7 +929,7 @@ select.control {
 /* Pulsanti auth */
 .auth-actions { display: flex; gap: 10px; align-items: center; }
 
-/* ===== Dropdown Admin ===== */
+/* ===== Dropdown Menu ===== */
 .admin-menu { position: relative; }
 .admin-menu > summary {
   list-style: none; cursor: pointer;
@@ -956,7 +956,7 @@ select.control {
   display: grid; gap: 6px;
 }
 
-/* voci nel dropdown (riuso delle classi button) */
+/* voci nel dropdown admin */
 .admin-menu__list .btn {
   width: 100%; justify-content: flex-start;
   background: #f8fafc; color: #0f172a;
@@ -964,6 +964,64 @@ select.control {
 }
 .admin-menu__list .btn:hover {
   background: #eef2f7;
+}
+
+/* impila in verticale le voci nel menu dropdown */
+
+.dropdown-menu.vertical-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  gap: 0.5rem;
+}
+
+/* Menu Sfide */
+.sfide-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.sfide-menu__list {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.s ease, transform 0.4s ease, visibility 1,5s;
+  pointer-events: none;
+  z-index: 100;
+  text-align: left;
+}
+
+.sfide-menu.open .sfide-menu__list {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.sfide-menu__list .btn {
+  all: unset;
+  cursor: pointer;
+  color: white;
+  padding: 0.25rem 0;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sfide-menu__list .btn:hover {
+  text-decoration: underline;
 }
 
 /* corpo del testo */

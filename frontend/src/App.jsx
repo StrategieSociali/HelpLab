@@ -8,7 +8,8 @@ import '@/styles/styles.css';
 import Challenges from './pages/Challenges';
 import CreateChallenge from "@/pages/challenges/CreateChallenge";
 import LearningPaths from './pages/LearningPaths.jsx';
-import UserProfile from './pages/UserProfile'; //-> attivare quando si parte con la registrazione
+import UserProfile from './pages/UserProfile';
+import Leaderboard from "@/pages/Leaderboard";
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import NotFound from './pages/NotFound';
@@ -25,6 +26,7 @@ import SubmissionsOverview from './pages/SubmissionsOverview.jsx';
 import SubmissionForm from './components/SubmissionForm.jsx';
 import ChallengeSubmitPage from "@/pages/challenges/ChallengeSubmitPage";
 import JudgeSubmissionsList from './components/JudgeSubmissionsList.jsx';
+import WelcomeInfo from "@/pages/WelcomeInfo";
 
 
 export default function App() {
@@ -41,9 +43,11 @@ export default function App() {
     <Route path={routes.auth.login} element={<Login />} />
     <Route path={routes.auth.register} element={<Register />} />
     <Route path={routes.joinHelpLab} element={<JoinHelpLab />} />
+    <Route path={routes.leaderboard} element={<Leaderboard />} />
     <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
     <Route path={routes.business.packages} element={<BusinessPackages />} />
     <Route path={routes.roadmap} element={<Roadmap />} />
+    <Route path={routes.info} element={<WelcomeInfo />} />
     <Route
       path="/learningpaths"
       element={<Navigate to={routes.dashboard.learningPaths} replace />}

@@ -29,8 +29,8 @@ export const API_PATHS = {
   // pubblico (v1)
   challenges: (q = "") => `/v1/challenges${q}`,
   challengeDetail: (id) => `/v1/challenges/${id}`,
-  scoringConfig: () => '/v1/scoring/config',
-  previewScoring: () => '/v1/challenges/preview-scoring',
+  scoringConfig: () => `/v1/scoring/config`,
+  previewScoring: () => `/v1/challenges/preview-scoring`,
   challengeLeaderboard: (id, q = '') => `/v1/challenges/${id}/leaderboard${q}`,
 
   // admin – proposals (v1)
@@ -42,16 +42,14 @@ export const API_PATHS = {
   adminJudges: (q = "") => `/v1/admin/judges${q}`,
   unassigned:  (q = "") => `/v1/challenges/unassigned${q}`,
   assignJudge: (id) => `/v1/challenges/${id}/assign-judge`,
-  
-  //ChallengeProgress
-    challengeSubmissions: (id) => `${BASE_API}/api/v1/challenges/${id}/submissions`,
-    challengeLeaderboard: (id, q = '') => `${BASE_API}/api/v1/challenges/${id}/leaderboard${q}`,
-    submitReview: (id) => `${BASE_API}/api/v1/submissions/${id}/review`,
+
+  // challenge submissions & review
+  challengeSubmissions: (id) => `/v1/challenges/${id}/submissions`,
+  submitReview: (id) => `/v1/submissions/${id}/review`,
 
   // auth
-  login:   `/auth/login`,
-  refresh: `/auth/refresh`,
-  me:      `/auth/me`,
-  register: `/auth/register`,
+  login:    `/v1/auth/login`,
+  refresh:  `/v1/auth/refresh`,
+  me:       `/v1/auth/me`,
+  register: `/v1/auth/register`,
 };
-
