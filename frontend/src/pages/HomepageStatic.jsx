@@ -280,7 +280,7 @@ const HomepageStatic = () => {
     <h2>Confronta i Piani di Membership</h2>
 
     {/* DESKTOP TABLE */}
-    <div className="features-table desktop-table">
+    <div className="desktop-table">
       <div className="table-header">
         <div className="feature-column">Funzionalità</div>
         <div className="plan-column">Volontario</div>

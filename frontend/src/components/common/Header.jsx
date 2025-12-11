@@ -19,8 +19,9 @@ import { isAdmin } from "@/utils/roles";
 export default function Header() {
   const { isAuthenticated, user, logout } = useAuth();
 
-  const [hasMounted, setHasMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [ready, setReady] = useState(false);
 
 // gestione menu impilati
   const [sfideOpen, setSfideOpen] = useState(false);
@@ -29,25 +30,19 @@ export default function Header() {
   const [communityOpen, setCommunityOpen] = useState(false);
 
 
-// gestione mobile
-  const [isMobile, setIsMobile] = useState(false);
-
 useEffect(() => {
   const checkMobile = () => {
-    setIsMobile(window.innerWidth < 768);
+    const mobile = window.innerWidth < 768;
+    setIsMobile(mobile);
+    setMenuOpen(false); // Forza chiusura al primo render
+    setReady(true);
   };
   checkMobile();
   window.addEventListener("resize", checkMobile);
   return () => window.removeEventListener("resize", checkMobile);
 }, []);
 
-
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-
-  if (!hasMounted) return null;
+if (!ready) return null;
 
   return (
     <header className="site-header">
