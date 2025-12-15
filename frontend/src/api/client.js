@@ -1,7 +1,13 @@
 // src/api/client.js
+console.warn(">>> CLIENT.JS LOADED <<<");
+
 import axios from "axios";
 
+
 const API_BASE = (import.meta.env.VITE_API_URL || "").trim().replace(/\/+$/, "");
+
+//temporanea
+console.log("API_BASE =", API_BASE);
 
 export const api = axios.create({
   baseURL: API_BASE,
@@ -46,6 +52,8 @@ export const API_PATHS = {
   // challenge submissions & review
   challengeSubmissions: (id) => `/v1/challenges/${id}/submissions`,
   submitReview: (id) => `/v1/submissions/${id}/review`,
+  dashboard: () => "/v1/auth/dashboard",
+  leaderboardUsers: () => "/v1/leaderboard/users",
 
   // auth
   login:    `/v1/auth/login`,

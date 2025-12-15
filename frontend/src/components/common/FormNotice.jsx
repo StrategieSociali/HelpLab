@@ -1,7 +1,10 @@
+// src/components/common/FormNotice.jsx
 import React from "react";
 import TextBlock from "@/components/UI/TextBlock.jsx";
+import { useTranslation } from "react-i18next";
 
 export default function FormNotice({ className = "" }) {
+const { t } = useTranslation("components/common/formnotice");
   return (
     <div
       className={`notice notice--info ${className}`}
@@ -10,14 +13,14 @@ export default function FormNotice({ className = "" }) {
     >
       <span className="notice__icon" aria-hidden="true"></span>
       <div className="notice__content">
-       <TextBlock>Registrati oggi stesso. Per seguire lo sviluppo visita</TextBlock>
+         <TextBlock>{t("form_header")}</TextBlock>
        {" "}
       <a
           href="https://github.com/StrategieSociali/HelpLab"
           target="_blank"
           rel="noopener noreferrer"
         >
-           <TextBlock>HelpLab su GitHub </TextBlock>
+           <TextBlock>{t("github")}</TextBlock>
         </a>
         {" "}
         <a
@@ -25,7 +28,7 @@ export default function FormNotice({ className = "" }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-         <TextBlock>HelpLab@Telegram</TextBlock>
+         <TextBlock>{t("telegram")}</TextBlock>
         </a>
       </div>
     </div>

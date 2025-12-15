@@ -21,7 +21,7 @@ export default function BusinessPackages() {
         </header>
 
         {/* Pillars / Value */}
-        <div className="benefits-grid" style={{ marginBottom: 16 }}>
+        <div className="content-grid" style={{ marginBottom: 16 }}>
           <div className="benefit-card">
             <div className="benefit-icon">📊</div>
             <h3>ESG con valore reale</h3>

@@ -1,0 +1,11 @@
+{
+ "_comment": "/src/pages/Login.jsx",
+  "email_label": "Email",
+  "email_placeholder": "nome@esempio.com",
+  "password_label": "Password",
+  "password_placeholder": "Inserisci la password",
+  "login_button": "Accedi",
+  "logging_in": "Accesso in corso…",
+  "error": "Login non riuscito. Controlla le credenziali e riprova."
+}
+

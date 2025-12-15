@@ -113,6 +113,20 @@ body{
 }
 .site-header .main-nav .nav-link:visited { color: var(--text-primary); }
 
+/* Header – language switch */
+
+.language-switch {
+  display: flex;
+  gap: 6px;
+}
+
+.lang-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1rem;
+}
 
 /* =============== HOME (invariata) =============== */
 /* Hero */
@@ -189,6 +203,7 @@ body{
 .support-card h3{ font-size:1.25rem; font-weight:600; margin-bottom:1rem; color:#0f172a; }
 .support-card p{ color:#6b7280; line-height:1.6; }
 
+/* =============== FORM VARI =============== */
 /* Registration (FORM BLU) */
 .registration-section{
   padding:5rem 0; background:linear-gradient(135deg,#0f172a,#1e40af); color:white;
@@ -307,6 +322,23 @@ body{
     grid-template-columns: 1fr;
   }
 }
+
+/* Responsive FORM grid (FORM GENERICI */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 24px;   /* ⬅️ PIÙ SPAZIO TRA COLONNE */
+  row-gap: 14px;      /* leggero respiro verticale */
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* distanza label → input */
+}
+
+
 
 /* =============== PAGINE INTERNE (Sfide, Corsi, ecc.) =============== */
 /* Sfondo scuro globale delle pagine interne */
@@ -475,7 +507,11 @@ main { flex: 1 0 auto; display: block; }
 }
 
 .control-small { height: 32px; padding: 0 10px; }
-.control-pill  { border-radius: 9999px; }        /* per esplicitare l’uso se serve */
+.control-pill  { 
+border-radius: 9999px;
+  padding-left: 14px;
+  padding-right: 14px;
+  }        /* per esplicitare l’uso se serve */
 
 .control:focus,
 .filter-input:focus {
@@ -1258,4 +1294,65 @@ select.control {
   }
 }
 
+/* =========================================================
+   Pagine con layout a griglia
+   ========================================================= */
+/* Layout generico a griglia per pagine contenuto */
+/* Layout generico a griglia per pagine contenuto (3 colonne desktop) */
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .content-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   HOME — Griglie dedicate (isolamento layout landing)
+   ========================================================= */
+
+/* Griglia base home */
+.home-grid {
+  display: grid;
+  gap: 32px;
+  align-items: stretch;
+}
+
+/* Desktop: 3 colonne fisse */
+@media (min-width: 1025px) {
+  .home-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Tablet: 2 colonne */
+@media (max-width: 1024px) {
+  .home-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile: 1 colonna */
+@media (max-width: 640px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Varianti semantiche (future-proof) */
+.home-grid--benefits {}
+.home-grid--support  {}
 

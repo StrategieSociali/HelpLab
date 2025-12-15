@@ -15,8 +15,11 @@ import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes";
 import { isAdmin } from "@/utils/roles";
+import { useTranslation } from "react-i18next";
 
 export default function Header() {
+  const { t, i18n } = useTranslation("components/common/header");
+
   const { isAuthenticated, user, logout } = useAuth();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -47,11 +50,43 @@ if (!ready) return null;
   return (
     <header className="site-header">
       <div className="container header-row">
+      
         {/* Brand */}
         <Link to={routes.home} className="brand-link">
-          <strong>HelpLab</strong>
-          <span className="muted small">Humanity Empowered for Local Progress</span>
-        </Link>
+          <strong>{t("brand.title")}</strong>
+          <span className="muted small">{t("brand.subtitle")}</span>
+          
+          {/* Language switch */}
+          
+  <span className="muted small language-switch">
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        i18n.changeLanguage("it");
+      }}
+      aria-label="Italiano"
+      className="lang-btn"
+    >
+      🇮🇹
+    </button>
+
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        i18n.changeLanguage("en");
+      }}
+      aria-label="English"
+      className="lang-btn"
+    >
+      🇬🇧
+    </button>
+  </span>
+</Link>
+ 
+        
+
 
         {/* Burger icon per mobile */}
         <button
@@ -79,7 +114,7 @@ if (!ready) return null;
   }}
 >
 
-  <span className="nav-link">Sfide ▾</span>
+  <span className="nav-link">{t("nav.challenges")} ▾</span>
   <div className="sfide-menu__list">
     <NavLink
       to={routes.dashboard.challenges}
@@ -89,7 +124,7 @@ if (!ready) return null;
         setSfideOpen(false);
       }}
     >
-      Tutte le Sfide
+      {t("nav.allChallenges")}
     </NavLink>
     <NavLink
       to={routes.leaderboard}
@@ -99,12 +134,12 @@ if (!ready) return null;
         setSfideOpen(false);
       }}
     >
-      Classifiche
+       {t("nav.leaderboard")}
     </NavLink>
   </div>
 </div>
 
-          <NavLink to={routes.dashboard.learningPaths} className="nav-link" onClick={() => setMenuOpen(false)}>Corsi</NavLink>
+          <NavLink to={routes.dashboard.learningPaths} className="nav-link" onClick={() => setMenuOpen(false)}>{t("nav.learningPaths")}</NavLink>
           
 {/* COMMUNITY + sotto menu */}
 <div
@@ -119,7 +154,7 @@ if (!ready) return null;
     if (isMobile) setCommunityOpen((prev) => !prev);
   }}
 >
-  <span className="nav-link">Community ▾</span>
+  <span className="nav-link">{t("nav.community")} ▾</span>
   <div className="sfide-menu__list">
     <NavLink
       to={routes.joinHelpLab}
@@ -129,7 +164,7 @@ if (!ready) return null;
         setCommunityOpen(false);
       }}
     >
-      Unisciti a HelpLab
+      {t("nav.join")}
     </NavLink>
     <NavLink
       to={routes.info}
@@ -139,14 +174,14 @@ if (!ready) return null;
         setCommunityOpen(false);
       }}
     >
-      Cosa puoi fare su HelpLab?
+      {t("nav.info")}
     </NavLink>
   </div>
 </div>
 
 
-          <NavLink to={routes.business.packages} className="nav-link" onClick={() => setMenuOpen(false)}>Imprese</NavLink>
-          <NavLink to={routes.roadmap} className="nav-link" onClick={() => setMenuOpen(false)}>Roadmap</NavLink>
+          <NavLink to={routes.business.packages} className="nav-link" onClick={() => setMenuOpen(false)}>{t("nav.business")}</NavLink>
+          <NavLink to={routes.roadmap} className="nav-link" onClick={() => setMenuOpen(false)}>{t("nav.roadmap")}</NavLink>
 
           {/* Azioni auth all'interno del menu mobile */}
           <div className="nav-auth-actions">
@@ -154,21 +189,21 @@ if (!ready) return null;
               <>
                 {isAdminUser && (
                   <details className="admin-menu">
-                    <summary className="btn btn-ghost btn-pill">Admin</summary>
+                    <summary className="btn btn-ghost btn-pill">{t("nav.title.admin")}</summary>
                     <div className="admin-menu__list">
-                      <NavLink to={routes.admin.proposals} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>Gestione Proposte</NavLink>
-                      <NavLink to={routes.admin.assignJudge} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>Assegna Giudici</NavLink>
+                      <NavLink to={routes.admin.proposals} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>{t("nav.title.proposals")}</NavLink>
+                      <NavLink to={routes.admin.assignJudge} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>{t("nav.title.assignJudges")}</NavLink>
                     </div>
                   </details>
                 )}
-                <NavLink to={routes.dashboard.challengeCreate} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>Crea Sfida</NavLink>
-                <NavLink to={routes.dashboard.userProfile} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>Profilo</NavLink>
-                <button className="btn btn-outline btn-pill" onClick={() => { logout(); setMenuOpen(false); }}>Esci</button>
+                <NavLink to={routes.dashboard.challengeCreate} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>{t("nav.createChallenge")}</NavLink>
+                <NavLink to={routes.dashboard.userProfile} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>{t("nav.profile")}</NavLink>
+                <button className="btn btn-outline btn-pill" onClick={() => { logout(); setMenuOpen(false); }}>{t("nav.logout")}</button>
               </>
             ) : (
               <>
-                <NavLink to={routes.auth.login} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>Accedi</NavLink>
-                <NavLink to={routes.auth.register} className="btn btn-outline btn-pill" onClick={() => setMenuOpen(false)}>Registrati</NavLink>
+                <NavLink to={routes.auth.login} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>{t("nav.login")}</NavLink>
+                <NavLink to={routes.auth.register} className="btn btn-outline btn-pill" onClick={() => setMenuOpen(false)}>{t("nav.register")}</NavLink>
               </>
             )}
           </div>

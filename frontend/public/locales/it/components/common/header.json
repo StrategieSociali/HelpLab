@@ -1,0 +1,29 @@
+{
+ "_comment": "/src/components/common/Header.jsx",
+  "brand": {
+    "title": "HelpLab",
+    "subtitle": "Humanity Empowered for Local Progress"
+  },
+  "nav": {
+    "challenges": "Sfide",
+    "allChallenges": "Tutte le Sfide",
+    "leaderboard": "Classifiche",
+    "learningPaths": "Corsi",
+    "community": "Community",
+    "join": "Unisciti a HelpLab",
+    "info": "Cosa puoi fare su HelpLab?",
+    "business": "Imprese",
+    "roadmap": "Roadmap",
+    "createChallenge": "Crea Sfida",
+    "profile": "Profilo",
+    "logout": "Esci",
+    "login": "Accedi",
+    "register": "Registrati",
+    "admin": {
+      "title": "Admin",
+      "proposals": "Gestione Proposte",
+      "assignJudges": "Assegna Giudici"
+    }
+  }
+}
+

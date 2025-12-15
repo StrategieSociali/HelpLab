@@ -2,31 +2,36 @@
 /**
  * Scopo: costruire una classifica delle figure previste nelle challenge
  *
- * Attualmente supporta:
- * Filtro temporale: tutti i tempi, mese, settimana.
- * Colonne: posizione, nickname, punti, task verificati, ultima attività.
- * Chiamata API corretta: /v1/leaderboard/users.
+ * Supporta:
+ * - Filtro temporale: all, this_month, this_week (backend)
+ * - Ricerca username: client-side su entry.user (frontend)
+ * - Colonne: posizione, username, punti, task verificati, ultima attività.
+ * - Chiamata API centralizzata: API_PATHS.leaderboardUsers()
  */
-import React, { useEffect, useState } from "react";
-import { api } from "@/api/client";
-import { API_PATHS } from "@/api/client";
+
+import React, { useEffect, useMemo, useState } from "react";
+import { api, API_PATHS } from "@/api/client";
 
 export default function Leaderboard() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [window, setWindow] = useState("all");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setLoading(true);
       setError("");
       try {
-        const { data } = await api.get(`/v1/leaderboard/users?window=${window}`);
-        setEntries(data.entries || []);
+        const { data } = await api.get(API_PATHS.leaderboardUsers(), {
+          params: { window },
+        });
+        setEntries(Array.isArray(data?.entries) ? data.entries : []);
       } catch (err) {
-        setError("Errore durante il caricamento della classifica");
         console.error(err);
+        setError("Errore durante il caricamento della classifica");
+        setEntries([]);
       } finally {
         setLoading(false);
       }
@@ -35,65 +40,118 @@ export default function Leaderboard() {
     fetchLeaderboard();
   }, [window]);
 
+  const filteredEntries = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return entries;
+    return entries.filter((e) =>
+      (e?.user || "").toLowerCase().includes(q)
+    );
+  }, [entries, search]);
+
+  const fmtDateTime = (d) =>
+    d
+      ? new Date(d).toLocaleDateString(undefined, {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "—";
+
   return (
     <section className="page-section page-text">
       <div className="container">
-        <h2 className="page-title">Leaderboard Utenti</h2>
+        <h2 className="page-title">Leaderboard utenti</h2>
 
-        <div style={{ marginBottom: 16 }}>
-          <label>Filtro temporale: </label>
-          <select value={window} onChange={(e) => setWindow(e.target.value)}>
-            <option value="all">Tutti i tempi</option>
-            <option value="this_month">Questo mese</option>
-            <option value="this_week">Questa settimana</option>
-          </select>
+        {/* FILTRI */}
+        <div className="card" style={{ marginBottom: 24 }}>
+          <h3>Filtri</h3>
+
+          <div className="form-grid">
+            <label>
+              Intervallo temporale
+              <select
+                className="control control-pill"
+                value={window}
+                onChange={(e) => setWindow(e.target.value)}
+              >
+                <option value="all">Tutti i tempi</option>
+                <option value="this_month">Questo mese</option>
+                <option value="this_week">Questa settimana</option>
+              </select>
+            </label>
+
+            <label>
+              Cerca utente
+              <input
+                className="control control-pill"
+                placeholder="Username…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <div className={`hint ${search ? "ok" : ""}`}>
+                {search ? "Filtro attivo" : "Inserisci uno username"}
+              </div>
+            </label>
+          </div>
         </div>
 
+        {/* STATI */}
         {loading && <div className="callout neutral">Caricamento…</div>}
         {error && <div className="callout error">{error}</div>}
 
-        {!loading && !error && entries.length === 0 && (
+        {!loading && !error && filteredEntries.length === 0 && (
           <div className="callout neutral">Nessun dato disponibile</div>
         )}
 
-        {!loading && entries.length > 0 && (
-          <div className="table-like">
-            <div className="row head" style={{
-              display: "grid",
-              gridTemplateColumns: "50px 1fr 100px 100px 140px",
-              padding: "8px 0",
-              borderBottom: "1px solid rgba(255,255,255,.1)"
-            }}>
-              <div>#</div>
-              <div>Nickname</div>
-              <div>Punti</div>
-              <div>Task Verificati</div>
-              <div>Ultima Attività</div>
-            </div>
+        {/* LISTA */}
+        {!loading && !error && filteredEntries.length > 0 && (
+          <div className="card">
+            <h3>Classifica</h3>
 
-            {entries.map((entry, idx) => (
-              <div key={entry.userId} className="row" style={{
-                display: "grid",
-                gridTemplateColumns: "50px 1fr 100px 100px 140px",
-                padding: "10px 0",
-                borderBottom: "1px solid rgba(255,255,255,.06)"
-              }}>
-                <div>{entry.rank}</div>
-                <div className="muted-strong">{entry.user || `Utente #${entry.userId}`}</div>
-                <div>{entry.score}</div>
-                <div>{entry.verified_tasks}</div>
-                <div>{entry.last_event_at ? new Date(entry.last_event_at).toLocaleDateString(undefined, {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit"
-                    }) : "—"}</div>
+            <div className="table-like">
+              <div
+                className="row head"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "60px 1fr 120px 160px 180px",
+                  padding: "8px 0",
+                  borderBottom: "1px solid rgba(255,255,255,.1)",
+                }}
+              >
+                <div>Pos.</div>
+                <div>Username</div>
+                <div>Punti</div>
+                <div>Task verificati</div>
+                <div>Ultima attività</div>
               </div>
-            ))}
+
+              {filteredEntries.map((entry) => (
+                <div
+                  key={entry.userId}
+                  className="row"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "60px 1fr 120px 160px 180px",
+                    padding: "10px 0",
+                    borderBottom: "1px solid rgba(255,255,255,.06)",
+                  }}
+                >
+                  <div className="muted-strong">{entry.rank}</div>
+                  <div className="muted-strong">
+                    {entry.user || `Utente #${entry.userId}`}
+                  </div>
+                  <div>{entry.score}</div>
+                  <div>{entry.verified_tasks}</div>
+                  <div className="muted">{fmtDateTime(entry.last_event_at)}</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
     </section>
   );
 }
+

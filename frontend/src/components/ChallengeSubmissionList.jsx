@@ -63,18 +63,14 @@ export default function ChallengeSubmissionList({ challengeId: propChallengeId }
             <p className="text-white">{sub.activity_description}</p>
           )}
 
-          {sub.photos?.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-              {sub.photos.slice(0, 4).map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt={`foto ${i + 1}`}
-                  className="w-full h-24 object-cover rounded-xl border"
-                />
-              ))}
-            </div>
-          )}
+          {sub.payload?.evidences?.length > 0 && (
+  <ul className="list-disc pl-5 space-y-1 text-white">
+    {sub.payload.evidences.map((ev, i) => (
+      <li key={i}>{ev}</li>
+    ))}
+  </ul>
+)}
+
         </li>
       ))}
     </ul>

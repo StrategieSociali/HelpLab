@@ -71,60 +71,96 @@ export default function ChallengeSubmitPage() {
   };
 
   return (
-    <section className="space-y-6">
-      <h1 className="page-title">Invia una nuova submission</h1>
+<section className="page-section page-text">
+  <div className="container space-y-6">
+    <h1 className="page-title">Invia una nuova submission</h1>
 
-      <TextBlock>
-        Inserisci una descrizione dell’attività svolta e almeno un’evidenza (immagine, testo,
-        documento o link).
-      </TextBlock>
+    <p className="page-subtitle">
+      Inserisci una descrizione dell’attività svolta e almeno un’evidenza
+      (immagine, testo, documento o link).
+    </p>
 
-      {error && (
-        <div className="callout error" role="alert">
-          {error}
-        </div>
-      )}
+    {error && (
+      <div className="callout error" role="alert">
+        {error}
+      </div>
+    )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="form-group">
-          <label htmlFor="activity">Descrizione attività</label>
-          <textarea
-            id="activity"
-            className="w-full"
-            value={activityDescription}
-            onChange={(e) => setActivityDescription(e.target.value)}
-            rows={4}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block">Evidenze</label>
-          {evidences.map((evidence, index) => (
-            <input
-              key={index}
-              type="text"
-              className="w-full"
-              placeholder="Link o descrizione"
-              value={evidence}
-              onChange={(e) => handleEvidenceChange(index, e.target.value)}
+    <form onSubmit={handleSubmit}>
+      <div className="card">
+        <div className="form-grid">
+          {/* DESCRIZIONE ATTIVITÀ */}
+          <label>
+            Descrizione attività
+            <textarea
+              className="control"
+              value={activityDescription}
+              onChange={(e) => setActivityDescription(e.target.value)}
+              rows={5}
+              required
             />
-          ))}
-          <button type="button" className="btn btn-outline" onClick={handleAddEvidence}>
-            + Aggiungi evidenza
+            <div className="hint">
+              Descrivi in modo chiaro cosa hai fatto
+            </div>
+          </label>
+
+          {/* EVIDENZE */}
+          <label>
+            Evidenze
+            <div className="space-y-2">
+              {evidences.map((evidence, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  className="control control-pill"
+                  placeholder="Link o descrizione"
+                  value={evidence}
+                  onChange={(e) =>
+                    handleEvidenceChange(index, e.target.value)
+                  }
+                />
+              ))}
+            </div>
+
+            <div style={{ marginTop: 8 }}>
+              <button
+                type="button"
+                className="btn btn-outline btn-pill"
+                onClick={handleAddEvidence}
+              >
+                + Aggiungi evidenza
+              </button>
+            </div>
+
+            <div className="hint">
+              Inserisci almeno un link, testo o riferimento
+            </div>
+          </label>
+        </div>
+
+        {/* CTA */}
+        <div
+          className="cta-row"
+          style={{
+            marginTop: 24,
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <button
+            type="submit"
+            className="btn btn-primary btn-pill"
+            disabled={loading}
+            aria-busy={loading}
+          >
+            {loading ? "Invio in corso…" : "Invia submission"}
           </button>
         </div>
+      </div>
+    </form>
+  </div>
+</section>
 
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={loading}
-          aria-busy={loading}
-        >
-          {loading ? "Invio in corso…" : "Invia submission"}
-        </button>
-      </form>
-    </section>
   );
 }
 

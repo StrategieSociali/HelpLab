@@ -1,10 +1,22 @@
 // src/pages/Login.jsx
+/**
+ * Scopo: permettere l'autenticazione degli utenti
+ *
+ * Attualmente supporta:
+ * - Login
+*/
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import FormNotice from "@/components/common/FormNotice.jsx";
+import { useTranslation } from "react-i18next";
+
 
 export default function Login() {
+
+const { t } = useTranslation("pages/login");
+
   const { login } = useAuth();               // AuthContext v0.3
   const navigate = useNavigate();
 
@@ -27,7 +39,7 @@ export default function Login() {
       navigate("/challenges");                // redirect post-login
     } catch (err) {
       console.error(err);
-      setError("Login non riuscito. Controlla le credenziali e riprova.");
+      setError(t("error"));
     } finally {
       setSubmitting(false);
     }
@@ -40,12 +52,12 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="registration-form">
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">{t("email_label")}</label>
             <input
               id="email"
               name="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder={t("email_placeholder")}
               value={form.email}
               onChange={handleChange}
               required
@@ -54,12 +66,12 @@ export default function Login() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">{t("password_label")}</label>
             <input
               id="password"
               name="password"
               type="password"
-              placeholder="Password"
+              placeholder={t("password_placeholder")}
               value={form.password}
               onChange={handleChange}
               required
@@ -67,16 +79,19 @@ export default function Login() {
             />
           </div>
 
-          {error && <p style={{ color: "salmon", marginTop: 8 }}>{error}</p>}
-
-          <button
-            type="submit"
-            className="submit-button"
-            disabled={submitting}
-            aria-busy={submitting}
-          >
-            {submitting ? "Accesso in corso…" : "Accedi"}
-          </button>
+          {error && (
+           <p style={{ color: "salmon", marginTop: 8 }}>
+            {t(error) || t("error")}
+           </p>
+           )}
+<button
+  type="submit"
+  className="submit-button"
+  disabled={submitting}
+  aria-busy={submitting}
+>
+  {submitting ? t("logging_in") : t("login_button")}
+</button>
         </form>
       </div>
     </section>

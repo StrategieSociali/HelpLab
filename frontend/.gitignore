@@ -1,1 +1,50 @@
+# =====================
+# Node / JS
+# =====================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =====================
+# Build / dist
+# =====================
+dist/
+build/
+.vite/
+.cache/
+
+# =====================
+# Environment variables
+# =====================
+.env
+.env.local
+.env.*.local
+
+# =====================
+# OS / Editor
+# =====================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# =====================
+# Logs
+# =====================
+logs/
+*.log
+
+# =====================
+# Archives
+# =====================
 *.zip
+*.tar.gz
+
+# =====================
+# Optional: backend secrets
+# =====================
+**/config/secrets.*
+

@@ -1,0 +1,144 @@
+{
+ "_comment": "/src/pages/HomeStatic.jsx",
+"hero": {
+    "title": "Turn your ESG commitment into concrete and measurable actions",
+    "subtitle": "HelpLab connects companies, public administrations and citizens to generate measurable local impact with verifiable data and evidence.",
+    "note": {
+      "label": "Note:",
+      "text": "This is a development version. Interruptions or malfunctions may occur. Please check the Roadmap in the top menu."
+    },
+    "cta": {
+      "launch": "Launch a challenge",
+      "join": "Join a challenge",
+      "launchTitle": "Launch a challenge as a company or public administration",
+      "joinTitle": "Join a challenge near you"
+    }
+  },
+"businessBenefits": {
+  "title": "Why it is convenient for businesses and public administrations",
+  "items": [
+    {
+      "title": "ESG with real value",
+      "text": "Verifiable data usable in CSRD/ESRS reports: photos, geolocation and certifiable KPIs."
+    },
+    {
+      "title": "Reputation & Marketing",
+      "text": "Visibility as a sponsor of high-impact local challenges, with storytelling ready for corporate channels."
+    },
+    {
+      "title": "Internal & External Engagement",
+      "text": "Engage employees and communities together: corporate volunteering, welfare, and local impact."
+    }
+  ]
+},
+"howItWorks": {
+  "title": "How it works (for companies)",
+  "steps": [
+    {
+      "title": "Choose or propose a challenge",
+      "text": "Examples: beach and park cleanups, tree planting, waste reduction, sustainable mobility."
+    },
+    {
+      "title": "Sponsor and activate the community",
+      "text": "Fund one or more challenges with micro-incentives and materials. HelpLab manages local engagement."
+    },
+    {
+      "title": "Receive a certified report",
+      "text": "Verified data, photos, geolocation and KPIs for sustainability reports and corporate communication."
+    }
+  ]
+},
+"businessValue": {
+  "title": "Value for your company (examples)",
+  "rows": [
+    {
+      "left": "500 kg of waste collected in one month",
+      "right": "Ready-to-use report"
+    },
+    {
+      "left": "30 volunteers involved, 200 hours donated",
+      "right": "Measurable engagement"
+    },
+    {
+      "left": "Estimated reduction: X tons of CO₂e",
+      "right": "Aligned with CSRD/ESRS"
+    }
+  ],
+  "note": "Each result can be communicated in sustainability reports, marketing campaigns and corporate welfare programs."
+},
+"testimonials": {
+  "title": "Testimonials & Sponsors",
+  "items": [
+    {
+      "title": "Real impact, not just words",
+      "quote": "Thanks to HelpLab, we turned a CSR budget into tangible impact for the local community.",
+      "note": "(demonstration example)"
+    },
+    {
+      "title": "Case study (mockup)",
+      "quote": "Park cleanup sponsored by a utility company: 120 volunteers, 1.2 tons of waste collected."
+    },
+    {
+      "title": "Evidence and data",
+      "quote": "Photos, geolocation and reports make results verifiable and reusable across your channels."
+    }
+  ]
+},
+"finalCta": {
+  "title": "Turn your sustainability into real impact",
+  "subtitle": "Discover how to launch your first challenge with HelpLab.",
+  "contact": {
+    "label": "Talk to us",
+    "email": "info@helplab.space",
+    "subject": "I would like more information about HelpLab solutions for companies",
+    "body": "Please describe your company, sector and leave a contact to receive a quick response."
+  },
+  "packages": "Discover business packages"
+},
+"citizens": {
+  "hero": {
+    "title": "Get involved, earn rewards and create impact in your city",
+    "subtitle": "Join the community: choose a challenge, contribute and earn monetizable rewards while improving your territory.",
+    "cta": {
+      "join": "Join a challenge",
+      "register": "Sign up now"
+    }
+  },
+  "benefits": {
+    "title": "Why participate",
+    "items": [
+      {
+        "title": "Solving real problems",
+        "text": "Park cleanups, tree planting and more: concrete actions that truly improve your neighborhood."
+      },
+      {
+        "title": "Monetizable rewards",
+        "text": "Earn points through challenges and redeem them for rewards or vouchers. You can also become a judge or trainer."
+      },
+      {
+        "title": "Value-driven community",
+        "text": "Join a network of people and local organizations sharing sustainability and solidarity goals."
+      }
+    ]
+  }
+},
+"membership": {
+  "title": "Compare Membership Plans",
+  "plans": ["Volunteer", "Judge", "Company"],
+  "features": [
+    { "label": "Community Access", "values": ["✓", "✓", "✓"] },
+    { "label": "Private Wallet", "values": ["✓", "✓", "✓"] },
+    { "label": "Monthly Projects", "values": ["3", "Unlimited", "Unlimited"] },
+    { "label": "Basic Courses", "values": ["✓", "✓", "✓"] },
+    { "label": "Advanced Courses", "values": ["—", "✓", "For employees"] },
+    { "label": "VIP Event Access", "values": ["—", "✓", "✓"] },
+    { "label": "CSRD/ESRS Reports", "values": ["—", "Basic", "Certifiable"] },
+    { "label": "Personalized Support", "values": ["—", "—", "✓"] }
+  ]
+}
+
+
+
+
+
+}
