@@ -1,58 +1,84 @@
-# HelpLab License Agreement
+**GNU AFFERO GENERAL PUBLIC LICENSE**
+Version 3, 19 November 2007
 
-## 0. Backend Licence (No licence)
-At the moment we don't think to a OS licence for backend and Database
+HelpLab — Attribution & Project Notice
 
-## 1. Frontend License (Open Source - MIT with Attribution)
-The frontend code of the HelpLab project is licensed under the **MIT License with Attribution**. You are free to:
-- Use, copy, modify, merge, publish, and distribute the frontend software.
-- Create derivative works based on the frontend software.
+Copyright © 2025 HelpLab
 
-### Conditions:
-- You **must** include proper attribution to the original HelpLab project in all copies or substantial portions of the software.
-- You **must not** misrepresent the origin of the software.
-- The software is provided "as is", without warranty of any kind.
+This software is part of the HelpLab project.
 
-```
-MIT License with Attribution
-Copyright (c) [2025] HelpLab
+If you modify this software and make it available to users
+(e.g. as a web service or SaaS), you must comply with the
+GNU Affero General Public License v3.0, including making
+the source code of your modified version available.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Project name: HelpLab
+Official project: https://helplab.space
+Contact: antonio@strategiesociali.it
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+# HelpLab — Licensing & Project Structure
 
-Proper attribution to the HelpLab project must be included in any redistributions
-or derivative works.
+This repository contains the **HelpLab Frontend** only.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+---
 
-## 2. Backend License (Closed Source - Proprietary)
-The backend code of the HelpLab project is **proprietary software** and is not open-source.
-- The backend may **only** be used in connection with the official HelpLab project.
-- No rights are granted for modification, distribution, or commercial use of the backend source code.
-- Only essential API documentation and data structures required for frontend development will be shared.
+## 1. Frontend (this repository)
+The frontend source code contained in this repository is licensed under the
+**GNU Affero General Public License v3.0 (AGPL-3.0)**.
 
-## 3. Database License (Closed Source - Proprietary)
-The database schema, structure, and queries are **proprietary** and not publicly available.
-- Only the minimum necessary data required for frontend operation will be exposed via API endpoints.
-- Unauthorized access, modification, or redistribution of database structures is strictly prohibited.
+This means that:
+- You may use, study, modify, and redistribute this software.
+- If you modify the software and make it available to users
+  (including as a web service or SaaS), you must also make
+  the source code of your modified version available under AGPL-3.0.
 
-## 4. General Terms
-- Any attempt to reverse-engineer, decompile, or extract proprietary backend or database components is strictly prohibited.
-- Violations of these terms may result in legal action.
+See the `LICENSE` file for full terms.
 
-For any questions or licensing inquiries, please contact: **[antonio@strategiesociali.it]**.
+---
 
+## 2. Backend & Database (Not included — Proprietary)
+The HelpLab backend source code, database schema, migrations,
+queries, and internal business logic are **not included in this repository**
+and are **proprietary**.
+
+No license or rights are granted to access, copy, modify, or
+redistribute backend or database components unless explicitly
+agreed in writing by HelpLab.
+
+---
+
+## 3. API Access
+Access to HelpLab APIs may require authorization (e.g. API keys)
+and may be subject to separate terms, rate limits, and pricing.
+
+The public API documentation exposes only what is strictly
+necessary for integration and does not disclose internal
+implementation details.
+
+---
+
+## 4. Trademarks & Branding
+“HelpLab” and associated names, logos, and branding are
+trademarks of HelpLab.
+
+This license does not grant permission to use the HelpLab name
+or branding to imply endorsement or affiliation without
+prior written consent.
+
+---
+
+## 5. Scope of AGPL
+The AGPL license applies **only** to the frontend source code
+contained in this repository.
+
+It does not apply to:
+- backend services
+- databases
+- proprietary APIs
+- infrastructure or operational systems
+
+---
+
+## 6. Contact
+For commercial licensing, partnerships, or other inquiries:
+antonio@strategiesociali.it
