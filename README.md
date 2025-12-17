@@ -2,7 +2,7 @@
 Humanity Empowered for Local Progress
 
 ## Disclaimer
-This project is in its **early stages**, and we are working on core features (challenges), take a look at the roadmap for more details. Follow us if you want to stay up to date.
+This project is in its **early stages**, and we are working on core features (challenges), take a look at the roadmap (https://helplab.space/roadmap) for more details. Follow us if you want to stay up to date.
 
 ## 🚀 Empowering People, Transforming Communities
 
@@ -58,6 +58,12 @@ HelpLab is an open-source platform designed to **encourage sustainable behaviors
 - **Bitcoin Lightning Node** (optional for payment features)
 
 ### **Installation**
+For users:
+- clone the ../dist folder
+- put the contents of the folder on your server
+- that's all
+
+For developpers:
 ```bash
 # Clone the repository
 git clone https://github.com/your-repo/helplab-space.git
