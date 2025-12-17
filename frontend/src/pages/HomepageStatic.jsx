@@ -20,11 +20,48 @@ import { Wrench, Gift, Users } from "lucide-react";
 import heroBg from '@/assets/sustainability-hero.jpg';
 import { useTranslation } from "react-i18next";
 
-
 const HomepageStatic = () => {
-  const { t } = useTranslation("pages/home");
+  const { t } = useTranslation("pages/home", {
+    useSuspense: false,
+  });
 
   const navigate = useNavigate();
+  
+    const businessBenefitsItems = t("businessBenefits.items", {
+    returnObjects: true,
+    defaultValue: [],
+  });
+
+  const howItWorksSteps = t("howItWorks.steps", {
+    returnObjects: true,
+    defaultValue: [],
+  });
+
+  const businessValueRows = t("businessValue.rows", {
+    returnObjects: true,
+    defaultValue: [],
+  });
+
+  const testimonialItems = t("testimonials.items", {
+    returnObjects: true,
+    defaultValue: [],
+  });
+
+  const citizenBenefitsItems = t("citizens.benefits.items", {
+    returnObjects: true,
+    defaultValue: [],
+  });
+
+  const membershipPlans = t("membership.plans", {
+    returnObjects: true,
+    defaultValue: [],
+  });
+
+  const membershipFeatures = t("membership.features", {
+    returnObjects: true,
+    defaultValue: [],
+  });
+
 
   return (
     <>
@@ -79,18 +116,18 @@ const HomepageStatic = () => {
     <h2>{t("businessBenefits.title")}</h2>
 
     <div className="home-grid home-grid--benefits">
-      {t("businessBenefits.items", { returnObjects: true }).map((item, i) => (
-        <div className="benefit-card" key={i}>
-          <div className="benefit-icon">
-            {i === 0 && "📊"}
-            {i === 1 && "🏅"}
-            {i === 2 && "🤝"}
-          </div>
-
-          <h3>{item.title}</h3>
-          <p>{item.text}</p>
-        </div>
-      ))}
+      {Array.isArray(businessBenefitsItems) &&
+  businessBenefitsItems.map((item, i) => (
+    <div className="benefit-card" key={i}>
+      <div className="benefit-icon">
+        {i === 0 && "📊"}
+        {i === 1 && "🏅"}
+        {i === 2 && "🤝"}
+      </div>
+      <h3>{item.title}</h3>
+      <p>{item.text}</p>
+    </div>
+))}
     </div>
   </div>
 </section>
@@ -101,26 +138,21 @@ const HomepageStatic = () => {
     <h2>{t("howItWorks.title")}</h2>
 
     <div className="home-grid home-grid--support">
-      {t("howItWorks.steps", { returnObjects: true }).map((step, i) => (
-        <div className="support-card" key={i}>
-          <div className="support-icon">
-            {i === 0 && "🧭"}
-            {i === 1 && "💸"}
-            {i === 2 && "✅"}
-          </div>
-
-          <h3>
-            {i + 1}. {step.title}
-          </h3>
-
-          <p>{step.text}</p>
-        </div>
-      ))}
+     {Array.isArray(howItWorksSteps) &&
+  howItWorksSteps.map((step, i) => (
+    <div className="support-card" key={i}>
+      <div className="support-icon">
+        {i === 0 && "🧭"}
+        {i === 1 && "💸"}
+        {i === 2 && "✅"}
+      </div>
+      <h3>{i + 1}. {step.title}</h3>
+      <p>{step.text}</p>
+    </div>
+))}
     </div>
   </div>
 </section>
-
-      
 
       {/* 4) VALORE PER LE AZIENDE (esempio di output concreti) */}
 <section className="features-section">
@@ -128,12 +160,13 @@ const HomepageStatic = () => {
     <h2>{t("businessValue.title")}</h2>
 
     <div className="features-table card" style={{ padding: 16 }}>
-      {t("businessValue.rows", { returnObjects: true }).map((row, i) => (
-        <div className="table-row" key={i}>
-          <div className="feature-cell">✅ {row.left}</div>
-          <div className="plan-cell">{row.right}</div>
-        </div>
-      ))}
+      {Array.isArray(businessValueRows) &&
+  businessValueRows.map((row, i) => (
+    <div className="table-row" key={i}>
+      <div className="feature-cell">✅ {row.left}</div>
+      <div className="plan-cell">{row.right}</div>
+    </div>
+))}
     </div>
 
     <p className="muted" style={{ marginTop: 10 }}>
@@ -151,27 +184,27 @@ const HomepageStatic = () => {
     <h2>{t("testimonials.title")}</h2>
 
     <div className="home-grid home-grid--benefits">
-      {t("testimonials.items", { returnObjects: true }).map((item, i) => (
-        <div className="benefit-card" key={i}>
-          <div className="benefit-icon">
-            {i === 0 && "💬"}
-            {i === 1 && "🏢"}
-            {i === 2 && "📸"}
-          </div>
+      {Array.isArray(testimonialItems) &&
+  testimonialItems.map((item, i) => (
+    <div className="benefit-card" key={i}>
+      <div className="benefit-icon">
+        {i === 0 && "💬"}
+        {i === 1 && "🏢"}
+        {i === 2 && "📸"}
+      </div>
+      <h3>{item.title}</h3>
+      <p>
+        “{item.quote}”
+        {item.note && (
+          <>
+            <br />
+            <span className="muted small">{item.note}</span>
+          </>
+        )}
+      </p>
+    </div>
+))}
 
-          <h3>{item.title}</h3>
-
-          <p>
-            “{item.quote}”
-            {item.note && (
-              <>
-                <br />
-                <span className="muted small">{item.note}</span>
-              </>
-            )}
-          </p>
-        </div>
-      ))}
     </div>
   </div>
 </section>
@@ -255,18 +288,18 @@ const HomepageStatic = () => {
     <h2>{t("citizens.benefits.title")}</h2>
 
     <div className="home-grid home-grid--benefits">
-      {t("citizens.benefits.items", { returnObjects: true }).map((item, i) => (
-        <div className="benefit-card" key={i}>
-          <div className="benefit-icon">
-            {i === 0 && <Wrench size={40} strokeWidth={1.5} />}
-            {i === 1 && <Gift size={40} strokeWidth={1.5} />}
-            {i === 2 && <Users size={40} strokeWidth={1.5} />}
-          </div>
-
-          <h3>{item.title}</h3>
-          <p>{item.text}</p>
-        </div>
-      ))}
+     {Array.isArray(citizenBenefitsItems) &&
+  citizenBenefitsItems.map((item, i) => (
+    <div className="benefit-card" key={i}>
+      <div className="benefit-icon">
+        {i === 0 && <Wrench size={40} strokeWidth={1.5} />}
+        {i === 1 && <Gift size={40} strokeWidth={1.5} />}
+        {i === 2 && <Users size={40} strokeWidth={1.5} />}
+      </div>
+      <h3>{item.title}</h3>
+      <p>{item.text}</p>
+    </div>
+))}
     </div>
   </div>
 </section>
@@ -282,37 +315,43 @@ const HomepageStatic = () => {
     <div className="desktop-table">
       <div className="table-header">
         <div className="feature-column"></div>
-        {t("membership.plans", { returnObjects: true }).map((plan, i) => (
-          <div className={`plan-column ${i === 1 ? "premium" : ""}`} key={i}>
-            {plan}
-          </div>
-        ))}
+       {Array.isArray(membershipPlans) &&
+  membershipPlans.map((plan, i) => (
+    <div className={`plan-column ${i === 1 ? "premium" : ""}`} key={i}>
+      {plan}
+    </div>
+))}
       </div>
 
-      {t("membership.features", { returnObjects: true }).map((feature, i) => (
-        <div className="table-row" key={i}>
-          <div className="feature-cell">{feature.label}</div>
-          {feature.values.map((value, j) => (
-            <div className="plan-cell" key={j}>{value}</div>
-          ))}
-        </div>
-      ))}
+    {Array.isArray(membershipFeatures) &&
+  membershipFeatures.map((feature, i) => (
+    <div className="table-row" key={i}>
+      <div className="feature-cell">{feature.label}</div>
+      {Array.isArray(feature.values) &&
+        feature.values.map((value, j) => (
+          <div className="plan-cell" key={j}>{value}</div>
+        ))}
+    </div>
+))}
     </div>
 
     {/* MOBILE */}
     <div className="mobile-plan-cards">
-      {t("membership.plans", { returnObjects: true }).map((plan, planIdx) => (
-        <div className="plan-card" key={planIdx}>
-          <h3 className="plan-title">{plan}</h3>
-          <ul className="plan-features">
-            {t("membership.features", { returnObjects: true }).map((feature, i) => (
-              <li key={i}>
-                <strong>{feature.label}:</strong> {feature.values[planIdx]}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+     {Array.isArray(membershipPlans) &&
+  membershipPlans.map((plan, planIdx) => (
+    <div className="plan-card" key={planIdx}>
+      <h3 className="plan-title">{plan}</h3>
+      <ul className="plan-features">
+        {Array.isArray(membershipFeatures) &&
+          membershipFeatures.map((feature, i) => (
+            <li key={i}>
+              <strong>{feature.label}:</strong>{" "}
+              {feature.values?.[planIdx]}
+            </li>
+          ))}
+      </ul>
+    </div>
+))}
     </div>
   </div>
 </section>

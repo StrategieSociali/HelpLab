@@ -1,11 +1,24 @@
 {
- "_comment": "/src/pages/Login.jsx",
-  "email_label": "Email",
-  "email_placeholder": "nome@esempio.com",
-  "password_label": "Password",
-  "password_placeholder": "Inserisci la password",
-  "login_button": "Accedi",
-  "logging_in": "Accesso in corso…",
-  "error": "Login non riuscito. Controlla le credenziali e riprova."
+  "_comment": "/src/pages/Login.jsx",
+
+  "email": {
+    "label": "Email",
+    "placeholder": "Inserisci la tua email"
+  },
+
+  "password": {
+    "label": "Password",
+    "placeholder": "Inserisci la tua password"
+  },
+
+  "actions": {
+    "login": "Accedi",
+    "loggingIn": "Accesso in corso..."
+  },
+
+  "errors": {
+    "invalid_credentials": "Email o password non corrette",
+    "generic": "Si è verificato un errore durante l’accesso"
+  }
 }
 

@@ -1,0 +1,40 @@
+{
+  "_comment": "/src/pages/JoinHelpLab.jsx",
+
+  "hero": {
+    "title": "Join HelpLab: the first local community for change",
+    "text": "HelpLab is the community for environmental and social sustainability connecting citizens, companies and public administrations to create local ESG projects with measurable and verifiable impact according to CSRD/ESRS standards. Join to receive updates and collaboration opportunities."
+  },
+
+  "cta": {
+    "title": "Join the community now",
+    "text": "You will receive updates on local ESG projects, new opportunities to participate and tools to measure your impact transparently. Gifts and opportunities for those who help test the platform before the stable release."
+  },
+
+  "form": {
+    "name": {
+      "label": "Name",
+      "placeholder": "John"
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "name@example.com"
+    },
+    "interests": {
+      "label": "Areas of interest",
+      "testing": "Platform testing",
+      "propose": "Propose local projects",
+      "trainer": "Become a trainer",
+      "judge": "Become a judge",
+      "sponsor": "Sponsor a project"
+    },
+    "newsletter": "Subscribe to the newsletter to receive updates",
+    "submit": "Apply to the Community",
+    "submitting": "Submitting…",
+    "success": "✅ Thank you! You’ve been added to the community.",
+    "errors": {
+      "required": "Please fill in name and email."
+    }
+  }
+}
+

@@ -86,6 +86,7 @@ body{
 .btn-ghost{
   background:transparent; color:#ffffff; border-color:rgba(255,255,255,.35);
 }
+
 .btn-ghost:hover {
   background: rgba(255, 255, 255, 0.15); /* leggero velo bianco trasparente */
   color: #ffffff; /* testo resta bianco */
@@ -1085,6 +1086,18 @@ select.control {
   resize: none;
 }
 
+.mautic-message {
+  background: rgba(255, 255, 255, 0.2); /* sfondo bianco semitrasparente */
+  color: #ffffff; /* testo bianco */
+  font-weight: 800; /* grassetto medio */
+  border: 1px solid rgba(255, 255, 255, 0.35); /* bordo semitrasparente */
+  padding: 1rem; /* spazio interno */
+  border-radius: 8px; /* angoli arrotondati */
+  text-align: center; /* testo centrato */
+  backdrop-filter: blur(4px); /* opzionale: effetto vetro smerigliato */
+}
+
+
 /* =========================================================
    Responsive Layout – Mobile-first adjustments
    Target: screens <= 768px
@@ -1355,4 +1368,41 @@ select.control {
 /* Varianti semantiche (future-proof) */
 .home-grid--benefits {}
 .home-grid--support  {}
+
+/* =============== Welcome / Info pages =============== */
+
+.welcome-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.welcome-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.welcome-icon {
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .welcome-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .welcome-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 

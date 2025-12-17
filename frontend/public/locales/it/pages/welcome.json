@@ -1,0 +1,55 @@
+{
+  "_comment": "/src/pages/WelcomeInfo.jsx",
+
+  "hero": {
+    "title": "Benvenuto su HelpLab!",
+    "subtitle": "Scopri tutto quello che puoi fare su questa piattaforma collaborativa per l’innovazione sostenibile."
+  },
+
+  "sections": {
+    "path": {
+      "icon": "🚀",
+      "title": " Il tuo percorso su HelpLab",
+      "subtitle": "Cresci con noi",
+      "text": "Su HelpLab non esiste un solo modo di partecipare. Puoi iniziare come cittadino, diventare giudice con l’esperienza, contribuire alla community, coinvolgere sponsor e sostenere economicamente una sfida. Il tuo percorso cresce insieme al tuo impatto."
+    },
+    "challenges": {
+      "icon": "🎯",
+      "title": " Partecipa a una Sfida",
+      "subtitle": "Agisci subito",
+      "text": "Le sfide sono azioni concrete a impatto ambientale e sociale, radicate nei territori. Puoi unirti a una sfida locale o tematica, contribuire con azioni reali e documentate e vedere il tuo impegno trasformarsi in risultati misurabili."
+    },
+    "judge": {
+      "icon": "🧑‍⚖️",
+      "title": " Diventa Giudice",
+      "subtitle": "Dai valore al tuo impatto",
+      "text": "I giudici garantiscono che ogni azione sia verificabile, trasparente e correttamente valutata. Analizzi evidenze, assegni punti e contribuisci a rendere i risultati oggettivi e credibili."
+    },
+    "sponsor": {
+      "icon": "🏭",
+      "title": " Coinvolgi uno Sponsor",
+      "subtitle": "Abilita l’impatto",
+      "text": "Le sfide possono essere sostenute da imprese, enti e fondazioni. Gli sponsor ottengono visibilità, valore sociale e report di impatto utili per i loro obiettivi ESG."
+    },
+    "learning": {
+      "icon": "📚",
+      "title": " Segui i Percorsi Formativi",
+      "subtitle": "Impara con la community",
+      "text": "HelpLab offrirà percorsi formativi gratuiti su sostenibilità, innovazione sociale e cittadinanza attiva per aumentare le tue competenze e il tuo impatto."
+    },
+    "community": {
+      "icon": "💬",
+      "title": " Contribuisci alla Community",
+      "subtitle": "Costruisci relazioni",
+      "text": "HelpLab è una community che cresce grazie allo scambio di idee, feedback e competenze. Contribuisci e partecipa alla costruzione di un ecosistema collaborativo."
+    }
+  },
+
+  "cta": {
+    "title": "✨ Pronto a iniziare il tuo percorso su HelpLab?",
+    "subtitle": "Scegli da dove partire: esplora le sfide attive o completa il tuo profilo per costruire il tuo ruolo nella community.",
+    "profile": "Vai al tuo profilo",
+    "challenges": "Esplora le sfide"
+  }
+}
+

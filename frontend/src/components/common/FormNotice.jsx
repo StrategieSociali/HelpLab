@@ -4,7 +4,9 @@ import TextBlock from "@/components/UI/TextBlock.jsx";
 import { useTranslation } from "react-i18next";
 
 export default function FormNotice({ className = "" }) {
-const { t } = useTranslation("components/common/formnotice");
+  const { t } = useTranslation("components/common/formnotice", {
+    useSuspense: false,
+  });
   return (
     <div
       className={`notice notice--info ${className}`}

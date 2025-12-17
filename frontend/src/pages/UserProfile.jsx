@@ -14,9 +14,17 @@ import { useAuth } from "@/context/AuthContext";
 import { api, API_PATHS } from "@/api/client";
 import { useNavigate } from "react-router-dom";
 import { isJudge } from "@/utils/roles";
+import { useTranslation } from "react-i18next";
+import LogoutButton from "@/components/common/LogoutButton";
+
 
 export default function UserProfile() {
-  const { user, token, logout, loading } = useAuth();
+  const { t } = useTranslation("pages/userProfile", {
+  useSuspense: false, // pagina raggiunta da click
+});
+
+  const { user, token, loading } = useAuth();
+
   const navigate = useNavigate();
 
   const isJudgeUser = isJudge(user?.role);
@@ -43,7 +51,8 @@ export default function UserProfile() {
       setQueue((prev) => (append ? [...prev, ...items] : items));
       setCursor(data?.nextCursor ?? null);
     } catch (err) {
-      setQError("Errore nel caricamento della coda");
+      setQError("load_error");
+
       if (!append) {
         setQueue([]);
         setCursor(null);
@@ -54,19 +63,21 @@ export default function UserProfile() {
   };
 
   // Carica dati da /v1/dashboard
-  useEffect(() => {
-    if (!token) return;
+  const [errorCode, setErrorCode] = useState(null);
+useEffect(() => {
+  if (!token) return;
 
-    api
-      .get(API_PATHS.dashboard())
-      .then((res) => {
-        setDashboard(res.data);
-      })
-      .catch((err) => {
-        console.error("Errore nel caricamento del profilo:", err);
-        setError("Errore durante il caricamento del profilo.");
-      });
-  }, [token]);
+  api
+    .get(API_PATHS.dashboard())
+    .then((res) => {
+      setDashboard(res.data);
+    })
+    .catch((err) => {
+      console.error("Profile load error:", err);
+      setErrorCode("profile_load_error");
+    });
+}, [token]);
+
 
   // Coda giudice
   useEffect(() => {
@@ -80,7 +91,7 @@ export default function UserProfile() {
   if (loading) {
     return (
       <section className="page-section page-text">
-        <div className="container">Caricamento…</div>
+        <div className="container">{t("states.loading")}</div>
       </section>
     );
   }
@@ -88,7 +99,7 @@ export default function UserProfile() {
   if (!user) {
     return (
       <section className="page-section page-text">
-        <div className="container">Non sei loggato.</div>
+        <div className="container">{t("states.notAuthenticated")}</div>
       </section>
     );
   }
@@ -98,38 +109,48 @@ export default function UserProfile() {
   return (
     <section className="page-section page-text">
       <div className="container">
-        <h2 className="page-title">Profilo</h2>
+        <h2 className="page-title">{t("title")}</h2>
+        
+        {/* Render errore di caricamento */}
+        {errorCode && (
+  <div className="callout error">
+    {t(`errors.${errorCode}`, {
+      defaultValue: t("errors.generic"),
+    })}
+  </div>
+)}
+
 
         {/* Card utente – ordine B */}
         <div className="card" style={{ padding: 16, marginBottom: 16 }}>
           <div style={{ display: "grid", gap: 6 }}>
             {dashboardUser?.username && (
-              <div><strong>Username:</strong> {dashboardUser.username}</div>
+              <div><strong>{t("fields.username")}:</strong> {dashboardUser.username}</div>
             )}
 
             {dashboardUser?.nickname && (
-              <div><strong>Nickname:</strong> {dashboardUser.nickname}</div>
+              <div><strong>{t("fields.nickname")}:</strong> {dashboardUser.nickname}</div>
             )}
 
-            <div><strong>Email:</strong> {dashboardUser?.email ?? user.email}</div>
+            <div><strong>{t("fields.email")}:</strong> {dashboardUser?.email ?? user.email}</div>
 
             {dashboardUser?.role && (
-              <div><strong>Ruolo:</strong> {dashboardUser.role}</div>
+              <div><strong>{t("fields.role")}:</strong> {dashboardUser.role}</div>
             )}
 
-            <div><strong>ID:</strong> {dashboardUser?.id ?? user.id}</div>
+            <div><strong>{t("fields.id")}:</strong> {dashboardUser?.id ?? user.id}</div>
 
             {dashboard?.totalPoints != null && (
-              <div><strong>Punti totali:</strong> {dashboard.totalPoints}</div>
+              <div><strong>{t("fields.totalPoints")}:</strong> {dashboard.totalPoints}</div>
             )}
 
             {dashboard?.totalVerified != null && (
-              <div><strong>Tasks verificati:</strong> {dashboard.totalVerified}</div>
+              <div><strong>{t("fields.totalVerified")}:</strong> {dashboard.totalVerified}</div>
             )}
           </div>
 
           <div style={{ marginTop: 12 }}>
-            <button className="btn btn-outline" onClick={logout}>Logout</button>
+            <LogoutButton />
           </div>
         </div>
 
@@ -137,22 +158,22 @@ export default function UserProfile() {
         {dashboard?.submissions?.length > 0 && (
           <div className="card" style={{ padding: 16, marginTop: 24 }}>
             <h3 className="page-title" style={{ marginBottom: 10 }}>
-              Le tue submission
+              {t("submissions.title")}
             </h3>
             <ul className="space-y-2">
               {dashboard.submissions.map((sub) => (
                 <li key={sub.id} className="border rounded p-3">
                   <div>
-                    <strong>Challenge:</strong> #{sub.challengeId}
+                    <strong>{t("submissions.challenge")}</strong> #{sub.challengeId}
                   </div>
                   <div>
-                    <strong>Attività:</strong> {sub.activity}
+                    <strong> {t("submissions.activity")}</strong> {sub.activity}
                   </div>
                   <div className="muted small">
-                    Stato: {sub.status} &middot; Punti: {sub.points ?? 0}
+                    {t("submissions.status")} {sub.status} &middot; {t("submissions.points")} {sub.points ?? 0}
                   </div>
                   <div className="muted small">
-                    Inviata: {fmtDate(sub.createdAt)} &middot; Verificata: {fmtDate(sub.reviewedAt)}
+                   {t("submissions.submittedAt")} {fmtDate(sub.createdAt)} &middot; {t("submissions.reviewedAt")} {fmtDate(sub.reviewedAt)}
                   </div>
                 </li>
               ))}
@@ -164,41 +185,45 @@ export default function UserProfile() {
         {isJudgeUser && (
           <div className="card" style={{ padding: 16, marginTop: 32 }}>
             <div className="page-header" style={{ marginBottom: 10 }}>
-              <h3 className="page-title" style={{ margin: 0 }}>Le mie sfide da giudicare</h3>
+              <h3 className="page-title" style={{ margin: 0 }}>{t("judge.title")}</h3>
               <div className="page-actions" style={{ display: "flex", gap: 8 }}>
                 <button
                   className="btn btn-outline btn-pill"
                   onClick={() => loadQueue({ append: false })}
                   disabled={qLoading}
                 >
-                  Aggiorna
+                  {t("judge.refresh")}
                 </button>
                 <button
                   className="btn btn-outline btn-pill"
                   onClick={() => window.location.href = "/modera"}
                 >
-                  Modera le submission
+                  {t("judge.moderateAll")}
                 </button>
               </div>
             </div>
 
             {qLoading && queue.length === 0 && (
-              <div className="callout neutral">Caricamento…</div>
+              <div className="callout neutral">{t("judge.loading")}</div>
             )}
-            {qError && !qLoading && (
-              <div className="callout error">{qError}</div>
-            )}
+           {errorCode && !dashboard && (
+  <div className="callout error">
+    {t(`judge.errors.${qError}`, {
+      defaultValue: t("judge.errors.generic"),
+    })}
+  </div>
+)}
             {!qLoading && !qError && queue.length === 0 && (
-              <div className="callout neutral">Nessuna sfida in coda al momento.</div>
+              <div className="callout neutral">{t("judge.empty")}</div>
             )}
 
             {queue.length > 0 && (
               <div className="table-like">
                 <div className="row head" style={{ display: "grid", gridTemplateColumns: "minmax(220px, 2fr) 1fr 120px 160px", gap: 12, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,.1)" }}>
-                  <div>Titolo</div>
-                  <div>Luogo</div>
-                  <div>Scadenza</div>
-                  <div>Aggiornata</div>
+                  <div>{t("judge.table.title")}</div>
+                  <div>{t("judge.table.location")}</div>
+                  <div>{t("judge.table.deadline")}</div>
+                  <div>{t("judge.table.updatedAt")}</div>
                 </div>
 
                 {queue.map((ch) => (
@@ -223,7 +248,7 @@ export default function UserProfile() {
                           className="btn btn-sm btn-outline"
                           onClick={() => navigate(`/challenges/${ch.id}/submissions`)}
                         >
-                          Modera la submission
+                          {t("judge.table.moderate")}
                         </button>
                       </div>
                     </div>
@@ -238,7 +263,7 @@ export default function UserProfile() {
                   className="btn btn-outline"
                   onClick={() => loadQueue({ append: true })}
                 >
-                  Carica altri
+                  {t("loadMore")}
                 </button>
               </div>
             )}

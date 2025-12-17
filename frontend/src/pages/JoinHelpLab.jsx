@@ -1,17 +1,30 @@
 // src/pages/JoinHelpLab.jsx
+/**
+ * Scopo: Presentare la community 
+ *
+ * Attualmente supporta:
+ * Breve presentazione
+ * Iscrizione a Mautic
+ */
+ 
 import React, { useEffect, useState } from "react";
 import FormNotice from "@/components/common/FormNotice.jsx";
-import communityHero from "@/assets/community-hero.jpg"; // ✅ immagine hero
-
-const INTEREST_OPTIONS = [
-  { value: "volontario", label: "Test della piattaforma" },
-  { value: "proponer", label: "Proporre progetti locali" },
-  { value: "aspirante_formatore", label: "Diventare formatore" },
-  { value: "aspirante_giudice", label: "Diventare giudice" },
-  { value: "aspirante_sponsor", label: "Sponsorizzare un progetto" },
-];
+import communityHero from "@/assets/community-hero.jpg";
+import { useTranslation } from "react-i18next";
 
 export default function JoinHelpLab() {
+  const { t } = useTranslation("pages/join", {
+    useSuspense: false,
+  });
+
+  const INTEREST_OPTIONS = [
+    { value: "volontario", label: t("form.interests.testing") },
+    { value: "proponer", label: t("form.interests.propose") },
+    { value: "aspirante_formatore", label: t("form.interests.trainer") },
+    { value: "aspirante_giudice", label: t("form.interests.judge") },
+    { value: "aspirante_sponsor", label: t("form.interests.sponsor") },
+  ];
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -105,49 +118,50 @@ export default function JoinHelpLab() {
       >
         <div className="hero-overlay"></div>
         <div className="hero-content">
-          <h1 className="section-title">
-            Unisciti a HelpLab: la prima community locale per il cambiamento
-          </h1>
-          <p className="section-subtitle">
-            HelpLab è la <strong>community per la sostenibilità ambientale e sociale</strong> che
-            collega cittadini, imprese e pubbliche amministrazioni per
-            realizzare <strong>progetti ESG locali</strong> con impatto
-            misurabile e verificabile secondo gli standard{" "}
-            <strong>CSRD/ESRS</strong>. Iscriviti per ricevere aggiornamenti,
-            opportunità di collaborazione e per entrare in una rete che
-            trasforma la sostenibilità in azione concreta.
-          </p>
+         <h1 className="section-title">
+         {t("hero.title")}
+         </h1>
+
+        <p className="section-subtitle">
+         {t("hero.text")}
+        </p>
+
         </div>
       </section>
 
       {/* --- CTA SECTION (testo bianco) --- */}
       <section className="cta-section" style={{ backgroundColor: "#0f172a" }}>
         <div className="container text-center" style={{ color: "white" }}>
-          <h2>Iscriviti ora alla community</h2>
-          <p>
-            Riceverai aggiornamenti sui <strong>progetti ESG locali</strong>,
-            nuove opportunità di partecipazione e strumenti per misurare il tuo
-            impatto in modo trasparente.  Fantastici regali e opportunità a tutti coloro che ci aiuteranno a testare
-	    la piattaforma prima della release stabile v1.0.
+          <h1 className="section-title">
+           {t("hero.title")}
+          </h1>
+
+          <p className="section-subtitle">
+             {t("hero.text")}
           </p>
+
         </div>
       </section>
 
-      {/* --- FORM SECTION --- */}
+      {/* --- FORM SECTION --- 
+       ⚠️ ATTENZIONE:
+       Le chiavi "mauticform[...]" sono CONTRATTO con Mautic.
+       Non tradurre né rinominare. */}
+
       <section className="registration-form">
         <div className="mauticform-innerform">
           <FormNotice className="notice--center" />
           <form className="registration-form" onSubmit={onSubmit}>
             <div className="form-group mauticform-row">
 	  <label htmlFor="name" className="mauticform-label">
-	    Nome <span className="required">*</span>
+	    {t("form.name.label")} <span className="required">*</span>
 	  </label>
 	  <input
 	    id="name"
  	   name="name"
  	   type="text"
  	   className="mauticform-input"
- 	   placeholder="Mario"
+ 	   placeholder={t("form.name.placeholder")}
  	   value={form.name}
  	   onChange={onChange}
  	   required
@@ -157,14 +171,14 @@ export default function JoinHelpLab() {
 
             <div className="form-group mauticform-row">
               <label htmlFor="email" className="mauticform-label">
-                Email <span className="required">*</span>
+                {t("form.email.label")} <span className="required">*</span>
               </label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 className="mauticform-input"
-                placeholder="nome@esempio.it"
+                placeholder={t("form.email.placeholder")}
                 value={form.email}
                 onChange={onChange}
                 required
@@ -173,7 +187,7 @@ export default function JoinHelpLab() {
             </div>
 
             <div className="form-group mauticform-row">
-              <label className="mauticform-label">Aree di interesse</label>
+              <label className="mauticform-label">{t("form.interests.label")}</label>
               <div className="checkbox-grid">
                 {INTEREST_OPTIONS.map((opt) => (
                   <label key={opt.value} className="checkbox-item">
@@ -202,21 +216,23 @@ export default function JoinHelpLab() {
                   className="mauticform-checkboxgrp-checkbox"
                 />
                 <span>
-                  Iscriviti alla newsletter per ricevere aggiornamenti
+                  {t("form.newsletter")}
                 </span>
               </label>
             </div>
 
-            {error && (
-              <div className="mauticform-error mauticform-errormsg">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="mauticform-message">
-                ✅ Grazie! Ti abbiamo aggiunto alla community.
-              </div>
-            )}
+               {error && (
+                 <div className="mauticform-error">
+                  {t("form.errors.required")}
+                 </div>
+               )}
+
+               {success && (
+                 <div className="mautic-message">
+                  {t("form.success")}
+                 </div>
+               )}
+
 
             <div className="mauticform-row mauticform-button-wrapper">
               <button
@@ -226,8 +242,8 @@ export default function JoinHelpLab() {
                 aria-busy={submitting}
               >
                 {submitting
-                  ? "Invio in corso…"
-                  : "Proponiti alla Community"}
+                  ? t("form.submitting")
+                  : t("form.submit")}
               </button>
             </div>
           </form>

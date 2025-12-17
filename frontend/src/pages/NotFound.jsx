@@ -1,4 +1,4 @@
-// NotFound.jsx
+// /src/pages/NotFound.jsx
 // Pagina 404 con lo stesso look dei form/pannelli (gradient scuro + card “vetrosa”).
 // Usiamo soltanto classi che esistono già nel tuo CSS globale:
 // - registration-section  → sfondo scuro a gradiente + tipografia chiara
@@ -10,8 +10,15 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from "react-i18next";
+
 
 function NotFound() {
+
+const { t } = useTranslation("pages/notFound", {
+  useSuspense: false,
+});
+
   return (
     // <main> semantico + aria-labelledby per accessibilità degli screen reader
     <main className="registration-section" aria-labelledby="nf-title">
@@ -20,13 +27,12 @@ function NotFound() {
         <div className="registration-form" role="region" aria-describedby="nf-desc">
           {/* Titolo della pagina 404 (leggibile su sfondo scuro grazie al tema) */}
           <h1 id="nf-title" style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
-            Pagina non trovata
+            {t("title")}
           </h1>
 
           {/* Testo breve e chiaro su cosa è successo e cosa può fare l’utente */}
           <p id="nf-desc" style={{ textAlign: 'center', opacity: 0.9, marginBottom: '1.25rem' }}>
-            La risorsa che stai cercando potrebbe essere stata spostata o non esiste più.
-            Puoi tornare alla Home oppure accedere per continuare.
+            {t("description")}
           </p>
 
           {/* Azioni principali (usiamo i CTA verdi già presenti nello stile) */}
@@ -36,13 +42,13 @@ function NotFound() {
           >
             {/* Link alla Home */}
             <Link to="/" className="cta-button" aria-label="Torna alla Home">
-              Torna alla Home
+              {t("actions.home")}
               <span className="arrow">→</span>
             </Link>
 
             {/* Link al Login */}
             <Link to="/login" className="cta-button" aria-label="Vai al Login">
-              Vai al Login
+              {t("actions.login")}
               <span className="arrow">→</span>
             </Link>
           </div>

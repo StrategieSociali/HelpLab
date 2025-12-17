@@ -48,7 +48,7 @@ export default function Roadmap() {
           </div>
           <div className="benefit-card">
             <h3>v0.8.x Gamification.</h3>
-            <p>Badge, punteggi utente, achievements. Primo profilo/privato pubblico utente.API review evidenze (auto/judge). Inizio consolidamento codice.</p>
+            <p>Badge, punteggi utente, achievements. Primo profilo/privato pubblico utente.API review evidenze (auto/judge). Introduzione pagina informativa su ruoli. Inizio consolidamento codice.</p>
           </div>
           <div className="benefit-card">
             <h3>v0.9.x Dashboard Admin evoluta</h3>

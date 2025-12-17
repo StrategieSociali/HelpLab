@@ -1,0 +1,39 @@
+{
+  "_comment": "/src/pages/Register.jsx",
+
+  "title": "Create an account",
+
+  "name": {
+    "label": "Name",
+    "placeholder": "Your name"
+  },
+
+  "nickname": {
+    "label": "Nickname",
+    "placeholder": "Choose a public nickname"
+  },
+
+  "email": {
+    "label": "Email",
+    "placeholder": "name@example.com"
+  },
+
+  "password": {
+    "label": "Password",
+    "placeholder": "Minimum 8 characters"
+  },
+
+  "actions": {
+    "submit": "Create account",
+    "creating": "Creating account…",
+    "loginLink": "Already have an account?"
+  },
+
+  "errors": {
+    "invalid_nickname": "Nickname may contain only letters, numbers, _ or - (3–40 characters).",
+    "conflict": "Email or nickname already registered.",
+    "invalid_data": "Invalid data. Please check the fields and try again.",
+    "generic": "Registration failed. Please try again."
+  }
+}
+

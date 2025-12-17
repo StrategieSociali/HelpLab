@@ -1,0 +1,56 @@
+{
+  "_comment": "/src/pages/WelcomeInfo.jsx",
+
+  "hero": {
+    "title": "Welcome to HelpLab!",
+    "subtitle": "Discover everything you can do on this collaborative platform for sustainable innovation."
+  },
+
+  "sections": {
+    "path": {
+            "icon": "🚀",
+            "title": " Your journey on HelpLab",
+            "subtitle": "Grow with us",
+            "text": "On HelpLab there is no single way to participate. You can start as a citizen, become a judge through experience, contribute to the community, involve sponsors and support challenges economically."
+            },
+    "challenges": {
+            "icon": "🎯",
+            "title": " Join a Challenge",
+            "subtitle": "Take action now",
+             "text": "Challenges are concrete actions with environmental and social impact, rooted in local territories. Join a local or thematic challenge and turn your commitment into measurable results."
+    },
+      "judge": {
+             "icon": "🧑‍⚖️",
+             "title": " Become a Judge",
+             "subtitle": "Give value to your impact",
+             "text": "Judges ensure that every action is verifiable, transparent and properly evaluated. You analyze evidence, assign points and help make results credible."
+    },
+      "sponsor": {
+             "icon": "🏭",
+             "title": " Involve a Sponsor",
+             "subtitle": "Enable impact",
+             "text": "Challenges can be supported by companies, institutions and foundations. Sponsors gain visibility, social value and impact reports for ESG goals."
+    },
+     "learning": {
+             "icon": "📚",
+             "title": " Follow Learning Paths",
+             "subtitle": "Learn with the community",
+             "text": "HelpLab will offer free learning paths on sustainability, social innovation and active citizenship to boost your skills and impact."
+    },
+      "community": {
+             "icon": "💬",
+             "title": " Contribute to the Community",
+             "subtitle": "Build relationships",
+             "text": "HelpLab is a community that grows through the exchange of ideas, feedback and skills. Join and help build a collaborative ecosystem."
+    }
+  },
+
+  "cta": {
+    "icon": "✨",
+    "title": " Ready to start your journey on HelpLab?",
+    "subtitle": "Choose where to begin: explore active challenges or complete your profile to build your role in the community.",
+    "profile": "Go to your profile",
+    "challenges": "Explore challenges"
+  }
+}
+

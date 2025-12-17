@@ -1,0 +1,18 @@
+{
+ "_comment": "/src/components/common/footer.jsx",
+  "brand": {
+    "name": "HelpLab",
+    "claim": "Humanity Empowered for Local Progress"
+  },
+  "copyright": "HelpLab — Tutti i diritti riservati",
+  "version": {
+    "label": "Versione attuale"
+  },
+  "links": {
+    "home": "Home",
+    "challenges": "Sfide",
+    "learning": "Corsi",
+    "github": "GitHub"
+  }
+}
+

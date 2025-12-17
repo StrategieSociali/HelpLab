@@ -1,0 +1,15 @@
+{
+  "_comment": "/src/pages/NotFound.jsx",
+
+  "title": "Page not found",
+
+  "description": "The resource you are looking for may have been moved or no longer exists. You can return to the Home page or log in to continue.",
+
+  "actions": {
+    "home": "Back to Home",
+    "homeAria": "Go back to the Home page",
+    "login": "Go to Login",
+    "loginAria": "Go to the Login page"
+  }
+}
+

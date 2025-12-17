@@ -1,9 +1,22 @@
+// src/pages/Register.jsx
+/**
+ * Scopo: permettere la registrazione degli utenti
+ *
+ * Attualmente supporta:
+ * - Registrazione
+ */
+
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import TextBlock from "@/components/UI/TextBlock.jsx";
+import { useTranslation } from "react-i18next";
 
 export default function Register() {
+  const { t } = useTranslation("pages/register", {
+    useSuspense: false, // OBBLIGATORIO: pagina raggiunta da click
+  });
+
   const navigate = useNavigate();
   const { register } = useAuth();
 
@@ -13,8 +26,9 @@ export default function Register() {
     name: "",
     nickname: "",
   });
+
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const [errorCode, setErrorCode] = useState(null);
 
   const onChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -26,12 +40,10 @@ export default function Register() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setErr("");
+    setErrorCode(null);
 
     if (!validateNickname(form.nickname)) {
-      setErr(
-        "Il nickname deve contenere solo lettere, numeri, _ o - (3-40 caratteri)."
-      );
+      setErrorCode("invalid_nickname");
       return;
     }
 
@@ -48,11 +60,11 @@ export default function Register() {
       console.error(error);
 
       if (error?.response?.status === 409) {
-        setErr("Email o nickname già registrati.");
+        setErrorCode("conflict");
       } else if (error?.response?.status === 400) {
-        setErr("Dati non validi. Controlla i campi e riprova.");
+        setErrorCode("invalid_data");
       } else {
-        setErr("Registrazione non riuscita. Controlla i dati e riprova.");
+        setErrorCode("generic");
       }
     } finally {
       setBusy(false);
@@ -72,10 +84,10 @@ export default function Register() {
             marginBottom: "2rem",
           }}
         >
-          Registrati
+          {t("title")}
         </h1>
 
-        {err && (
+        {errorCode && (
           <div
             className="callout error"
             style={{
@@ -87,18 +99,20 @@ export default function Register() {
               color: "#fca5a5",
             }}
           >
-            {err}
+            {t(`errors.${errorCode}`, {
+              defaultValue: t("errors.generic"),
+            })}
           </div>
         )}
 
         <form onSubmit={onSubmit} className="registration-form">
           <div className="form-group">
-            <label htmlFor="name">Nome</label>
+            <label htmlFor="name">{t("name.label")}</label>
             <input
               id="name"
               name="name"
               type="text"
-              placeholder="Il tuo nome"
+              placeholder={t("name.placeholder")}
               value={form.name}
               onChange={onChange}
               required
@@ -106,12 +120,12 @@ export default function Register() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="nickname">Nickname</label>
+            <label htmlFor="nickname">{t("nickname.label")}</label>
             <input
               id="nickname"
               name="nickname"
               type="text"
-              placeholder="Scegli un nickname pubblico"
+              placeholder={t("nickname.placeholder")}
               value={form.nickname}
               onChange={onChange}
               required
@@ -119,12 +133,12 @@ export default function Register() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">{t("email.label")}</label>
             <input
               id="email"
               name="email"
               type="email"
-              placeholder="nome@esempio.it"
+              placeholder={t("email.placeholder")}
               value={form.email}
               onChange={onChange}
               required
@@ -133,12 +147,12 @@ export default function Register() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">{t("password.label")}</label>
             <input
               id="password"
               name="password"
               type="password"
-              placeholder="Minimo 8 caratteri"
+              placeholder={t("password.placeholder")}
               value={form.password}
               onChange={onChange}
               required
@@ -152,7 +166,7 @@ export default function Register() {
             disabled={busy}
             aria-busy={busy}
           >
-            {busy ? "Creazione in corso…" : "Crea account"}
+            {busy ? t("actions.creating") : t("actions.submit")}
           </button>
 
           <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
@@ -170,7 +184,7 @@ export default function Register() {
                 transition: "all 0.3s ease",
               }}
             >
-              Hai già un account?
+              {t("actions.loginLink")}
             </Link>
           </div>
         </form>

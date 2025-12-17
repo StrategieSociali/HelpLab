@@ -1,0 +1,52 @@
+{
+  "_comment": "/src/pages/UserProfile.jsx",
+
+  "title": "Profile",
+
+  "states": {
+    "loading": "Loading…",
+    "notAuthenticated": "You are not logged in."
+  },
+
+  "fields": {
+    "username": "Username",
+    "nickname": "Nickname",
+    "email": "Email",
+    "role": "Role",
+    "id": "ID",
+    "totalPoints": "Total points",
+    "totalVerified": "Verified tasks"
+  },
+
+  "submissions": {
+    "title": "Your submissions",
+    "challenge": "Challenge",
+    "activity": "Activity",
+    "status": "Status",
+    "points": "Points",
+    "submittedAt": "Submitted",
+    "reviewedAt": "Reviewed"
+  },
+
+  "judge": {
+    "title": "My challenges to review",
+    "refresh": "Refresh",
+    "moderateAll": "Moderate submissions",
+    "loading": "Loading…",
+    "empty": "No challenges in the queue at the moment.",
+    "loadError": "Error while loading the queue",
+    "table": {
+      "title": "Title",
+      "location": "Location",
+      "deadline": "Deadline",
+      "updatedAt": "Updated",
+      "moderate": "Moderate submission"
+    },
+    "errors": {
+    "load_error": "Error loading queue",
+    "generic": "An error occurred"
+    },
+    "loadMore": "Load more"
+  }
+}
+

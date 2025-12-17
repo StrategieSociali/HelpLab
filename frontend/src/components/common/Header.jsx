@@ -11,16 +11,21 @@
 */
 
 import React, { useState, useEffect } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes";
 import { isAdmin } from "@/utils/roles";
+import LogoutButton from "@/components/common/LogoutButton";
 import { useTranslation } from "react-i18next";
+import { startTransition } from "react";
 
 export default function Header() {
-  const { t, i18n } = useTranslation("components/common/header");
+  const { t, i18n } = useTranslation("components/common/header", {
+    useSuspense: false,
+  });
 
-  const { isAuthenticated, user, logout } = useAuth();
+const { isAuthenticated, user } = useAuth();
+
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -31,6 +36,9 @@ export default function Header() {
   const isAdminUser = isAdmin(user?.role);
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const [communityOpen, setCommunityOpen] = useState(false);
+  
+// gestione transitions per Accedi  
+    const navigate = useNavigate();
 
 
 useEffect(() => {
@@ -84,9 +92,6 @@ if (!ready) return null;
     </button>
   </span>
 </Link>
- 
-        
-
 
         {/* Burger icon per mobile */}
         <button
@@ -119,10 +124,14 @@ if (!ready) return null;
     <NavLink
       to={routes.dashboard.challenges}
       className="btn"
-      onClick={() => {
-        setMenuOpen(false);
-        setSfideOpen(false);
-      }}
+      onClick={(e) => {
+  e.preventDefault();
+  setMenuOpen(false);
+  setSfideOpen(false);
+  startTransition(() => {
+    navigate(routes.dashboard.challenges);
+  });
+}}
     >
       {t("nav.allChallenges")}
     </NavLink>
@@ -198,43 +207,97 @@ if (!ready) return null;
                 )}
                 <NavLink to={routes.dashboard.challengeCreate} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>{t("nav.createChallenge")}</NavLink>
                 <NavLink to={routes.dashboard.userProfile} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>{t("nav.profile")}</NavLink>
-                <button className="btn btn-outline btn-pill" onClick={() => { logout(); setMenuOpen(false); }}>{t("nav.logout")}</button>
+               <LogoutButton onAfterLogout={() => setMenuOpen(false)} />
+
               </>
             ) : (
               <>
-                <NavLink to={routes.auth.login} className="btn btn-ghost btn-pill" onClick={() => setMenuOpen(false)}>{t("nav.login")}</NavLink>
+                <NavLink 
+                 to={routes.auth.login}
+                  className="btn btn-ghost btn-pill" 
+                  onClick={(e) => {
+                   e.preventDefault();
+                   setMenuOpen(false);
+                   startTransition(() => {
+                   navigate(routes.auth.login);
+                   });
+                  }}
+                 >{t("nav.login")}</NavLink>
                 <NavLink to={routes.auth.register} className="btn btn-outline btn-pill" onClick={() => setMenuOpen(false)}>{t("nav.register")}</NavLink>
               </>
             )}
           </div>
         </nav>
- 
- 
- 
 
       {/* Auth actions visibili solo su desktop */}
       <div className="nav-auth-actions desktop-only">
-        {isAuthenticated ? (
-          <>
-            {isAdminUser && (
-              <details className="admin-menu">
-                <summary className="btn btn-ghost btn-pill">Admin</summary>
-                <div className="admin-menu__list">
-                  <NavLink to={routes.admin.proposals} className="btn btn-ghost btn-pill">Gestione Proposte</NavLink>
-                  <NavLink to={routes.admin.assignJudge} className="btn btn-ghost btn-pill">Assegna Giudici</NavLink>
-                </div>
-              </details>
-            )}
-            <NavLink to={routes.dashboard.challengeCreate} className="btn btn-ghost btn-pill">Crea Sfida</NavLink>
-            <NavLink to={routes.dashboard.userProfile} className="btn btn-ghost btn-pill">Profilo</NavLink>
-            <button className="btn btn-outline btn-pill" onClick={logout}>Esci</button>
-          </>
-        ) : (
-          <>
-            <NavLink to={routes.auth.login} className="btn btn-ghost btn-pill">Accedi</NavLink>
-            <NavLink to={routes.auth.register} className="btn btn-outline btn-pill">Registrati</NavLink>
-          </>
-        )}
+       {isAuthenticated ? (
+  <>
+    {isAdminUser && (
+      <details className="admin-menu">
+        <summary className="btn btn-ghost btn-pill">
+          {t("auth.admin.label")}
+        </summary>
+
+        <div className="admin-menu__list">
+          <NavLink
+            to={routes.admin.proposals}
+            className="btn btn-ghost btn-pill"
+          >
+            {t("auth.admin.proposals")}
+          </NavLink>
+
+          <NavLink
+            to={routes.admin.assignJudge}
+            className="btn btn-ghost btn-pill"
+          >
+            {t("auth.admin.assignJudges")}
+          </NavLink>
+        </div>
+      </details>
+    )}
+
+    <NavLink
+      to={routes.dashboard.challengeCreate}
+      className="btn btn-ghost btn-pill"
+    >
+      {t("auth.actions.createChallenge")}
+    </NavLink>
+
+    <NavLink
+      to={routes.dashboard.userProfile}
+      className="btn btn-ghost btn-pill"
+    >
+      {t("auth.actions.profile")}
+    </NavLink>
+
+<LogoutButton />
+
+  </>
+) : (
+  <>
+    <NavLink
+      to={routes.auth.login}
+      className="btn btn-ghost btn-pill"
+      onClick={(e) => {
+        e.preventDefault(); // ⛔ blocca NavLink
+        startTransition(() => {
+          navigate(routes.auth.login);
+        });
+      }}
+    >
+      {t("auth.actions.login")}
+    </NavLink>
+
+    <NavLink
+      to={routes.auth.register}
+      className="btn btn-outline btn-pill"
+    >
+      {t("auth.actions.register")}
+    </NavLink>
+  </>
+)}
+
       </div>
         </div>
     </header>

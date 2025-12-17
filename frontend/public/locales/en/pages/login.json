@@ -1,11 +1,24 @@
 {
   "_comment": "/src/pages/Login.jsx",
-  "email_label": "Email",
-  "email_placeholder": "name@example.com",
-  "password_label": "Password",
-  "password_placeholder": "Password",
-  "login_button": "Login",
-  "logging_in": "Logging in…",
-  "error": "Login failed. Check your credentials and try again."
+
+  "email": {
+    "label": "Email",
+    "placeholder": "Enter your email"
+  },
+
+  "password": {
+    "label": "Password",
+    "placeholder": "Enter your password"
+  },
+
+  "actions": {
+    "login": "Login",
+    "loggingIn": "Logging in..."
+  },
+
+  "errors": {
+    "invalid_credentials": "Invalid email or password",
+    "generic": "An error occurred during login"
+  }
 }
 
