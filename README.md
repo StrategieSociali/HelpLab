@@ -59,7 +59,11 @@ HelpLab is an open-source platform designed to **encourage sustainable behaviors
 
 ### **Installation**
 For users:
-- clone the ../dist folder
+- git clone https://github.com/your-repo/helplab-space.git
+- cd frontend
+- npm install
+- npm run build
+- copy the contento of ../dist folder
 - put the contents of the folder on your server
 - that's all
 
