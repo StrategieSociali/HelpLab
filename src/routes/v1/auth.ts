@@ -168,31 +168,211 @@ export async function authV1Routes(app: FastifyInstance) {
     return reply.code(200).send({ ok: true })
   })
 
-  // ME (profilo + role) — per riempire AuthContext al reload
-  app.get('/me', {
-    config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
-    schema: { tags: ['Auth'], summary: 'Profilo utente (richiede Bearer)' }
-  }, async (req, reply) => {
-    const auth = (req.headers?.authorization || '').toString()
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
-    if (!token) return reply.code(401).send({ error: 'missing token' })
-    try {
-      const payload = verifyAccessToken(token) as any
-      const user = await prisma.users.findUnique({
-        where: { id: BigInt(String(payload.sub)) } as any,
-        select: { id: true, email: true, username: true, role: true }
-      })
-      if (!user) return reply.code(401).send({ error: 'invalid token' })
-      return reply.send({
-        user: {
-          id: Number(user.id),
-          email: user.email ?? null,
-          username: user.username,
-          role: user.role ?? 'user'
+ // ME (profilo + role) — per riempire AuthContext al reload
+app.get('/me', {
+  config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
+  schema: {
+    tags: ['Auth'],
+    summary: 'Profilo utente (richiede Bearer)',
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              email: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+              username: { type: 'string' },
+              nickname: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+              role: { anyOf: [{ type: 'string' }, { type: 'null' }] }
+            }
+          }
         }
-      })
-    } catch {
-      return reply.code(401).send({ error: 'invalid token' })
+      },
+      401: {
+        type: 'object',
+        properties: {
+          error: { type: 'string' }
+        }
+      }
     }
-  })
+  }
+},
+ async (req, reply) => {
+  const auth = (req.headers?.authorization || '').toString()
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
+  if (!token) return reply.code(401).send({ error: 'missing token' })
+
+  try {
+    const payload = verifyAccessToken(token) as any
+    const user = await prisma.users.findUnique({
+      where: { id: BigInt(String(payload.sub)) },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        nickname: true,
+        role: true
+      }
+    })
+
+    if (!user) return reply.code(401).send({ error: 'invalid token' })
+
+    return reply.send({
+      user: {
+        id: Number(user.id),
+        email: user.email ?? null,
+        username: user.username,
+        nickname: user.nickname ?? null,
+        role: user.role ?? 'user'
+      }
+    })
+  } catch {
+    return reply.code(401).send({ error: 'invalid token' })
+  }
+})
+ // GET che estrae i dati delle challenge in maniera aggregata
+    // DASHBOARD UTENTE — dati aggregati per frontend
+app.get('/dashboard', {
+  config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+  schema: {
+    tags: ['Auth'],
+    summary: 'Dashboard personale utente loggato',
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              username: { type: 'string' },
+              email: { type: 'string' },
+              nickname: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+              role: { anyOf: [{ type: 'string' }, { type: 'null' }] }
+            }
+          },
+          totalPoints: { type: 'number' },
+          totalVerified: { type: 'number' },
+          submissions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'number' },
+                challengeId: { type: 'number' },
+                status: { type: 'string' },
+                visibility: { type: 'string' },
+                activity: { type: 'string' },
+                createdAt: { type: 'string' },
+                reviewedAt: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+                points: { anyOf: [{ type: 'number' }, { type: 'null' }] }
+              }
+            }
+          },
+          scores: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                challengeId: { type: 'number' },
+                score: { type: 'number' },
+                verified_tasks: { type: 'number' },
+                last_event_at: { type: 'string' }
+              }
+            }
+          }
+        }
+      },
+      401: {
+        type: 'object',
+        properties: { error: { type: 'string' } }
+      }
+    }
+  }
+}, async (req, reply) => {
+  const auth = (req.headers?.authorization || '').toString()
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
+  if (!token) return reply.code(401).send({ error: 'missing token' })
+
+  try {
+    const payload = verifyAccessToken(token) as any
+    const userId = BigInt(payload.sub)
+
+    // Profilo
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        nickname: true,
+        role: true
+      }
+    })
+    if (!user) return reply.code(401).send({ error: 'invalid token' })
+
+    // Submission dell'utente
+    const submissions = await prisma.challenge_submissions.findMany({
+      where: { user_id: userId },
+      select: {
+        id: true,
+        challenge_id: true,
+        status: true,
+        visibility: true,
+        activity_description: true,
+        created_at: true,
+        reviewed_at: true,
+        points_awarded: true
+      },
+      orderBy: { created_at: 'desc' }
+    })
+
+    // Challenge scores (aggregati)
+    const scores = await prisma.challenge_scores.findMany({
+      where: { user_id: userId },
+      select: {
+        challenge_id: true,
+        score: true,
+        verified_tasks_count: true,
+        last_event_at: true
+      }
+    })
+
+    // Totali aggregati
+    const totalPoints = scores.reduce((sum, s) => sum + Number(s.score), 0)
+    const totalVerified = scores.reduce((sum, s) => sum + Number(s.verified_tasks_count), 0)
+
+    return reply.send({
+      user: {
+        id: Number(user.id),
+        email: user.email,
+        username: user.username,
+        nickname: user.nickname ?? null,
+        role: user.role ?? 'user'
+      },
+      totalPoints,
+      totalVerified,
+      submissions: submissions.map(s => ({
+        id: Number(s.id),
+        challengeId: Number(s.challenge_id),
+        status: s.status,
+        visibility: s.visibility,
+        activity: s.activity_description ?? '',
+        createdAt: s.created_at.toISOString(),
+        reviewedAt: s.reviewed_at?.toISOString() ?? null,
+        points: s.points_awarded ?? null
+      })),
+      scores: scores.map(s => ({
+        challengeId: Number(s.challenge_id),
+        score: Number(s.score),
+        verified_tasks: Number(s.verified_tasks_count),
+        last_event_at: s.last_event_at?.toISOString() ?? null
+      }))
+    })
+  } catch {
+    return reply.code(401).send({ error: 'invalid token' })
+  }
+})
 }

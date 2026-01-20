@@ -3,6 +3,9 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { previewBodySchema, proposalBodySchema } from '../../schemas/scoringSchemas.js'
 import { verifyAccessToken } from '../../utils/jwt.js'
+import { copyProposalTasks } from '../../utils/copyProposalTasks.js'
+import { users_role } from '@prisma/client'
+
 
 // --- util: pulizia payload (toglie null, "", normalizza) ---
 function cleanPayload(input: any): any {
@@ -113,7 +116,7 @@ app.get('/admin/proposals', {
   403: { type: 'object', properties: { error: { type: 'string' } } }
 }
   },
-  preHandler: requireAuth('admin')
+  preHandler: requireAuth(users_role.admin)
 }, async (req: any, reply) => {
   const q = (req.query || {}) as { status?: string; limit?: number; cursor?: string }
 
@@ -274,8 +277,15 @@ function shortId(n = 6) {
 app.patch('/challenge-proposals/:id/approve', {
   schema: {
     tags: ['Proposals v1'],
-    summary: 'Approva una proposal e (se necessario) crea/aggiorna la challenge',
+    summary: 'Approva una proposal e crea/aggiorna la challenge collegata',
     security: [{ bearerAuth: [] }],
+    body: {
+      type: 'object',
+      properties: {
+        approved_co2: { type: 'number', nullable: true },
+        max_points:   { type: 'number', nullable: true }
+      }
+    },
     response: {
       200: {
         type: 'object',
@@ -292,12 +302,13 @@ app.patch('/challenge-proposals/:id/approve', {
       409: { type: 'object', properties: { error: { type: 'string' } } }
     }
   },
-  preHandler: requireAuth('admin')
+  preHandler: requireAuth(users_role.admin)
 }, async (req: any, reply) => {
   const id = String((req.params as any).id || '')
   if (!id) return reply.code(404).send({ error: 'not found' })
 
-  // 1) Carica la proposal (solo campi garantiti dallo schema Prisma)
+  const { approved_co2, max_points } = req.body || {}
+
   const p = await prisma.challenge_proposals.findUnique({
     where: { id },
     select: {
@@ -308,9 +319,7 @@ app.patch('/challenge-proposals/:id/approve', {
       location_address: true,
       deadline: true,
       target: true,
-      // NB: queste colonne potrebbero esistere nel DB anche se non mappate nel client
-      // le leggiamo “best effort” con cast più avanti:
-      // challenge_id, approved_at
+      challenge_id: true
     }
   })
 
@@ -319,67 +328,65 @@ app.patch('/challenge-proposals/:id/approve', {
     return reply.code(409).send({ error: 'invalid status transition' })
   }
 
-  const now   = new Date()
+  const now = new Date()
   const title = p.title ?? '(senza titolo)'
-  const type  = p.impact_type ?? 'generic'
-  const slug  = `${toSlugBase(title) || 'challenge'}-${shortId(6)}`
-
-  // Se nel DB esiste challenge_id lo usiamo, altrimenti branch "create"
+  const type = p.impact_type ?? 'generic'
+  const slug = `${toSlugBase(title) || 'challenge'}-${shortId(6)}`
   const challengeId: bigint | null = (p as any).challenge_id ?? null
 
-  // 2) Transazione: crea/aggiorna challenge + aggiorna proposal
   const { outId, outUpdatedAt } = await prisma.$transaction(async (tx) => {
+    const challengeData: any = {
+      title,
+      type,
+      location: p.location_address ?? null,
+      rules: '',
+      deadline: p.deadline ? new Date(p.deadline) : null,
+      target_json: p.target as any,
+      status: 'open'
+    }
+
+    // Solo se tipo "climate"
+    if (type === 'climate' && approved_co2 !== undefined) {
+      challengeData.approved_co2 = approved_co2
+    }
+
+    if (max_points !== undefined) {
+      challengeData.max_points = max_points
+    }
+
     let createdOrUpdatedId: bigint
     let updatedAt: Date | null = null
 
     if (challengeId) {
-      // UPDATE esistente
       const upd = await tx.challenges.update({
         where: { id: challengeId as any },
-        data: {
-          title,
-          type,
-          location: p.location_address ?? null,
-          rules: '',
-          deadline: p.deadline ? new Date(p.deadline as any) : null,
-          target_json: p.target as any,
-          status: 'open'
-        } as any,
+        data: challengeData,
         select: { id: true, updated_at: true }
       })
       createdOrUpdatedId = upd.id
       updatedAt = upd.updated_at
     } else {
-      // CREATE nuovo
       const crt = await tx.challenges.create({
         data: {
-          proposal_uuid: p.id as any,             // riferimento indietro alla proposal
+          ...challengeData,
+          proposal_uuid: p.id,
           slug,
-          title,
-          type,
-          location: p.location_address ?? null,
-          rules: '',
-          deadline: p.deadline ? new Date(p.deadline as any) : null,
-          target_json: p.target as any,
-          budget_amount: null,
           budget_currency: 'EUR',
-          status: 'open',
           judge_user_id: null
-        } as any,
+        },
         select: { id: true, updated_at: true }
       })
       createdOrUpdatedId = crt.id
       updatedAt = crt.updated_at
     }
 
-    // Aggiorna la proposal → approved (+ link alla challenge se la colonna esiste)
-    const updateData: any = { status: 'approved' }
-    updateData.approved_at = now                   // se la colonna non esiste, Prisma ignora in build? al limite castiamo
-    updateData.challenge_id = createdOrUpdatedId   // idem: campo opzionale DB-first
-
     await tx.challenge_proposals.update({
       where: { id: p.id },
-      data: updateData
+      data: {
+        status: 'approved',
+        approved_at: now,
+        challenge_id: createdOrUpdatedId
+      }
     })
 
     return { outId: createdOrUpdatedId, outUpdatedAt: updatedAt }
@@ -394,14 +401,12 @@ app.patch('/challenge-proposals/:id/approve', {
 })
 
 
-
-
   // =========================
   // PATCH /api/v1/challenge-proposals/:id/reject   (SOLO ADMIN)
   // =========================
   app.patch('/challenge-proposals/:id/reject', {
     config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
-    preHandler: requireAuth('admin'),
+    preHandler: requireAuth(users_role.admin),
     schema: {
       tags: ['Proposals v1'],
       summary: 'Rifiuta una proposal (solo admin)',

@@ -2,6 +2,8 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { requireAuth } from '../../utils/requireAuth.js'
+import { users_role } from '@prisma/client'
+
 
 export async function summaryV1Routes(app: FastifyInstance) {
   // ============================================================

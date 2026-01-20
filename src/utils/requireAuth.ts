@@ -1,55 +1,88 @@
 // src/utils/requireAuth.ts
+/**
+ * Middleware di autenticazione e autorizzazione.
+ *
+ * - Verifica JWT Bearer
+ * - Carica l'utente dal DB
+ * - (Opzionale) verifica ruolo richiesto
+ *
+ * Regola:
+ * - admin è sempre super‑ruolo
+ */
+
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { prisma } from '../db/client.js'
 import { verifyAccessToken } from './jwt.js'
+import { users_role } from '@prisma/client'
 
-/**
- * Middleware Fastify per richiedere autenticazione JWT e, opzionalmente, un ruolo specifico.
- *
- * @param role Facoltativo: "admin" o "judge" per restringere l’accesso
- * @returns funzione Fastify preHandler
- */
-export function requireAuth(role?: 'admin' | 'judge') {
+
+type Role = users_role
+
+// Middleware di autenticazione e autorizzazione.
+export function requireAuth(role?: users_role) {
   return async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const auth = String(req.headers?.authorization || '')
       const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
 
       if (!token) {
-        return reply.code(401).send({ error: 'unauthorized', message: 'Missing bearer token' })
+        return reply.code(401).send({
+          error: 'unauthorized',
+          message: 'Missing bearer token'
+        })
       }
 
-      // Verifica firma JWT
+      // 🔐 Verifica JWT
       const payload = verifyAccessToken(token) as any
       if (!payload?.sub) {
-        return reply.code(401).send({ error: 'invalid_token' })
+        return reply.code(401).send({
+          error: 'invalid_token',
+          message: 'Invalid JWT payload'
+        })
       }
 
-      // Recupera utente da DB
+      const userId = BigInt(payload.sub)
+
+      // 👤 Carica utente
       const user = await prisma.users.findUnique({
-        where: { id: BigInt(payload.sub) as any },
-        select: { id: true, email: true, role: true }
+        where: { id: userId as any },
+        select: {
+          id: true,
+          email: true,
+          role: true
+        }
       })
 
       if (!user) {
-        return reply.code(401).send({ error: 'unauthorized', message: 'User not found' })
+        return reply.code(401).send({
+          error: 'unauthorized',
+          message: 'User not found'
+        })
       }
 
-      // Controllo ruolo
-      if (role && user.role !== role && user.role !== 'admin') {
-        return reply.code(403).send({ error: 'forbidden', message: 'Insufficient permissions' })
+      const userRole: Role = user.role ?? users_role.user
+
+      // 🛑 Controllo ruolo
+      if (role && userRole !== role && userRole !== users_role.admin) {
+        return reply.code(403).send({
+          error: 'forbidden',
+          message: 'Insufficient permissions'
+        })
       }
 
-      // Attacca utente al request object
+      // ✅ Attacca user al request
       ;(req as any).user = {
         id: user.id,
         email: user.email,
-        role: user.role ?? 'user'
+        role: userRole
       }
 
-    } catch (err: any) {
+    } catch (err) {
       req.log.error({ err }, 'requireAuth error')
-      return reply.code(401).send({ error: 'invalid_token', message: 'Auth verification failed' })
+      return reply.code(401).send({
+        error: 'invalid_token',
+        message: 'Auth verification failed'
+      })
     }
   }
 }

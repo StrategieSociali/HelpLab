@@ -89,12 +89,15 @@ model challenges {
   challenge_scores       challenge_scores[]
   challenge_submissions  challenge_submissions[]
   challenge_tasks        challenge_tasks[]
+  approved_co2           Float?                   @db.Double // kg CO₂ approvati dall'admin
+  max_points             Int? // punti massimi assegnabili
 
-  users_challenges_created_byTousers users?                @relation("challenges_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_ch_created_by")
-  users                              users?                @relation(fields: [judge_user_id], references: [id], onUpdate: NoAction, map: "fk_ch_judge")
-  sponsors                           sponsors?             @relation(fields: [sponsor_id], references: [id], onUpdate: NoAction, map: "fk_ch_sponsor")
-  challenge_proposals                challenge_proposals?  @relation(fields: [proposal_id], references: [id], onUpdate: NoAction, map: "fk_chal_proposal")
+  users_challenges_created_byTousers users?                   @relation("challenges_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_ch_created_by")
+  users                              users?                   @relation(fields: [judge_user_id], references: [id], onUpdate: NoAction, map: "fk_ch_judge")
+  sponsors                           sponsors?                @relation(fields: [sponsor_id], references: [id], onUpdate: NoAction, map: "fk_ch_sponsor")
+  challenge_proposals                challenge_proposals?     @relation(fields: [proposal_id], references: [id], onUpdate: NoAction, map: "fk_chal_proposal")
   points_transactions                points_transactions[]
+  sponsorships                       challenge_sponsorships[] @relation("challenge_sponsorships")
 
   @@index([judge_user_id], map: "fk_ch_judge")
   @@index([sponsor_id], map: "fk_ch_sponsor")
@@ -120,26 +123,61 @@ model learning_modules {
 }
 
 model learning_paths {
-  id                BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
-  slug              String                @unique(map: "slug") @db.VarChar(160)
-  title             String                @db.VarChar(200)
-  description       String?               @db.Text
-  level             learning_paths_level?
-  estimated_minutes Int?
-  tags_json         Json?
-  published         Boolean               @default(true)
-  created_at        DateTime              @default(now()) @db.DateTime(0)
-  updated_at        DateTime              @default(now()) @db.DateTime(0)
-  learning_modules  learning_modules[]
+  id                  BigInt                    @id @default(autoincrement()) @db.UnsignedBigInt
+  slug                String                    @unique(map: "slug") @db.VarChar(160)
+  title               String                    @db.VarChar(200)
+  description         String?                   @db.Text
+  level               learning_paths_level?
+  estimated_minutes   Int?
+  tags_json           Json?
+  published           Boolean                   @default(true)
+  created_at          DateTime                  @default(now()) @db.DateTime(0)
+  updated_at          DateTime                  @default(now()) @db.DateTime(0)
+  type                learning_paths_type?      @default(manual)
+  external_url        String?                   @db.VarChar(255)
+  playlist_embed_id   String?                   @db.VarChar(100)
+  user_can_complete   Boolean                   @default(false)
+  learning_modules    learning_modules[]
+  simplified_progress learning_paths_progress[]
 
   @@index([level], map: "idx_level")
 }
 
+// 🆕 Tracciamento completamento per type != manual
+model learning_paths_progress {
+  id           BigInt   @id @default(autoincrement())
+  user_id      BigInt   @db.UnsignedBigInt
+  path_id      BigInt   @db.UnsignedBigInt
+  completed_at DateTime @default(now()) @db.DateTime(0)
+
+  users          users          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  learning_paths learning_paths @relation(fields: [path_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, path_id], map: "uq_user_path")
+}
+
+// ✅ Enum per tipo percorso
+enum learning_paths_type {
+  manual // percorso con moduli (già gestito ora)
+  external // es. YouTube, Vimeo, ecc.
+  lifter // gestito su LifterLMS
+}
+
 model sponsors {
-  id         BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
-  name       String       @db.VarChar(180)
-  website    String?      @db.VarChar(255)
-  challenges challenges[]
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id      BigInt   @unique @db.UnsignedBigInt
+  name         String   @db.VarChar(180)
+  website      String?  @db.VarChar(255)
+  description  String?  @db.Text
+  logo_url     String?  @db.VarChar(255)
+  public_score Int?     @default(0)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now())
+
+  user         users                    @relation("user_sponsor", fields: [user_id], references: [id], onDelete: Cascade, map: "fk_sponsor_user")
+  challenges   challenges[] // mantenuta
+  ratings      sponsor_ratings[]        @relation("sponsor_reviews") // sponsor riceve recensioni
+  sponsorships challenge_sponsorships[] @relation("sponsor_sponsorships")
 }
 
 model user_module_progress {
@@ -170,6 +208,12 @@ model users {
   points_transactions                     points_transactions[]
   review_audit                            review_audit[]
   user_module_progress                    user_module_progress[]
+
+  // Relazioni inverse
+  sponsor_profile   sponsors?                 @relation("user_sponsor")
+  sponsor_ratings   sponsor_ratings[]         @relation("sponsor_rater") // utente valuta sponsor
+  sponsorships      challenge_sponsorships[]  @relation("user_sponsor_link")
+  learning_progress learning_paths_progress[] // completamento learning path
 }
 
 model form_submissions {
@@ -271,15 +315,48 @@ model challenge_tasks {
 
   challenges            challenges              @relation(fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_task_challenge")
   challenge_submissions challenge_submissions[]
+  max_points            Int? // quota punti del task
+  co2_quota             Float?                  @db.Double // quota CO₂ (se climate)
 
   @@unique([challenge_id, order_index], map: "uq_task_challenge_order")
   @@index([challenge_id], map: "idx_task_challenge")
+}
+
+model challenge_sponsorships {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  challenge_id   BigInt   @db.UnsignedBigInt
+  sponsor_id     BigInt   @db.UnsignedBigInt
+  amount_eur     Int      @default(0)
+  sponsored_at   DateTime @default(now())
+  public_comment String?  @db.Text
+  private_notes  String?  @db.Text
+
+  challenge challenges @relation("challenge_sponsorships", fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_challenge_sponsorship_challenge")
+  sponsor   sponsors   @relation("sponsor_sponsorships", fields: [sponsor_id], references: [id], onDelete: Cascade, map: "fk_challenge_sponsorship_sponsor")
+  user      users      @relation("user_sponsor_link", fields: [sponsor_id], references: [id], onDelete: Cascade, map: "fk_challenge_sponsorship_user")
+
+  @@unique([challenge_id, sponsor_id])
+  @@index([sponsor_id])
+}
+
+model sponsor_ratings {
+  sponsor_id BigInt   @db.UnsignedBigInt
+  user_id    BigInt   @db.UnsignedBigInt
+  rating     Int      @default(5)
+  feedback   String?  @db.Text
+  created_at DateTime @default(now())
+
+  sponsor sponsors @relation("sponsor_reviews", fields: [sponsor_id], references: [id], onDelete: Cascade, map: "fk_rating_sponsor")
+  user    users    @relation("sponsor_rater", fields: [user_id], references: [id], onDelete: Cascade, map: "fk_rating_user")
+
+  @@id([sponsor_id, user_id])
 }
 
 enum users_role {
   user
   judge
   admin
+  sponsor
 }
 
 enum challenge_submissions_status {

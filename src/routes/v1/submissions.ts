@@ -10,6 +10,17 @@ import { requireAuth } from '../../utils/requireAuth.js'
 import { onApprove } from '../../services/scoring/onApprove.js'
 import { invalidateLeaderboardCache } from '../../services/leaderboardService.js'
 import { generateLeaderboardCacheKey } from '../../services/leaderboardService.js'
+import { users_role } from '@prisma/client'
+
+
+// Invalida leaderboard globale
+        async function invalidateGlobalLeaderboards() {
+  await Promise.all([
+    invalidateLeaderboardCache(generateLeaderboardCacheKey('user-global', { window: 'all' })),
+    invalidateLeaderboardCache(generateLeaderboardCacheKey('user-global', { window: 'this_month' })),
+    invalidateLeaderboardCache(generateLeaderboardCacheKey('user-global', { window: 'this_week' }))
+  ])
+}
 
 // visibilità consentita in base al ruolo/contesto
 async function computeVisibilityFilter(opts: {
@@ -181,93 +192,126 @@ export async function submissionsV1Routes(app: FastifyInstance) {
     return reply.code(201).send({ id: Number(created.id), status: created.status })
   })
 
-  // ================================
-  // POST /api/v1/submissions/:id/review (approve/reject)
-  // ================================
-  app.post('/submissions/:id/review', {
-    preHandler: requireAuth('judge'),
-    schema: {
-      tags: ['Submissions v1'],
-      summary: 'Valuta una submission (judge/admin)',
-      params: {
-        type: 'object',
-        properties: { id: { type: 'number' } },
-        required: ['id']
+// ================================
+// POST /api/v1/submissions/:id/review (approve/reject)
+// ================================
+app.post('/submissions/:id/review', {
+  preHandler: requireAuth(users_role.judge),
+  schema: {
+    tags: ['Submissions v1'],
+    summary: 'Valuta una submission (judge/admin)',
+    params: {
+      type: 'object',
+      properties: { id: { type: 'number' } },
+      required: ['id']
+    },
+    body: {
+      type: 'object',
+      properties: {
+        decision: { enum: ['approved', 'rejected'] },
+        points: { type: 'number' },
+        task_id: { type: 'number' },
+        note: { type: 'string' }
       },
-      body: {
-        type: 'object',
-        properties: {
-          decision: { enum: ['approved', 'rejected'] },
-          points: { type: 'number' }
-        },
-        required: ['decision']
-      }
+      required: ['decision', 'task_id']
     }
-  }, async (req: any, reply) => {
-    const sid = BigInt(String((req.params as any).id))
-    const { decision, points } = (req.body || {}) as { decision: 'approved' | 'rejected', points?: number }
+  }
+}, async (req: any, reply) => {
+  const sid = BigInt(req.params.id)
+  const { decision, points, task_id, note } = req.body
 
-    const sub = await prisma.challenge_submissions.findUnique({
-      where: { id: sid as any },
-      select: { id: true, challenge_id: true, user_id: true }
+  const sub = await prisma.challenge_submissions.findUnique({
+    where: { id: sid },
+    select: {
+      id: true,
+      status: true,
+      challenge_id: true,
+      user_id: true
+    }
+  })
+
+  if (!sub || sub.status !== 'pending') {
+    return reply.code(404).send({ error: 'submission non trovata o già revisionata' })
+  }
+
+  // Verifica permessi se non admin
+  if (req.user.role !== 'admin') {
+    const ch = await prisma.challenges.findUnique({
+      where: { id: sub.challenge_id },
+      select: { judge_user_id: true }
     })
-    if (!sub) return reply.code(404).send({ error: 'not found' })
-
-    if (req.user.role !== 'admin') {
-      const ch = await prisma.challenges.findUnique({
-        where: { id: sub.challenge_id as any },
-        select: { judge_user_id: true }
-      })
-      if (!ch?.judge_user_id || BigInt(ch.judge_user_id as any) !== BigInt(req.user.id)) {
-        return reply.code(403).send({ error: 'forbidden' })
-      }
+    if (!ch?.judge_user_id || BigInt(ch.judge_user_id) !== BigInt(req.user.id)) {
+      return reply.code(403).send({ error: 'forbidden' })
     }
+  }
 
-    const now = new Date()
-    const updated = await prisma.challenge_submissions.update({
-      where: { id: sid as any },
+  // Verifica task_id valido
+  const task = await prisma.challenge_tasks.findUnique({
+    where: { id: BigInt(task_id) }
+  })
+
+  if (!task || task.challenge_id !== sub.challenge_id) {
+    return reply.code(400).send({ error: 'task non valido per questa challenge' })
+  }
+
+  const now = new Date()
+
+  // Transazione: update submission + audit
+  await prisma.$transaction([
+    prisma.challenge_submissions.update({
+      where: { id: sid },
       data: {
         status: decision,
-        reviewer_user_id: req.user.id as any,
+        reviewer_user_id: req.user.id,
         reviewed_at: now,
-        points_awarded: points != null ? Number(points) : null
-      },
-      select: { id: true, status: true, points_awarded: true, reviewed_at: true }
-    })
-
-    if (decision === 'approved') {
-      try {
-        const delta = points != null ? Number(points) : 0
-        await onApprove({
-          submission_id: sub.id,
-          challenge_id: sub.challenge_id,
-          user_id: sub.user_id,
-          reviewer_user_id: req.user.id,
-          delta,
-          event: 'task_completed_verified',
-          version: '1.0',
-          meta: {
-            review_context: 'manual_approval',
-            judge_role: req.user.role
-          }
-        })
-
-        //invalidazione chache se i dati cambiano
-      await invalidateLeaderboardCache(
-  generateLeaderboardCacheKey('challenge', { challenge_id: sub.challenge_id })
-)
-
-
-      } catch (err) {
-        req.log.error({ err }, 'Errore in onApprove hook')
+        points_awarded: decision === 'approved' ? points ?? 0 : 0,
+        task_id: BigInt(task_id)
       }
-    }
-
-    return reply.send({
-      id: Number(updated.id),
-      status: updated.status,
-      points: updated.points_awarded,
-      reviewedAt: updated.reviewed_at?.toISOString() ?? null
+    }),
+    prisma.review_audit.create({
+      data: {
+        submission_id: sid,
+        reviewer_user_id: BigInt(req.user.id),
+        action: decision === 'approved' ? 'approve' : 'reject',
+        points_awarded: decision === 'approved' ? points ?? 0 : 0,
+        note: note ?? null
+      }
     })
+  ])
+
+  // Se approved, esegui hook e cache invalidate
+  if (decision === 'approved') {
+    try {
+      await onApprove({
+        submission_id: sub.id,
+        challenge_id: sub.challenge_id,
+        user_id: sub.user_id,
+        reviewer_user_id: req.user.id,
+        delta: points ?? 0,
+        event: 'task_completed_verified',
+        version: '1.0',
+        meta: {
+          review_context: 'manual_approval',
+          judge_role: req.user.role
+        }
+      })
+
+      // Invalida cache leaderboard
+      await invalidateLeaderboardCache(
+        generateLeaderboardCacheKey('challenge', { challenge_id: sub.challenge_id })
+      )
+      await invalidateGlobalLeaderboards()
+
+    } catch (err) {
+      req.log.error({ err }, 'Errore in onApprove hook')
+    }
+  }
+
+  return reply.send({
+    id: Number(sid),
+    status: decision,
+    points: points ?? 0,
+    reviewedAt: now.toISOString()
   })
+})
 }

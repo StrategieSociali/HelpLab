@@ -88,6 +88,7 @@ async function start() {
         { name: 'Judges v1', description: 'Revisione giudici' },
         { name: 'Admin v1', description: 'Operazioni amministrative' },
         { name: 'Challenges v1', description: 'Sfide attive' },
+        { name: 'Sponsors', description: 'Profili sponsor e recensioni' },
         { name: 'Submissions v1', description: 'Invio e moderazione attività' },
         { name: 'Tasks v1', description: 'Gestione task challenge' },
         { name: 'Summary v1', description: 'Statistiche sfide' },

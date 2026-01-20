@@ -1,8 +1,18 @@
 // src/routes/v1/judges.ts
+/**
+ * Scopo: Gestione delle attività dei giudici -> DEPRECATED FROM V0.7
+ *
+ * Attualmente supporta:
+ * assegnazione a challenge,
+ * consultazione coda personale
+ * gestione challenge non assegnate
+*/
 import { FastifyInstance, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../../db/client.js'
 import { verifyAccessToken } from '../../utils/jwt.js'
+import { users_role } from '@prisma/client'
+
 
 /**
  * Auth helper locale: verifica Bearer JWT e (opzionalmente) ruolo richiesto.
@@ -43,7 +53,7 @@ export async function judgesV1Routes(app: FastifyInstance) {
    * query: ?limit=20&cursor=<ISO date> (cursor = updated_at LT)
    */
   app.get('/challenges/unassigned', {
-    preHandler: requireAuth('admin'),
+    preHandler: requireAuth(users_role.admin),
     schema: {
       tags: ['Judges v1'],
       summary: 'Elenco challenge senza giudice (paginato, solo admin)',
@@ -189,7 +199,7 @@ export async function judgesV1Routes(app: FastifyInstance) {
    * Body: { userId }
    */
   app.post('/challenges/:id/assign-judge', {
-    preHandler: requireAuth('admin'),
+    preHandler: requireAuth(users_role.admin),
     schema: {
       tags: ['Judges v1'],
       summary: 'Assegna un giudice a una challenge (solo admin)',
@@ -254,7 +264,7 @@ export async function judgesV1Routes(app: FastifyInstance) {
    * Challenge assegnate al giudice loggato con status 'open'.
    */
   app.get('/judge/my-queue', {
-    preHandler: requireAuth('judge'),
+    preHandler: requireAuth(users_role.judge),
     schema: {
       tags: ['Judges v1'],
       summary: 'Coda del giudice: challenge assegnate (paginato)',

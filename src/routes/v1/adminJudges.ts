@@ -2,6 +2,8 @@
 import { FastifyInstance, FastifyReply } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { verifyAccessToken } from '../../utils/jwt.js'
+import { users_role } from '@prisma/client'
+
 
 function requireAuth(role: 'admin') {
   return async (req: any, reply: FastifyReply) => {
@@ -65,7 +67,7 @@ export async function adminJudgesV1Routes(app: FastifyInstance) {
         403: { type: 'object', properties: { error: { type: 'string' } } }
       }
     },
-    preHandler: requireAuth('admin')
+    preHandler: requireAuth(users_role.admin)
   }, async (req: any, reply) => {
     const q = req.query || {}
     const limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)))

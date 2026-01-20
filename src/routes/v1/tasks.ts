@@ -2,6 +2,8 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { requireAuth } from '../../utils/requireAuth.js'
+import { users_role } from '@prisma/client'
+
 
 export async function tasksV1Routes(app: FastifyInstance) {
   // ================================
@@ -54,7 +56,7 @@ export async function tasksV1Routes(app: FastifyInstance) {
   // POST /api/v1/challenges/:id/tasks
   // ================================
   app.post('/challenges/:id/tasks', {
-    preHandler: requireAuth('admin'),
+    preHandler: requireAuth(users_role.admin),
     schema: {
       tags: ['Tasks v1'],
       summary: 'Crea un nuovo task per una challenge',
@@ -105,7 +107,7 @@ export async function tasksV1Routes(app: FastifyInstance) {
   // GET /api/v1/tasks/:id/submissions
   // ================================
   app.get('/tasks/:id/submissions', {
-    preHandler: requireAuth('judge'),
+    preHandler: requireAuth(users_role.judge),
     schema: {
       tags: ['Tasks v1'],
       summary: 'Elenca le submissions collegate a un task',
