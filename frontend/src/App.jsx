@@ -1,146 +1,166 @@
+//App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import HomepageStatic from './pages/HomepageStatic';
-import '@/styles/styles.css';
-import Challenges from './pages/Challenges';
-import CreateChallenge from "@/pages/challenges/CreateChallenge";
-import LearningPaths from './pages/LearningPaths.jsx';
-import UserProfile from './pages/UserProfile';
-import Leaderboard from "@/pages/Leaderboard";
+
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
+
+import HomepageStatic from './pages/HomepageStatic';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import NotFound from './pages/NotFound';
 import JoinHelpLab from './pages/JoinHelpLab';
-import './App.css';
-import { routes } from './routes';
-import { AuthProvider } from './context/AuthContext';
-import { AdminProposals } from './pages/admin/AdminProposals';
-import BusinessPackages from './pages/BusinessPackages.jsx';
-import StepAssignJudge from './pages/admin/steps/StepAssignJudge.jsx';
-import Roadmap from './pages/Roadmap.jsx';
-import ChallengeSubmissions from './pages/challenges/ChallengeSubmissions.jsx';
-import SubmissionsOverview from './pages/SubmissionsOverview.jsx';
-import SubmissionForm from './components/SubmissionForm.jsx';
-import ChallengeSubmitPage from "@/pages/challenges/ChallengeSubmitPage";
-import JudgeSubmissionsList from './components/JudgeSubmissionsList.jsx';
-import WelcomeInfo from "@/pages/WelcomeInfo";
+import WelcomeInfo from './pages/WelcomeInfo';
 
+import Challenges from './pages/Challenges';
+import ChallengeSubmitPage from './pages/challenges/ChallengeSubmitPage';
+import ChallengeSubmissions from './pages/challenges/ChallengeSubmissions';
+
+import UserProfile from './pages/UserProfile';
+import CreateChallenge from './pages/challenges/CreateChallenge';
+import LearningPaths from './pages/LearningPaths';
+import Leaderboard from './pages/Leaderboard';
+import BusinessPackages from './pages/BusinessPackages';
+import Roadmap from './pages/Roadmap';
+
+import { AdminProposals } from './pages/admin/AdminProposals';
+import StepAssignJudge from './pages/admin/steps/StepAssignJudge';
+
+// ⚖️ NUOVO: giudici e sponsor v0.8
+import JudgeDashboard from './pages/judge/JudgeDashboard';
+import JudgeChallengeOverview from './pages/judge/JudgeChallengeOverview';
+import SponsorPublicProfile from './pages/sponsors/SponsorPublicProfile';
+import SponsorsList from "./pages/sponsors/SponsorsList";
+
+import { routes } from './routes';
+
+import '@/styles/styles.css';
+import './App.css';
 
 export default function App() {
   return (
     <AuthProvider>
       <Router>
         <div className="App">
-          {/* Intestazione */}
           <Header />
-        <main>
-  <Routes>
-    {/* Pubbliche */}
-    <Route path={routes.home} element={<HomepageStatic />} />
-    <Route path={routes.auth.login} element={<Login />} />
-    <Route path={routes.auth.register} element={<Register />} />
-    <Route path={routes.joinHelpLab} element={<JoinHelpLab />} />
-    <Route path={routes.leaderboard} element={<Leaderboard />} />
-    <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
-    <Route path={routes.business.packages} element={<BusinessPackages />} />
-    <Route path={routes.roadmap} element={<Roadmap />} />
-    <Route path={routes.info} element={<WelcomeInfo />} />
-    <Route
-      path="/learningpaths"
-      element={<Navigate to={routes.dashboard.learningPaths} replace />}
-    />
 
-    {/* Sfide — ora pubblica per la demo */}
-    <Route path={routes.dashboard.challenges} element={<Challenges />} />
+          <main>
+            <Routes>
 
-    {/* Protette */}
-    <Route
-      path={routes.dashboard.userProfile}
-      element={
-        <ProtectedRoute>
-          <UserProfile />
-        </ProtectedRoute>
-      }
-    /> 
-    <Route
-  path={routes.dashboard.challengeCreate}
-  element={
-    <ProtectedRoute>
-      <CreateChallenge />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path={routes.dashboard.challengeSubmissions}
-  element={
-    <ProtectedRoute>
-     <ChallengeSubmissions />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/challenges/:id/submit"
-  element={
-    <ProtectedRoute>
-      <ChallengeSubmitPage />
-    </ProtectedRoute>
-  }
-/>
+              {/* ===== PUBBLICHE ===== */}
+              <Route path={routes.home} element={<HomepageStatic />} />
+              <Route path={routes.auth.login} element={<Login />} />
+              <Route path={routes.auth.register} element={<Register />} />
+              <Route path={routes.joinHelpLab} element={<JoinHelpLab />} />
+              <Route path={routes.info} element={<WelcomeInfo />} />
 
-<Route
-  path="/submissions"
-  element={
-    <ProtectedRoute>
-      <SubmissionsOverview />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path={routes.admin.assignJudge}
-  element={
-    <ProtectedRoute>
-      <StepAssignJudge />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path={routes.judge.moderation}
-  element={
-    <ProtectedRoute allowedRoles={['judge', 'admin']}>
-      <JudgeSubmissionsList />
-    </ProtectedRoute>
-  }
-/>
+              <Route path={routes.leaderboard} element={<Leaderboard />} />
+              <Route path={routes.business.packages} element={<BusinessPackages />} />
+              <Route path={routes.roadmap} element={<Roadmap />} />
+              <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
+              
+              {/* ===== COMMUNITY / SPONSORS ===== */}
+              <Route path={routes.community.sponsors} element={<SponsorsList />} />
+              <Route path={routes.community.sponsorProfile()} element={<SponsorPublicProfile />} />
 
-<Route
-  path={routes.dashboard.challengeSubmissionForm}
-  element={
-    <ProtectedRoute>
-      <SubmissionForm />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path={routes.admin.proposals}
-  element={
-    <ProtectedRoute>
-      <AdminProposals />
-    </ProtectedRoute>
-  }
-/>
+              {/* redirect legacy */}
+              <Route
+                path="/learningpaths"
+                element={<Navigate to={routes.dashboard.learningPaths} replace />}
+              />
 
-    {/* Fallback 404 */}
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-</main>
+              {/* ===== CHALLENGES (pubbliche + user) ===== */}
+              <Route path={routes.dashboard.challenges} element={<Challenges />} />
 
-          {/* Footer */}
+              <Route
+                path="/challenges/:id/submit"
+                element={
+                  <ProtectedRoute allowedRoles={['user']}>
+                    <ChallengeSubmitPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path={routes.dashboard.challengeSubmissions}
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'judge']}>
+                    <ChallengeSubmissions />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* ===== USER ===== */}
+              <Route
+                path={routes.dashboard.userProfile}
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
+                    <UserProfile />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* ===== CREAZIONE CHALLENGE ===== */}
+              <Route
+                path={routes.dashboard.challengeCreate}
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'sponsor']}>
+                    <CreateChallenge />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* ===== GIUDICI v0.8 ===== */}
+              <Route
+                path="/judge"
+                element={
+                  <ProtectedRoute allowedRoles={['judge', 'admin']}>
+                    <JudgeDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/judge/challenges/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['judge', 'admin']}>
+                    <JudgeChallengeOverview />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* ===== ADMIN ===== */}
+              <Route
+                path={routes.admin.proposals}
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminProposals />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path={routes.admin.assignJudge}
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <StepAssignJudge />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* ===== 404 ===== */}
+              <Route path="*" element={<NotFound />} />
+
+            </Routes>
+          </main>
+
           <Footer />
         </div>
       </Router>
     </AuthProvider>
   );
 }
+

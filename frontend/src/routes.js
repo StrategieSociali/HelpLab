@@ -1,46 +1,66 @@
 // src/routes.js
 export const routes = {
+  /* ======================
+   * AUTH
+   * ====================== */
   auth: {
     login: '/login',
     register: '/register',
   },
+
+  /* ======================
+   * HOME & COMMUNITY
+   * ====================== */
+  home: '/',
+  joinHelpLab: '/unisciti',
+  info: '/benvenuto',
+  leaderboard: '/leaderboard',
+
+  community: {
+    sponsors: '/sponsors',
+    sponsorProfile: (id = ':id') => `/sponsors/${id}`,
+  },
+
+  /* ======================
+   * CHALLENGES & LEARNING
+   * ====================== */
   dashboard: {
     // pubbliche
     challenges: '/challenges',
     challengeSubmissions: '/challenges/:challengeId/submissions',
     learningPaths: '/learning-paths',
 
-
-    // protette (utenti loggati)
+    // protette
     userProfile: '/dashboard/profile',
     challengeCreate: '/dashboard/challenges/create',
   },
-  
-   // sezione business
+
+  /* ======================
+   * BUSINESS
+   * ====================== */
   business: {
     root: '/business',
-    packages: '/business/packages', // ✅ sezione imprese
+    packages: '/business/packages',
   },
-  
-   roadmap: '/roadmap',
 
-  // sezione admin (protetta + role=admin)
-  admin: {
-    proposals: '/dashboard/admin/proposals',      // gestione proposte
-    assignJudge: '/dashboard/admin/assign-judge', // ✅ assegnazione giudici
-  },
-  
-  //rotta giudici
- judge: {
+  /* ======================
+   * JUDGES
+   * ====================== */
+  judge: {
     moderation: '/modera',
   },
 
+  /* ======================
+   * ADMIN
+   * ====================== */
+  admin: {
+    proposals: '/dashboard/admin/proposals',
+    assignJudge: '/dashboard/admin/assign-judge',
+  },
 
-  // sezione home e community
-  home: '/',
-  joinHelpLab: '/unisciti',
+  /* ======================
+   * MISC
+   * ====================== */
+  roadmap: '/roadmap',
   notFound: '*',
-  leaderboard: '/leaderboard',
-  info: '/benvenuto',
 };
-

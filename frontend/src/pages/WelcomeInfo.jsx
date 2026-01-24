@@ -11,7 +11,7 @@
 
 import React from "react";
 import { useTranslation } from "react-i18next";
-
+import { Link } from "react-router-dom";
 
 export default function WelcomeInfo() {
 const { t } = useTranslation("pages/welcome", {
@@ -99,13 +99,13 @@ const { t } = useTranslation("pages/welcome", {
       justifyContent: "center",
     }}
   >
-    <a href="/dashboard/profile" className="btn btn-primary btn-pill">
-     {t("cta.profile")}
-    </a>
+<Link to="/dashboard/profile" className="btn btn-primary btn-pill">
+  {t("cta.profile")}
+</Link>
 
-    <a href="/challenges" className="btn btn-outline btn-pill">
-     {t("cta.challenges")}
-    </a>
+<Link to="/challenges" className="btn btn-outline btn-pill">
+  {t("cta.challenges")}
+</Link>
   </div>
 </div>
 
