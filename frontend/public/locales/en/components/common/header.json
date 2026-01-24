@@ -13,7 +13,8 @@
     "join": "Join HelpLab",
     "info": "Info",
     "business": "Business",
-    "roadmap": "Roadmap"
+    "roadmap": "Roadmap",
+    "sponsors": "Sponsor"
   },
   "auth": {
     "admin": {

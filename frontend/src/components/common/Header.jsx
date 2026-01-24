@@ -185,10 +185,20 @@ if (!ready) return null;
     >
       {t("nav.info")}
     </NavLink>
+   <NavLink
+  to={routes.community.sponsors}
+  className="btn"
+  onClick={() => {
+    setMenuOpen(false);
+    setCommunityOpen(false);
+  }}
+>
+  {t("nav.sponsors")}
+</NavLink>
   </div>
 </div>
 
-
+          {/* Menu business */}
           <NavLink to={routes.business.packages} className="nav-link" onClick={() => setMenuOpen(false)}>{t("nav.business")}</NavLink>
           <NavLink to={routes.roadmap} className="nav-link" onClick={() => setMenuOpen(false)}>{t("nav.roadmap")}</NavLink>
 
