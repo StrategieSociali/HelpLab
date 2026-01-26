@@ -19,10 +19,19 @@ yarn-error.log*
 pnpm-debug.log*
 *.log
 
+# Tooling & cache
+.vite/
+.cache/
+.eslintcache
+
 # Prisma
 prisma/dev.db
 prisma/dev.db-journal
 
 # Misc
 .DS_Store
+.vite/
+.cache/
+.eslintcache
+
 
