@@ -19,13 +19,13 @@ export const routes = {
   community: {
     sponsors: '/sponsors',
     sponsorProfile: (id = ':id') => `/sponsors/${id}`,
+    sponsorEdit: "/dashboard/sponsor",
   },
 
   /* ======================
    * CHALLENGES & LEARNING
    * ====================== */
   dashboard: {
-    // pubbliche
     challenges: '/challenges',
     challengeSubmissions: '/challenges/:challengeId/submissions',
     learningPaths: '/learning-paths',
@@ -63,4 +63,4 @@ export const routes = {
    * ====================== */
   roadmap: '/roadmap',
   notFound: '*',
-};
+}

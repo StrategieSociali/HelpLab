@@ -34,6 +34,7 @@ import JudgeDashboard from './pages/judge/JudgeDashboard';
 import JudgeChallengeOverview from './pages/judge/JudgeChallengeOverview';
 import SponsorPublicProfile from './pages/sponsors/SponsorPublicProfile';
 import SponsorsList from "./pages/sponsors/SponsorsList";
+import SponsorProfileEditor from "./pages/sponsors/SponsorProfileEditor";
 
 import { routes } from './routes';
 
@@ -100,6 +101,16 @@ export default function App() {
                   <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
                     <UserProfile />
                   </ProtectedRoute>
+                }
+              />
+    
+                  {/* ===== SPONSOR PROFILE ===== */}
+              <Route
+                path={routes.community.sponsorEdit}
+                element={
+                 <ProtectedRoute allowedRoles={['sponsor']}>
+                   <SponsorProfileEditor />
+                 </ProtectedRoute>
                 }
               />
 

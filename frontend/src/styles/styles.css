@@ -1523,7 +1523,60 @@ select.control {
   margin: 2rem 0 3rem;
 }
 .sponsors-grid-wrapper {
-  margin-top: 3rem;
+  margin-top: 32px;
+}
+
+.sponsors-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-coloms: 1fr;
+}
+/* Tablet */
+@media (min-width: 640px) {
+  .sponsors-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .sponsors-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Large desktop */
+@media (min-width: 1280px) {
+  .sponsors-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.sponsor-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+.sponsor-logo {
+  width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.sponsor-card__website {
+  margin-top: 4px;
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.sponsor-card__cta {
+  margin-top: auto;
+  align-self: flex-start;
 }
 
 .sponsor-search input {

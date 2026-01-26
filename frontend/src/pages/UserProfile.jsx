@@ -269,6 +269,23 @@ useEffect(() => {
             )}
           </div>
         )}
+        
+        {/* Sezione giudice */}
+        {dashboardUser?.role === 'sponsor' && (
+  <div className="card" style={{ padding: 16, marginTop: 24 }}>
+    <h3 className="page-title">Profilo Sponsor</h3>
+    <p className="muted">
+      Gestisci le informazioni pubbliche della tua organizzazione
+    </p>
+
+    <button
+      className="btn btn-outline"
+      onClick={() => navigate('/dashboard/sponsor')}
+    >
+      Modifica profilo sponsor
+    </button>
+  </div>
+)}
       </div>
     </section>
   );
