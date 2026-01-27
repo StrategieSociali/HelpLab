@@ -14,7 +14,8 @@
     "info": "Info",
     "business": "Imprese",
     "roadmap": "Roadmap",
-    "sponsors": "Sponsor"
+    "sponsors": "Sponsor",
+     "judge": "Area giudice"
   },
   "auth": {
     "admin": {

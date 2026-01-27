@@ -30,37 +30,6 @@ export default function UserProfile() {
   const isJudgeUser = isJudge(user?.role);
 
   const [dashboard, setDashboard] = useState(null);
-  const [error, setError] = useState("");
-
-  // Queue per i giudici
-  const [queue, setQueue] = useState([]);
-  const [cursor, setCursor] = useState(null);
-  const [qLoading, setQLoading] = useState(false);
-  const [qError, setQError] = useState("");
-
-  const loadQueue = async ({ append = false } = {}) => {
-    if (!user || !token || !isJudgeUser) return;
-
-    setQLoading(true);
-    setQError("");
-    try {
-      const { data } = await api.get("/v1/judge/my-queue", {
-        params: { limit: 10, cursor: append ? cursor : undefined },
-      });
-      const items = Array.isArray(data?.items) ? data.items : [];
-      setQueue((prev) => (append ? [...prev, ...items] : items));
-      setCursor(data?.nextCursor ?? null);
-    } catch (err) {
-      setQError("load_error");
-
-      if (!append) {
-        setQueue([]);
-        setCursor(null);
-      }
-    } finally {
-      setQLoading(false);
-    }
-  };
 
   // Carica dati da /v1/dashboard
   const [errorCode, setErrorCode] = useState(null);
@@ -78,12 +47,6 @@ useEffect(() => {
     });
 }, [token]);
 
-
-  // Coda giudice
-  useEffect(() => {
-    if (!user || !token || !isJudgeUser) return;
-    loadQueue({ append: false });
-  }, [user, token]);
 
   const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : "—");
 
@@ -181,96 +144,25 @@ useEffect(() => {
           </div>
         )}
 
-        {/* Sezione giudice */}
-        {isJudgeUser && (
-          <div className="card" style={{ padding: 16, marginTop: 32 }}>
-            <div className="page-header" style={{ marginBottom: 10 }}>
-              <h3 className="page-title" style={{ margin: 0 }}>{t("judge.title")}</h3>
-              <div className="page-actions" style={{ display: "flex", gap: 8 }}>
-                <button
-                  className="btn btn-outline btn-pill"
-                  onClick={() => loadQueue({ append: false })}
-                  disabled={qLoading}
-                >
-                  {t("judge.refresh")}
-                </button>
-                <button
-                  className="btn btn-outline btn-pill"
-                  onClick={() => window.location.href = "/modera"}
-                >
-                  {t("judge.moderateAll")}
-                </button>
-              </div>
-            </div>
-
-            {qLoading && queue.length === 0 && (
-              <div className="callout neutral">{t("judge.loading")}</div>
-            )}
-           {errorCode && !dashboard && (
-  <div className="callout error">
-    {t(`judge.errors.${qError}`, {
-      defaultValue: t("judge.errors.generic"),
-    })}
-  </div>
-)}
-            {!qLoading && !qError && queue.length === 0 && (
-              <div className="callout neutral">{t("judge.empty")}</div>
-            )}
-
-            {queue.length > 0 && (
-              <div className="table-like">
-                <div className="row head" style={{ display: "grid", gridTemplateColumns: "minmax(220px, 2fr) 1fr 120px 160px", gap: 12, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,.1)" }}>
-                  <div>{t("judge.table.title")}</div>
-                  <div>{t("judge.table.location")}</div>
-                  <div>{t("judge.table.deadline")}</div>
-                  <div>{t("judge.table.updatedAt")}</div>
-                </div>
-
-                {queue.map((ch) => (
-                  <div
-                    key={ch.id || ch.challengeId}
-                    className="row"
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "minmax(220px, 2fr) 1fr 120px 160px",
-                      gap: 12,
-                      padding: "10px 0",
-                      borderBottom: "1px solid rgba(255,255,255,.06)",
-                    }}
-                  >
-                    <div className="muted-strong">{ch.title || "—"}</div>
-                    <div className="muted">{ch.location || "—"}</div>
-                    <div className="muted">{fmtDate(ch.deadline)}</div>
-                    <div className="muted">
-                      {ch.updatedAt ? new Date(ch.updatedAt).toLocaleString() : "—"}
-                      <div style={{ marginTop: 6 }}>
-                        <button
-                          className="btn btn-sm btn-outline"
-                          onClick={() => navigate(`/challenges/${ch.id}/submissions`)}
-                        >
-                          {t("judge.table.moderate")}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {cursor && !qLoading && (
-              <div style={{ textAlign: "center", marginTop: 10 }}>
-                <button
-                  className="btn btn-outline"
-                  onClick={() => loadQueue({ append: true })}
-                >
-                  {t("loadMore")}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
         
         {/* Sezione giudice */}
+        
+        {isJudgeUser && (
+  <div className="card" style={{ padding: 16, marginTop: 24 }}>
+    <h3 className="page-title">{t("judge.title")}</h3>
+    <p className="muted">
+      Accedi alla tua area di moderazione per valutare le challenge assegnate.
+    </p>
+
+    <button
+      className="btn btn-outline"
+      onClick={() => navigate("/judge")}
+    >
+      Vai all’area giudice
+    </button>
+  </div>
+)}
+        
         {dashboardUser?.role === 'sponsor' && (
   <div className="card" style={{ padding: 16, marginTop: 24 }}>
     <h3 className="page-title">Profilo Sponsor</h3>

@@ -201,6 +201,17 @@ if (!ready) return null;
           {/* Menu business */}
           <NavLink to={routes.business.packages} className="nav-link" onClick={() => setMenuOpen(false)}>{t("nav.business")}</NavLink>
           <NavLink to={routes.roadmap} className="nav-link" onClick={() => setMenuOpen(false)}>{t("nav.roadmap")}</NavLink>
+          
+          {/* Menu giudice */}
+        {user?.role === "judge" && (
+         <NavLink
+           to="/judge"
+           className="nav-link"
+           onClick={() => setMenuOpen(false)}
+             >
+         {t("auth.nav.judge")}
+        </NavLink>
+        )}
 
           {/* Azioni auth all'interno del menu mobile */}
           <div className="nav-auth-actions">

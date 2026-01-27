@@ -39,24 +39,24 @@ export default function Roadmap() {
             <p>I vecchi dati fake divengono deprecati e eliminati, tutte le sfide sono migrate nel database definitivo.</p>
           </div>
           <div className="benefit-card">
-            <h3>✅V 0.6.x 👷 Leaderboard “reale” su base submissions, non più mock.</h3>
+            <h3>✅V 0.6.x  Leaderboard “reale” su base submissions, non più mock.</h3>
             <p>Sviluppo sistema di scoring base e sua integrazione su API v1.</p>
           </div>
           <div className="benefit-card">
-            <h3>⚒️ v0.7.x Submissions & Evidence.</h3>
+            <h3>✅ v0.7.x Submissions & Evidence.</h3>
             <p>Upload riferimenti a prove (link immagini, link documenti) collegate alle submissions. Introduzione lingue (i18n). Inizio pulizia codice. Inizio scrittura istruzioni utente.</p>
           </div>
           <div className="benefit-card">
-            <h3>v0.8.x Gamification.</h3>
-            <p>Badge, punteggi utente, achievements. Primo profilo/privato pubblico utente.API review evidenze (auto/judge). Introduzione pagina informativa su ruoli. Inizio consolidamento codice.</p>
+            <h3>⚒️ v0.8.x 👷 Gamification.</h3>
+            <p>Interfaccia imprese per sponsorizzazione sfide. Primo profilo/privato pubblico utente. API review evidenze (auto/judge). Inizio consolidamento codice.</p>
           </div>
           <div className="benefit-card">
             <h3>v0.9.x Dashboard Admin evoluta</h3>
-            <p>Gestione challenge e giudici da interfaccia, interfaccia imprese per sponsorizzazione sfide. Analytiche di base. Caricamento corsi da fonti esterne. Pagina sponsor con elenco challenge e possibilità di sostegno.</p>
+            <p>Introduzione pagina informativa su ruoli. Caricamento corsi da fonti esterne. Pagina sponsor con elenco challenge e possibilità di sostegno.</p>
           </div>
           <div className="benefit-card">
             <h3>v1.x STABLE!! Report per sponsor (nuova milestone)</h3>
-            <p>Reportistica aggregata per sponsor: Sfide sponsorizzate, Partecipanti / impatto / metriche ambientali, Download PDF/CSV, scoring avanzato.</p>
+            <p>Reportistica aggregata per sponsor: Sfide sponsorizzate, Partecipanti / impatto / metriche ambientali, Download PDF/CSV, scoring avanzato. Badge, punteggi utente, achievements. Gestione challenge e giudici da interfaccia. Analytiche di base.  </p>
           </div>
         <div className="benefit-card">
             <h3>v2.x Rilascio versione stabile White Label e API per imprese (nuova milestone)</h3>
