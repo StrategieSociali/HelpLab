@@ -972,18 +972,30 @@ select.control {
 
 .sfide-menu__list {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  top: 100%;
   left: 0;
+  
+  margin-top: -4px;
+  
+  padding: 0.5rem 1rem;
+  padding-top: 12px;
+  
   background: rgba(255, 255, 255, 0.05);
   border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
+  
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  
   opacity: 0;
   visibility: hidden;
   transform: translateY(-8px);
-  transition: opacity 0.s ease, transform 0.4s ease, visibility 1,5s;
+  
+  transition:
+  opacity 0.2s ease,
+  transform 0.2s ease,
+  visibility 0.2s ease;
+  
   pointer-events: none;
   z-index: 100;
   text-align: left;

@@ -1,0 +1,65 @@
+{
+  "_comment": "/src/pages/BusinessCollaboration.jsx",
+
+  "hero": {
+    "title": "Collaborating with HelpLab",
+    "subtitle": "An open source platform to design, support and measure social and environmental impact initiatives."
+  },
+
+  "intro": {
+    "paragraph1": "HelpLab is an open infrastructure that connects people, organizations, companies and public bodies through concrete local challenges.",
+    "paragraph2": "Collaboration models are flexible and adapt to organizational goals, without rigid packages or predefined constraints."
+  },
+
+  "modes": {
+    "title": "Ways to collaborate",
+    "subtitle": "Some options available today and evolving in future releases.",
+    "items": [
+      {
+        "title": "🟢 Open access",
+        "text": "Free use of the open source platform, with access to public data and basic reporting."
+      },
+      {
+        "title": "🟢 Challenge sponsorship",
+        "text": "Support an existing challenge or co-design a new one, with a dedicated initiative report."
+      },
+      {
+        "title": "🟢 Ongoing programs",
+        "text": "Sponsorship of multiple challenges over time, with an aggregated view of generated impact."
+      },
+      {
+        "title": "🟢 Social & environmental reporting",
+        "text": "Custom reports on social, environmental and ESG indicators, available on request."
+      },
+      {
+        "title": "🟢 Communication & transparency",
+        "text": "Support for public reporting and communication of positive impact initiatives."
+      },
+      {
+        "title": "🟢 Dedicated solutions",
+        "text": "White-label installations, API access or custom integrations for structured organizations."
+      },
+      {
+        "title": "🟢 Project support",
+        "text": "Guidance in the design and management of challenges, including corporate or internal contexts."
+      }
+    ]
+  },
+
+  "cta": {
+    "title": "Would you like to support a challenge or explore a collaboration?",
+    "subtitle": "No obligation and no predefined packages. Let’s evaluate together if and how to collaborate."
+  },
+
+  "actions": {
+    "requestDiscussion": "Request a discussion",
+    "viewSponsors": "View active sponsors",
+    "exploreChallenges": "Explore challenges"
+  },
+
+  "mailto": {
+    "subject": "Request information about collaborating with HelpLab",
+    "body": "Please briefly describe your organization and the type of initiative you would like to explore."
+  }
+}
+

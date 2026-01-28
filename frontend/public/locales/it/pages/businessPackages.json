@@ -1,0 +1,65 @@
+{
+  "_comment": "/src/pages/BusinessPackages.jsx",
+
+  "hero": {
+    "title": "Collaborare con HelpLab",
+    "subtitle": "Una piattaforma open source per progettare, sostenere e misurare iniziative a impatto sociale e ambientale."
+  },
+
+  "intro": {
+    "paragraph1": "HelpLab è un’infrastruttura aperta che mette in relazione persone, organizzazioni, imprese ed enti pubblici attraverso sfide concrete sul territorio.",
+    "paragraph2": "Le modalità di collaborazione sono flessibili e si adattano agli obiettivi dell’organizzazione, senza pacchetti rigidi o vincoli predefiniti."
+  },
+
+  "modes": {
+    "title": "Modalità di collaborazione",
+    "subtitle": "Alcune possibilità oggi e in evoluzione nelle prossime versioni.",
+    "items": [
+      {
+        "title": "🟢 Accesso libero",
+        "text": "Utilizzo gratuito della piattaforma open source, con accesso ai dati pubblici e alla reportistica di base."
+      },
+      {
+        "title": "🟢 Sponsorizzazione di sfide",
+        "text": "Possibilità di sostenere una sfida esistente o co-progettarne una nuova, con report dedicato sull’iniziativa."
+      },
+      {
+        "title": "🟢 Programmi continuativi",
+        "text": "Sponsorizzazione di più sfide nel tempo, con visione aggregata dell’impatto generato."
+      },
+      {
+        "title": "🟢 Reportistica socio-ambientale",
+        "text": "Costruzione di report personalizzati su indicatori sociali, ambientali ed ESG, su richiesta."
+      },
+      {
+        "title": "🟢 Comunicazione e trasparenza",
+        "text": "Supporto alla rendicontazione pubblica e alla comunicazione di iniziative a impatto positivo."
+      },
+      {
+        "title": "🟢 Soluzioni dedicate",
+        "text": "Installazioni white label, accesso alle API o integrazioni personalizzate per organizzazioni strutturate."
+      },
+      {
+        "title": "🟢 Supporto progettuale",
+        "text": "Affiancamento nella progettazione e gestione delle sfide, anche in contesti aziendali o interni."
+      }
+    ]
+  },
+
+  "cta": {
+    "title": "Vuoi sostenere una challenge o esplorare una collaborazione?",
+    "subtitle": "Nessun impegno e nessun pacchetto predefinito. Valutiamo insieme se e come collaborare."
+  },
+
+  "actions": {
+    "requestDiscussion": "Richiedi un confronto",
+    "viewSponsors": "Scopri gli sponsor attivi",
+    "exploreChallenges": "Esplora le challenge"
+  },
+
+  "mailto": {
+    "subject": "Richiesta informazioni collaborazione HelpLab",
+    "body": "Raccontateci brevemente la vostra organizzazione e il tipo di iniziativa che vorreste esplorare."
+  }
+}
+

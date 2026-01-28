@@ -68,6 +68,23 @@ export default function SponsorsList() {
         <p className="muted" style={{ maxWidth: 640 }}>
           Le organizzazioni che rendono possibili le sfide di HelpLab
         </p>
+        
+  {/* CTA Sponsor */}
+<div className="card muted" style={{ margin: "16px 0", padding: 16 }}>
+  <strong>Sei un’azienda o un’organizzazione?</strong>
+
+  <p className="small" style={{ margin: "6px 0 12px" }}>
+    Puoi sostenere una challenge e generare impatto concreto.
+  </p>
+
+  <div style={{ marginTop: 28 }}>
+    <Link to="/business/packages" className="btn btn-sm btn-outline">
+      Diventa sponsor
+    </Link>
+  </div>
+</div>
+
+
 
         <div className="form-group sponsor-search">
          <input

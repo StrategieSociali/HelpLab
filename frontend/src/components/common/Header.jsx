@@ -112,10 +112,7 @@ if (!ready) return null;
     if (!isMobile) setSfideOpen(true);
   }}
   onMouseLeave={() => {
-    if (!isMobile) setTimeout(() => setSfideOpen(false), 400); // delay
-  }}
-  onClick={() => {
-    if (isMobile) setSfideOpen((prev) => !prev);
+    if (!isMobile) setSfideOpen(false);
   }}
 >
 
@@ -157,10 +154,7 @@ if (!ready) return null;
     if (!isMobile) setCommunityOpen(true);
   }}
   onMouseLeave={() => {
-    if (!isMobile) setTimeout(() => setCommunityOpen(false), 400);
-  }}
-  onClick={() => {
-    if (isMobile) setCommunityOpen((prev) => !prev);
+    if (!isMobile) setCommunityOpen(false);
   }}
 >
   <span className="nav-link">{t("nav.community")} ▾</span>

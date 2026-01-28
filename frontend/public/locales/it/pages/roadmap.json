@@ -1,0 +1,104 @@
+{
+  "_comment": "/src/pages/Roadmap.jsx",
+
+  "header": {
+    "title": "Roadmap di HelpLab – direzione, stato e prossimi passi",
+    "version": "Versione attuale: {{version}}",
+    "openSource": "Il progetto è open source. Segui o contribuisci su GitHub."
+  },
+
+  "workInProgress": {
+    "features": {
+      "title": "🧩 Funzionalità previste",
+      "items": [
+        "Gestione sponsor più evoluta",
+        "Profili pubblici utenti e organizzazioni",
+        "Challenge multi-fase",
+        "Badge, reputazione e progressione utenti",
+        "Sponsorizzazione automatica delle challenge",
+        "Gamification avanzata",
+        "Mappe georeferenziate",
+        "Report ESG e metriche di impatto",
+        "Pagina Hall of Fame",
+        "Corsi di formazione integrati"
+      ]
+    },
+    "improvements": {
+      "title": "🛠 Miglioramenti",
+      "items": [
+        "UX area giudici",
+        "Strumenti di moderazione avanzati",
+        "Esperienza mobile e accessibilità",
+        "Performance e stabilità dashboard",
+        "Filtri e campi di ricerca dove mancanti",
+        "Classifiche ambientali e sociali più dettagliate"
+      ]
+    },
+    "bugfixes": {
+      "title": "🐞 Bugfix & consolidamento",
+      "items": [
+        "Pulizia codice legacy",
+        "Correzione comportamento menu mobile",
+        "Allineamento colori contenuti e CTA",
+        "Allineamento traduzioni",
+        "Gestione edge case su submissions e review",
+        "Stabilità build e deploy"
+      ]
+    }
+  },
+
+  "roadmap": [
+    {
+      "title": "v4.x – Sistema di riscatto punti",
+      "text": "Introduzione di meccanismi di conversione dei punti in buoni, incentivi o sats."
+    },
+    {
+      "title": "v3.x – Integrazione Machine Learning",
+      "text": "Supporto al calcolo automatico delle metriche ambientali tramite modelli ML."
+    },
+    {
+      "title": "v2.x – White Label & API per imprese",
+      "text": "Versione white-label della piattaforma e API dedicate per integrazioni aziendali."
+    },
+    {
+      "title": "v1.x – Stable",
+      "text": "Reportistica avanzata per sponsor, export dati, badge, scoring evoluto e gestione completa challenge."
+    },
+    {
+      "title": "v0.9.x – Dashboard Admin evoluta",
+      "text": "Ruoli avanzati, caricamento corsi esterni, sponsor view e strumenti di gestione."
+    },
+    {
+      "title": "⚒️ v0.8.x – Gamification & Sponsor",
+      "text": "Prime interfacce sponsor, profili pubblici, review evidenze e consolidamento codice."
+    },
+    {
+      "title": "✅ v0.7.x – Submissions & Evidence",
+      "text": "Upload evidenze, introduzione i18n e pulizia iniziale del codice."
+    },
+    {
+      "title": "✅ v0.6.x – Leaderboard reale",
+      "text": "Scoring basato su submissions reali e integrazione API v1."
+    },
+    {
+      "title": "✅ v0.5.x – API reali",
+      "text": "Migrazione completa da mock a database e API definitive."
+    },
+    {
+      "title": "✅ v0.4.x – Sfide e giudici",
+      "text": "Introduzione del modello di challenge e del ruolo giudice."
+    },
+    {
+      "title": "✅ v0.3.x – Architettura base",
+      "text": "Fondamenta frontend e backend su dati simulati."
+    }
+  ],
+
+  "cta": {
+    "title": "Vuoi contribuire o proporre una challenge?",
+    "subtitle": "HelpLab cresce grazie alla community: sviluppatori, enti, organizzazioni e cittadini.",
+    "contact": "Contattaci",
+    "explore": "Esplora le challenge"
+  }
+}
+

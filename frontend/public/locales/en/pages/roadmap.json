@@ -1,0 +1,104 @@
+{
+  "_comment": "/src/pages/Roadmap.jsx",
+
+  "header": {
+    "title": "HelpLab Roadmap – direction, status and next steps",
+    "version": "Current version: {{version}}",
+    "openSource": "This project is open source. Follow or contribute on GitHub."
+  },
+
+  "workInProgress": {
+    "features": {
+      "title": "🧩 Planned features",
+      "items": [
+        "Advanced sponsor management",
+        "Public profiles for users and organizations",
+        "Multi-phase challenges",
+        "Badges, reputation and user progression",
+        "Automatic challenge sponsorship",
+        "Advanced gamification",
+        "Georeferenced maps",
+        "ESG reports and impact metrics",
+        "Hall of Fame page",
+        "Integrated learning courses"
+      ]
+    },
+    "improvements": {
+      "title": "🛠 Improvements",
+      "items": [
+        "Judge area UX",
+        "Advanced moderation tools",
+        "Mobile experience and accessibility",
+        "Dashboard performance and stability",
+        "Missing filters and search fields",
+        "More detailed environmental and social leaderboards"
+      ]
+    },
+    "bugfixes": {
+      "title": "🐞 Bugfixes & consolidation",
+      "items": [
+        "Legacy code cleanup",
+        "Mobile menu behavior fixes",
+        "Content and CTA color alignment",
+        "Translation alignment",
+        "Edge case handling for submissions and reviews",
+        "Build and deploy stability"
+      ]
+    }
+  },
+
+  "roadmap": [
+    {
+      "title": "v4.x – Point redemption system",
+      "text": "Introduction of mechanisms to convert points into vouchers, incentives or sats."
+    },
+    {
+      "title": "v3.x – Machine Learning integration",
+      "text": "Automatic environmental metric calculation through ML models."
+    },
+    {
+      "title": "v2.x – White label & enterprise APIs",
+      "text": "White-label platform version and dedicated APIs for enterprise integrations."
+    },
+    {
+      "title": "v1.x – Stable",
+      "text": "Advanced reporting, data export, badges, scoring and full challenge management."
+    },
+    {
+      "title": "v0.9.x – Advanced admin dashboard",
+      "text": "Advanced roles, external course loading, sponsor views and management tools."
+    },
+    {
+      "title": "⚒️ v0.8.x – Gamification & sponsors",
+      "text": "First sponsor interfaces, public/private profiles, evidence review and code consolidation."
+    },
+    {
+      "title": "✅ v0.7.x – Submissions & evidence",
+      "text": "Evidence upload, i18n introduction and initial code cleanup."
+    },
+    {
+      "title": "✅ v0.6.x – Real leaderboard",
+      "text": "Scoring based on real submissions and full API v1 integration."
+    },
+    {
+      "title": "✅ v0.5.x – Real APIs",
+      "text": "Full migration from mock data to database-backed APIs."
+    },
+    {
+      "title": "✅ v0.4.x – Challenges & judges",
+      "text": "Introduction of the challenge model and judge role."
+    },
+    {
+      "title": "✅ v0.3.x – Base architecture",
+      "text": "Frontend and backend foundations built on simulated data."
+    }
+  ],
+
+  "cta": {
+    "title": "Want to contribute or propose a challenge?",
+    "subtitle": "HelpLab grows thanks to the community: developers, organizations and citizens.",
+    "contact": "Contact us",
+    "explore": "Explore challenges"
+  }
+}
+

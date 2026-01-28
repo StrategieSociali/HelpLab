@@ -1,100 +1,125 @@
+//src/pages/roadmap.jsx
+/**
+ * Scopo: mantenere un'informazione aggiornata per gli sviluppatori e aggregare una community
+ *
+ * Attualmente supporta:
+ * - Attività in cantiere
+ * - Roadmap storica
+ * - CTA
+ * - Tasto login/registrati/logout
+*/
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { APP_VERSION } from '@/config/constants';
+import { APP_VERSION } from "@/config/constants";
+import { useTranslation } from "react-i18next";
 
 export default function Roadmap() {
   const navigate = useNavigate();
+  
+  const { t } = useTranslation("pages/roadmap", {
+  useSuspense: false,
+});
 
   const mailtoHref = `mailto:info@helplab.space?subject=${encodeURIComponent(
-    "vorrei maggiori informazioni sulle proposte di Helplab per le imprese"
+    "Vorrei maggiori informazioni sulle proposte di HelpLab"
   )}&body=${encodeURIComponent(
-    "Descrivere la vostra azienda, il settore di intervento, inserire inoltre un contatto cellulare se volete una risposta celere"
+    "Descrivi brevemente la tua organizzazione o il tuo interesse nel progetto."
   )}`;
 
   return (
     <section className="page-section page-bg page-text">
       <div className="container">
+        {/* HEADER */}
         <header className="page-header">
-          <h1 className="page-title">La nostra Roadmap, cosa aspettarsi e come seguirci</h1>
-          <p className="page-subtitle">
-           Versione attuale: {APP_VERSION}
-          </p>
-          <p className="page-subtitle">
-           Per contribuire vai sul GitHub repository: HelpLab
-          </p>
+         <h1 className="page-title">
+          {t("header.title")}
+         </h1>
+
+         <p className="page-subtitle">
+           {t("header.version", { version: APP_VERSION })}
+         </p>
+
+         <p className="page-subtitle">
+            {t("header.openSource")}
+         </p>
         </header>
 
-        {/* Pillars / Value */}
+{/* =========================
+   IN CANTIERE (SEZIONE VIVA)
+   ========================= */}
+<div className="content-grid" style={{ marginBottom: 32 }}>
+
+  <div className="benefit-card">
+    <h3>{t("workInProgress.features.title")}</h3>
+    <hr />
+    {t("workInProgress.features.items", {
+  returnObjects: true,
+  defaultValue: [],
+}).map((item, i) => (
+  <p className="muted" key={i}>{item}</p>
+))}
+  </div>
+
+  <div className="benefit-card">
+    <h3>{t("workInProgress.improvements.title")}</h3>
+    <hr />
+    {t("workInProgress.improvements.items", {
+  returnObjects: true,
+  defaultValue: [],
+}).map((item, i) => (
+  <p className="muted" key={i}>{item}</p>
+))}
+  </div>
+
+  <div className="benefit-card">
+    <h3>{t("workInProgress.bugfixes.title")}</h3>
+    <hr />
+    {t("workInProgress.bugfixes.items", {
+  returnObjects: true,
+  defaultValue: [],
+}).map((item, i) => (
+  <p className="muted" key={i}>{item}</p>
+))}
+  </div>
+
+</div>
+
+        {/* =========================
+            ROADMAP (FUTURO → PASSATO)
+           ========================= */}
         <div className="content-grid" style={{ marginBottom: 16 }}>
-          <div className="benefit-card">
-            <h3>✅ V0.3.x Messa a terra dell'architettura di base.</h3>
-            <p>Costruzione di base del modello FrontEnd e BackEnd su dati mock.</p>
+          {/* FUTURO */}
+           {t("roadmap", {
+             returnObjects: true,
+             defaultValue: [],
+            }).map((item, i) => (
+           <div className="benefit-card" key={i}>
+          <h3>{item.title}</h3>
+          <p>{item.text}</p>
+         </div>
+        ))}
           </div>
-          <div className="benefit-card">
-            <h3>✅ V 0.4.x Introduzione Sfide e Giudici.</h3>
-            <p>Sviluppo del modello di base delle sfide con giudici reali e loro assegnazione.</p>
-          </div>
-          <div className="benefit-card">
-            <h3>✅V 0.5.x Migrazione su api reali V1 senza dati mock.</h3>
-            <p>I vecchi dati fake divengono deprecati e eliminati, tutte le sfide sono migrate nel database definitivo.</p>
-          </div>
-          <div className="benefit-card">
-            <h3>✅V 0.6.x  Leaderboard “reale” su base submissions, non più mock.</h3>
-            <p>Sviluppo sistema di scoring base e sua integrazione su API v1.</p>
-          </div>
-          <div className="benefit-card">
-            <h3>✅ v0.7.x Submissions & Evidence.</h3>
-            <p>Upload riferimenti a prove (link immagini, link documenti) collegate alle submissions. Introduzione lingue (i18n). Inizio pulizia codice. Inizio scrittura istruzioni utente.</p>
-          </div>
-          <div className="benefit-card">
-            <h3>⚒️ v0.8.x 👷 Gamification.</h3>
-            <p>Interfaccia imprese per sponsorizzazione sfide. Primo profilo/privato pubblico utente. API review evidenze (auto/judge). Inizio consolidamento codice.</p>
-          </div>
-          <div className="benefit-card">
-            <h3>v0.9.x Dashboard Admin evoluta</h3>
-            <p>Introduzione pagina informativa su ruoli. Caricamento corsi da fonti esterne. Pagina sponsor con elenco challenge e possibilità di sostegno.</p>
-          </div>
-          <div className="benefit-card">
-            <h3>v1.x STABLE!! Report per sponsor (nuova milestone)</h3>
-            <p>Reportistica aggregata per sponsor: Sfide sponsorizzate, Partecipanti / impatto / metriche ambientali, Download PDF/CSV, scoring avanzato. Badge, punteggi utente, achievements. Gestione challenge e giudici da interfaccia. Analytiche di base.  </p>
-          </div>
-        <div className="benefit-card">
-            <h3>v2.x Rilascio versione stabile White Label e API per imprese (nuova milestone)</h3>
-            <p>Sarà possibile estrapolare i punti in buoni sconto o sats.</p>
-          </div>
-          <div className="benefit-card">
-            <h3>v3.x Integrazione Machine Learning (nuova milestone)</h3>
-            <p>Introduzione automatica del calcolo delle metriche con Machine Learning.</p>
-          </div>
-	<div className="benefit-card">
-            <h3>v4.x Introduzione sistema di riscatto punti - buoni/sats (nuova milestone)</h3>
-            <p>Sarà possibile estrapolare i punti in buoni sconto o sats.</p>
-          </div>
-	<div className="benefit-card">
-            <h3>Creazione sistema interno di relazioni e comunicazione</h3>
-            <p>Sarà possibile creare relazioni tra utenti e gruppi di utenti, gruppi locali e dialogare: un piccolo social network interno.</p>
-          </div>
-          
-          
-        </div>
-        {/* CTA finale */}
+      
+
+        {/* CTA */}
         <div className="card" style={{ padding: 20 }}>
-          <h2 style={{ marginBottom: 6 }}>Pronti a lanciare la vostra prima challenge?</h2>
-          <p className="page-subtitle" style={{ marginBottom: 12 }}>
-            Possiamo partire da una sfida esistente o co-progettarne una nuova sul territorio.
-          </p>
-          <div
-            className="cta-row"
-            style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}
-          >
-            <a className="btn btn-primary" href={mailtoHref}>Parla con noi</a>
-            <button className="btn btn-outline" onClick={() => navigate("/challenges/new")}>
-              Lancia una challenge
-            </button>
-          </div>
+<h2>{t("cta.title")}</h2>
+<p className="page-subtitle">{t("cta.subtitle")}</p>
+
+<a className="btn btn-primary" href={mailtoHref}>
+  {t("cta.contact")}
+</a>
+
+<button
+  className="btn btn-outline"
+  onClick={() => navigate("/challenges")}
+>
+  {t("cta.explore")}
+</button>
+         
         </div>
       </div>
     </section>
   );
 }
-
