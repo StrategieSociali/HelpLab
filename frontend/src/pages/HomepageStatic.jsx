@@ -65,7 +65,7 @@ const HomepageStatic = () => {
 
   return (
     <>
-      {/* 1) HERO */}
+      {/* 1) HERO INIZIALE*/}
       <section
       className="hero-section"
  	 style={{
@@ -84,7 +84,7 @@ const HomepageStatic = () => {
               <strong>{t("hero.note.label")}</strong>{t("hero.note.text")}
             </p>
 
-            {/* CTA doppia: aziende/PA vs cittadini */}
+            {/* CTA HERO INIZIALE */}
             <div
   className="cta-row"
   style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}
@@ -108,8 +108,8 @@ const HomepageStatic = () => {
         </div>
       </section>
 
-      {/* 2) PERCHÉ CONVIENE ALLE IMPRESE (3 pilastri) */}
-      <section className="community-section">
+{/* 2) UN ECOSISTEMA 3 PILASTRI */}
+<section className="community-section">
   <div className="community-bg"></div>
 
   <div className="container">
@@ -117,66 +117,23 @@ const HomepageStatic = () => {
 
     <div className="home-grid home-grid--benefits">
       {Array.isArray(businessBenefitsItems) &&
-  businessBenefitsItems.map((item, i) => (
-    <div className="benefit-card" key={i}>
-      <div className="benefit-icon">
-        {i === 0 && "📊"}
-        {i === 1 && "🏅"}
-        {i === 2 && "🤝"}
-      </div>
-      <h3>{item.title}</h3>
-      <p>{item.text}</p>
-    </div>
-))}
-    </div>
-  </div>
-</section>
- 
-      {/* 3) COME FUNZIONA (per le imprese) */}
-      <section className="support-section">
-  <div className="container">
-    <h2>{t("howItWorks.title")}</h2>
-
-    <div className="home-grid home-grid--support">
-     {Array.isArray(howItWorksSteps) &&
-  howItWorksSteps.map((step, i) => (
-    <div className="support-card" key={i}>
-      <div className="support-icon">
-        {i === 0 && "🧭"}
-        {i === 1 && "💸"}
-        {i === 2 && "✅"}
-      </div>
-      <h3>{i + 1}. {step.title}</h3>
-      <p>{step.text}</p>
-    </div>
-))}
+        businessBenefitsItems.map((item, i) => (
+          <div className="benefit-card" key={i}>
+            <h3>{item.title}</h3>
+            <p className="small muted" style={{ marginBottom: 8 }}>
+            {item.tagline}
+            </p>
+             <p><p>
+  <strong>{item.highlight}</strong>.
+</p>{item.text}</p>
+           
+          </div>
+        ))}
     </div>
   </div>
 </section>
 
-      {/* 4) VALORE PER LE AZIENDE (esempio di output concreti) */}
-<section className="features-section">
-  <div className="container">
-    <h2>{t("businessValue.title")}</h2>
-
-    <div className="features-table card" style={{ padding: 16 }}>
-      {Array.isArray(businessValueRows) &&
-  businessValueRows.map((row, i) => (
-    <div className="table-row" key={i}>
-      <div className="feature-cell">✅ {row.left}</div>
-      <div className="plan-cell">{row.right}</div>
-    </div>
-))}
-    </div>
-
-    <p className="muted" style={{ marginTop: 10 }}>
-      {t("businessValue.note")}
-    </p>
-  </div>
-</section>
-
-
-      {/* 5) TESTIMONIANZE / SPONSOR (placeholder) */}
+      {/* 3) ECOSISTEMA DOVE VALORE GENERA VALORE) */}
 <section className="community-section">
   <div className="community-bg"></div>
 
@@ -208,9 +165,34 @@ const HomepageStatic = () => {
     </div>
   </div>
 </section>
+     
+      {/* 4) HERO CITTADINI  IL TUO TEMPO*/}
+<section className="hero-section  hero-section--citizens" style={{
+    backgroundImage: `url(/assets/hero-citizens.jpg)`
+  }}>
+  <div className="hero-overlay"></div>
+  <div className="hero-content">
+    <div className="hero-text">
+      <h1>{t("citizens.hero.title")}</h1>
 
-      
-      {/* 6) CALL TO ACTION FINALE */}
+      <p className="page-subtitle" style={{ maxWidth: 860 }}>
+        {t("citizens.hero.subtitle")}
+      </p>
+
+      <div className="cta-row" style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+        <button className="btn btn-outline" onClick={() => navigate("/challenges")}>
+          {t("citizens.hero.cta.join")}
+        </button>
+        <button className="btn btn-outline" onClick={() => navigate("/register")}>
+          {t("citizens.hero.cta.register")}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+      {/* 5) CALL DALLA PARTECIPAZIONE OCCASIONALE */}
 <section className="support-section">
   <div className="container">
     <div className="card" style={{ padding: 20 }}>
@@ -256,57 +238,29 @@ const HomepageStatic = () => {
   </div>
 </section>
 
-      
-      {/* HERO CITTADINI */}
-<section className="hero-section">
-  <div className="hero-overlay"></div>
-  <div className="hero-content">
-    <div className="hero-text">
-      <h1>{t("citizens.hero.title")}</h1>
-
-      <p className="page-subtitle" style={{ maxWidth: 860 }}>
-        {t("citizens.hero.subtitle")}
-      </p>
-
-      <div className="cta-row" style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-        <button className="btn btn-outline" onClick={() => navigate("/challenges")}>
-          {t("citizens.hero.cta.join")}
-        </button>
-        <button className="btn btn-outline" onClick={() => navigate("/register")}>
-          {t("citizens.hero.cta.register")}
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-{/* BENEFICI CITTADINI */}
-<section className="community-section">
-  <div className="community-bg"></div>
+           {/* 6) DALL'INVESTIMENTO AL DATO */}
+      <section className="support-section">
   <div className="container">
-    <h2>{t("citizens.benefits.title")}</h2>
+    <h2>{t("howItWorks.title")}</h2>
 
-    <div className="home-grid home-grid--benefits">
-     {Array.isArray(citizenBenefitsItems) &&
-  citizenBenefitsItems.map((item, i) => (
-    <div className="benefit-card" key={i}>
-      <div className="benefit-icon">
-        {i === 0 && <Wrench size={40} strokeWidth={1.5} />}
-        {i === 1 && <Gift size={40} strokeWidth={1.5} />}
-        {i === 2 && <Users size={40} strokeWidth={1.5} />}
+    <div className="home-grid home-grid--support">
+     {Array.isArray(howItWorksSteps) &&
+  howItWorksSteps.map((step, i) => (
+    <div className="support-card" key={i}>
+      <div className="support-icon">
+        {i === 0 && "🧭"}
+        {i === 1 && "💸"}
+        {i === 2 && "✅"}
       </div>
-      <h3>{item.title}</h3>
-      <p>{item.text}</p>
+      <h3>{i + 1}. {step.title}</h3>
+      <p>{step.text}</p>
     </div>
 ))}
     </div>
   </div>
 </section>
 
-
-
-{/* Features Table */}
+{/* 7) SERVIZI E OPPORTUNITÀ */}
    <section className="features-section">
   <div className="container">
     <h2>{t("membership.title")}</h2>
@@ -334,7 +288,7 @@ const HomepageStatic = () => {
     </div>
 ))}
     </div>
-
+    
     {/* MOBILE */}
     <div className="mobile-plan-cards">
      {Array.isArray(membershipPlans) &&

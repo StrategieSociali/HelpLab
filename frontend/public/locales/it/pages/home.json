@@ -1,8 +1,9 @@
 {
- "_comment": "/src/pages/HomeStatic.jsx",
-"hero": {
-    "title": "Trasforma il tuo impegno ESG in azioni concrete e misurabili",
-    "subtitle": "HelpLab collega aziende, PA e cittadini per generare impatto locale misurabile, con dati e prove verificabili.",
+  "_comment": "/src/pages/HomeStatic.jsx",
+
+  "hero": {
+    "title": "L’infrastruttura per la partecipazione che genera valore.",
+    "subtitle": "HelpLab connette cittadini, imprese e istituzioni per trasformare l'impegno civico in dati misurabili e risorse reali per il territorio. Diamo forma alla partecipazione occasionale.",
     "note": {
       "label": "Nota Bene:",
       "text": "Questa è una versione in sviluppo, sono possibili interruzioni o malfunzionamenti. Consulta la Roadmap nel menu in alto."
@@ -14,126 +15,114 @@
       "joinTitle": "Partecipa a una challenge vicino a te"
     }
   },
+
   "businessBenefits": {
-  "title": "Perché conviene alle imprese e alle PA",
-  "items": [
-    {
-      "title": "ESG con valore reale",
-      "text": "Dati verificabili utilizzabili in report CSRD/ESRS: foto, geolocalizzazione e KPI certificabili."
-    },
-    {
-      "title": "Reputazione & Marketing",
-      "text": "Visibilità come sponsor di sfide locali ad alto impatto, con storytelling pronto per i canali aziendali."
-    },
-    {
-      "title": "Engagement interno & esterno",
-      "text": "Coinvolgi dipendenti e comunità insieme: volontariato d’impresa, welfare e impatto territoriale."
-    }
-  ]
-},
-"howItWorks": {
-  "title": "Come funziona (per le imprese)",
-  "steps": [
-    {
-      "title": "Scegli o proponi una sfida",
-      "text": "Esempi: pulizia spiagge e parchi, piantumazioni, riduzione sprechi, mobilità sostenibile."
-    },
-    {
-      "title": "Sponsorizza e attiva la community",
-      "text": "Finanzia con micro-incentivi e materiali una o più sfide. HelpLab gestisce il coinvolgimento sul territorio."
-    },
-    {
-      "title": "Ricevi report certificato",
-      "text": "Dati, foto, geo e KPI verificabili per bilanci di sostenibilità e comunicazione aziendale."
-    }
-  ]
-},
-"businessValue": {
-  "title": "Valore per la tua azienda (esempi)",
-  "rows": [
-    {
-      "left": "500 kg di rifiuti raccolti in 1 mese",
-      "right": "Report pronto all’uso"
-    },
-    {
-      "left": "30 volontari coinvolti, 200 ore donate",
-      "right": "Engagement misurabile"
-    },
-    {
-      "left": "Riduzione stimata: X tonnellate CO₂e",
-      "right": "Allineato a CSRD/ESRS"
-    }
-  ],
-  "note": "Ogni risultato è comunicabile in bilanci di sostenibilità, campagne marketing e programmi di welfare aziendale."
-},
-"testimonials": {
-  "title": "Testimonianze & Sponsor",
-  "items": [
-    {
-      "title": "Impatto reale, non solo parole",
-      "quote": "Grazie ad HelpLab abbiamo trasformato un budget CSR in un impatto concreto sulla comunità locale.",
-      "note": "(esempio dimostrativo)"
-    },
-    {
-      "title": "Case study (mockup)",
-      "quote": "Pulizia parchi sponsorizzata da un’azienda di utilities: 120 volontari, 1.2 tonnellate di rifiuti raccolti."
-    },
-    {
-      "title": "Prove e dati",
-      "quote": "Foto, geolocalizzazione e report rendono i risultati verificabili e riutilizzabili nei tuoi canali."
-    }
-  ]
-},
-"finalCta": {
-  "title": "Vuoi trasformare la tua sostenibilità in impatto reale?",
-  "subtitle": "Scopri come lanciare la tua prima challenge con HelpLab.",
-  "contact": {
-    "label": "Parla con noi",
-    "email": "info@helplab.space",
-    "subject": "Vorrei maggiori informazioni sulle proposte HelpLab per le imprese",
-    "body": "Descrivi la tua azienda, il settore di intervento e lascia un contatto per ricevere una risposta rapida."
-  },
-  "packages": "Scopri i pacchetti per le imprese"
-},
-"citizens": {
-  "hero": {
-    "title": "Partecipa in prima persona, ottieni premi e crea impatto nella tua città",
-    "subtitle": "Unisciti alla community: scegli una challenge, contribuisci e accumula premi monetizzabili mentre migliori il tuo territorio.",
-    "cta": {
-      "join": "Partecipa a una challenge",
-      "register": "Iscriviti ora"
-    }
-  },
-  "benefits": {
-    "title": "Perché partecipare",
+    "title": "Un ecosistema, tre protagonisti, un unico impatto",
     "items": [
       {
-        "title": "Risoluzione di problemi reali",
-        "text": "Pulizia dei parchi, piantumazione di alberi e molto altro: azioni concrete che migliorano davvero il quartiere."
+        "title": "Per i Cittadini",
+        "highlight": "Azioni certificate",
+        "tagline": "Partecipazione concreta e riconosciuta",
+        "text": "Trasforma il tuo impegno quotidiano in azioni certificate. Partecipa a sfide concrete nel tuo quartiere e vedi crescere il valore della tua città."
       },
       {
-        "title": "Premi monetizzabili",
-        "text": "Accumula punti con le challenge e riscattali in premi o buoni. Puoi anche diventare giudice o formatore."
+        "title": "Per le Imprese",
+        "highlight": "Impatto misurabile",
+        "tagline": "Dati certi per strategie ESG",
+        "text": "Finanzia il cambiamento e ottieni dati certi per il tuo bilancio di sostenibilità (ESG). Rendi il tuo impatto territoriale visibile e misurabile."
       },
       {
-        "title": "Community di valori",
-        "text": "Entra in una rete di persone e realtà locali che condividono obiettivi di sostenibilità e solidarietà."
+        "title": "Per la Pubblica Amministrazione",
+        "highlight": "Dati oggettivi",
+        "tagline": "Governance basata su evidenze",
+        "text": "Attiva nuove risorse private e canalizza l'energia civile in una cartografia dinamica dei bisogni. Governa il territorio con dati oggettivi."
+      }
+    ]
+  },
+
+  "testimonials": {
+    "title": "Un ecosistema dove il valore genera valore.",
+    "items": [
+      {
+        "title": "Perché funziona",
+        "quote": "HelpLab non si basa sulla semplice buona volontà, ma su un equilibrio studiato di interessi. Quando il cittadino agisce, l'impresa investe e il territorio migliora."
+      },
+      {
+        "title": "Nessun impegno disperso",
+        "quote": "Ogni sfida è progettata per essere sostenibile nel tempo, garantendo che l’energia dei cittadini trovi sempre supporto tecnico e finanziario."
+      },
+      {
+        "title": "Impatto verificabile",
+        "quote": "HelpLab trasforma piccoli gesti in dati verificabili, utili per la pianificazione territoriale e la rendicontazione ESG."
+      }
+    ]
+  },
+
+  "citizens": {
+    "hero": {
+      "title": "Il tuo tempo è prezioso. Dagli una forma!",
+      "subtitle": "Non serve essere un attivista a tempo pieno per cambiare il tuo quartiere. Con HelpLab, ogni piccolo gesto diventa parte di una sfida collettiva sostenuta dalle imprese e riconosciuta dalle istituzioni.",
+      "cta": {
+        "join": "Scopri le sfide vicino a te",
+        "register": "Iscriviti ora"
+      }
+    }
+  },
+
+  "finalCta": {
+    "title": "Dalla partecipazione occasionale all'impatto certificato",
+    "subtitle": "Sei pronto a trasformare la sostenibilità da costo a investimento? HelpLab è lo strumento per dare forma, dati e risorse al civismo del tuo territorio.",
+    "contact": {
+      "label": "Inizia ora",
+      "email": "info@helplab.space",
+      "subject": "Vorrei maggiori informazioni sulle proposte HelpLab per le imprese",
+      "body": "Descrivi la tua azienda, il settore di intervento e lascia un contatto per ricevere una risposta rapida."
+    },
+    "packages": "Scopri i pacchetti per le imprese"
+  },
+
+  "howItWorks": {
+    "title": "Dall’investimento al dato: come HelpLab abilita la tua strategia ESG.",
+    "steps": [
+      {
+        "title": "Individua l’impatto",
+        "text": "Scegli una sfida territoriale già attiva o co-progetta un intervento su misura, allineato ai tuoi obiettivi di sostenibilità."
+      },
+      {
+        "title": "Attiva la partecipazione",
+        "text": "Metti a disposizione le risorse necessarie. HelpLab connette il tuo investimento all’energia dei cittadini."
+      },
+      {
+        "title": "Monitora con audit ibrido",
+        "text": "Segui l’avanzamento in tempo reale. Ricevi dati certificati, SROI e output pronti per CSRD ed ESG reporting."
+      }
+    ]
+  },
+
+  "membership": {
+    "title": "Servizi e Opportunità: scegli il tuo ruolo nell'impatto",
+    "plans": ["Cittadini", "Imprese", "Pubbliche Amministrazioni"],
+    "features": [
+      {
+        "label": "Profilo Local Activist (gratuito)",
+        "values": ["✔︎", "✔︎", "✔︎"]
+      },
+      {
+        "label": "Rimborso spese etico",
+        "values": ["✔︎", "●", "●"]
+      },
+      {
+        "label": "Sponsorship di sfida",
+        "values": ["✔︎", "✔︎", "✔︎"]
+      },
+      {
+        "label": "Report ESG & CSRD",
+        "values": ["—", "✔︎", "✔︎"]
+      },
+      {
+        "label": "Dashboard territoriale",
+        "values": ["Trasparenza", "✔︎", "✔︎"]
       }
     ]
   }
-},
-"membership": {
-  "title": "Confronta i Piani di Membership",
-  "plans": ["Volontario", "Giudice", "Azienda"],
-  "features": [
-    { "label": "Accesso Community", "values": ["✓", "✓", "✓"] },
-    { "label": "Wallet privato", "values": ["✓", "✓", "✓"] },
-    { "label": "Progetti Mensili", "values": ["3", "Illimitati", "Illimitati"] },
-    { "label": "Corsi base", "values": ["✓", "✓", "✓"] },
-    { "label": "Corsi avanzati", "values": ["—", "✓", "Per dipendenti"] },
-    { "label": "Accesso VIP Eventi", "values": ["—", "✓", "✓"] },
-    { "label": "Report CSRD/ESRS", "values": ["—", "Base", "Certificabili"] },
-    { "label": "Supporto personalizzato", "values": ["—", "—", "✓"] }
-  ]
-}
 }
