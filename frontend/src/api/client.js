@@ -38,6 +38,9 @@ export const API_PATHS = {
   scoringConfig: () => `/v1/scoring/config`,
   previewScoring: () => `/v1/challenges/preview-scoring`,
   challengeLeaderboard: (id, q = '') => `/v1/challenges/${id}/leaderboard${q}`,
+  
+  // user-centric
+   userSubmissions: (q = "") => `/v1/user/submissions${q}`,
 
   // admin – proposals (v1)
   adminProposals: (q = "") => `/v1/admin/proposals${q}`,

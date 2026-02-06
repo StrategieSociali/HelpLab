@@ -1,4 +1,4 @@
-// src/components/ChallengeSubmissions.jsx
+// src/components/ChallengeSubmissions.jsx DEPRECATO sostituito da JudgeChallengeOverview e altro
 import React, { useEffect, useState } from "react";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
@@ -30,6 +30,7 @@ export default function ChallengeSubmissions({ challengeId }) {
 
   return (
     <section className="challenge-submissions">
+    <h3 className="page-subtitle">DEPRECATO</h3>
       <h3 className="page-subtitle">Le tue submission</h3>
 
       {loading && <div className="callout neutral">Caricamento…</div>}

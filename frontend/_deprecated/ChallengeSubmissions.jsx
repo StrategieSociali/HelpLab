@@ -33,7 +33,7 @@ export default function ChallengeSubmissions() {
 
   return (
     <div className="space-y-6">
-      <h2 className="page-title">Sottomissioni della sfida</h2>
+      <h2 className="page-title">Contributi alla sfida</h2>
 
       {targetAmount > 0 && (
         <ChallengeProgress
@@ -46,13 +46,13 @@ export default function ChallengeSubmissions() {
 
       {isJudgeUser && (
         <div>
-          <h3 className="page-subtitle">Moderazione</h3>
+          <h3 className="page-subtitle">Avanzamento della sfida</h3>
           <JudgeModerationPanel challengeId={challengeId} token={accessToken} />
         </div>
       )}
 
       <div>
-        <h3 className="page-subtitle">Tutte le sottomissioni</h3>
+        <h3 className="page-subtitle">Tutti i contributi</h3>
         <ChallengeSubmissionList challengeId={challengeId} token={accessToken} />
       </div>
     </div>

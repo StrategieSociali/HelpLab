@@ -203,7 +203,7 @@ if (!ready) return null;
            className="nav-link"
            onClick={() => setMenuOpen(false)}
              >
-         {t("auth.nav.judge")}
+         {t("nav.judge")}
         </NavLink>
         )}
 

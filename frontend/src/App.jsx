@@ -2,6 +2,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
+import { routes } from './routes';
+
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -17,7 +19,8 @@ import WelcomeInfo from './pages/WelcomeInfo';
 
 import Challenges from './pages/Challenges';
 import ChallengeSubmitPage from './pages/challenges/ChallengeSubmitPage';
-import ChallengeSubmissions from './pages/challenges/ChallengeSubmissions';
+
+import MyContributions from "@/pages/me/MyContributions";
 
 import UserProfile from './pages/UserProfile';
 import CreateChallenge from './pages/challenges/CreateChallenge';
@@ -35,8 +38,6 @@ import JudgeChallengeOverview from './pages/judge/JudgeChallengeOverview';
 import SponsorPublicProfile from './pages/sponsors/SponsorPublicProfile';
 import SponsorsList from "./pages/sponsors/SponsorsList";
 import SponsorProfileEditor from "./pages/sponsors/SponsorProfileEditor";
-
-import { routes } from './routes';
 
 import '@/styles/styles.css';
 import './App.css';
@@ -77,22 +78,23 @@ export default function App() {
               <Route path={routes.dashboard.challenges} element={<Challenges />} />
 
               <Route
-                path="/challenges/:id/submit"
+                path={routes.dashboard.challengeSubmit}
                 element={
-                  <ProtectedRoute allowedRoles={['user']}>
-                    <ChallengeSubmitPage />
-                  </ProtectedRoute>
+                 <ProtectedRoute allowedRoles={['user']}>
+                  <ChallengeSubmitPage />
+                 </ProtectedRoute>
                 }
               />
 
-              <Route
-                path={routes.dashboard.challengeSubmissions}
-                element={
-                  <ProtectedRoute allowedRoles={['admin', 'judge']}>
-                    <ChallengeSubmissions />
-                  </ProtectedRoute>
-                }
-              />
+               {/* ===== ME / USER AREA ===== */}
+<Route
+  path="/me/contributi"
+  element={
+    <ProtectedRoute allowedRoles={['user', 'judge', 'admin']}>
+      <MyContributions />
+    </ProtectedRoute>
+  }
+/>
 
               {/* ===== USER ===== */}
               <Route

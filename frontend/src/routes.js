@@ -27,8 +27,17 @@ export const routes = {
    * ====================== */
   dashboard: {
     challenges: '/challenges',
+    challengeSubmit: '/challenges/:id/submit',
     challengeSubmissions: '/challenges/:challengeId/submissions',
     learningPaths: '/learning-paths',
+    
+    /* ======================
+   * USER / AREA PERSONALE
+   * ====================== */
+  me: {
+    contributions: '/me/contributi',
+  },
+
 
     // protette
     userProfile: '/dashboard/profile',

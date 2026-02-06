@@ -1,4 +1,30 @@
 // src/pages/judge/JudgeDashboard.jsx
+/**
+ * JudgeDashboard.jsx
+ * ------------------
+ * Dashboard principale per gli utenti con ruolo "judge".
+ *
+ * SCOPO
+ * Questo componente rappresenta il punto di ingresso del giudice nella piattaforma.
+ * Mostra l’elenco delle challenge assegnate al giudice autenticato e costituisce
+ * il punto di partenza per l’attività di revisione e validazione delle submission.
+ *
+ * CONTESTO ARCHITETTURALE
+ * - Fa parte del nuovo flusso user-centrico (non challenge-centrico).
+ * - Sostituisce di fatto le vecchie viste legacy basate su listing globali di submission.
+ * - Ogni giudice vede solo le challenge a lui assegnate tramite endpoint dedicato.
+ *
+ * FLUSSO DATI
+ * - Recupera il token dall’AuthContext.
+ * - Chiama l’endpoint `getJudgeChallenges` per ottenere le challenge assegnate.
+ * - Ogni challenge viene renderizzata tramite `JudgeChallengeCard`,
+ *   che gestisce la navigazione verso il dettaglio/moderazione.
+ *
+ * STATO ATTUALE
+ * - File attivo e NON legacy.
+ * - Punto di riferimento per tutta l’esperienza giudice.
+ * - Da estendere in futuro con metriche, badge di priorità e stati di avanzamento.
+ */
 import React, { useEffect, useState } from "react";
 import TextBlock from "@/components/UI/TextBlock";
 import { useAuth } from "@/context/AuthContext";

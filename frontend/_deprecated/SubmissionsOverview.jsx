@@ -1,4 +1,4 @@
-// src/pages/SubmissionsOverview.jsx
+// src/pages/SubmissionsOverview.jsx DEPRECATO DA ELIMINARE
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
@@ -51,6 +51,7 @@ useEffect(() => {
   return (
     <div className="space-y-4">
       <h2 className="page-title">
+      DEPRECATO DA ELIMINARE
         {isJudgeUser ? "Submission da moderare" : "Le mie submission"}
       </h2>
 

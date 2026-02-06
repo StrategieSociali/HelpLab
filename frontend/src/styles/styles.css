@@ -231,6 +231,7 @@ body{
   border-radius: 0.375rem;    /* ✅ meno arrotondata degli input */
   background: rgba(255,255,255,.1);
   color: white;
+  font-family: inherit;
   font-size: 1rem;
   line-height: 1.4;           /* ✅ testo centrato visivamente */
   resize: vertical;           /* ✅ l’utente può allungarla */

@@ -1,4 +1,4 @@
-// src/components/ChallengeSubmissionList.jsx
+// src/components/ChallengeSubmissionList.jsx DEPRECATO SOSTITUTIO DA JudgeChallengeOverview.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
@@ -29,8 +29,8 @@ export default function ChallengeSubmissionList({ challengeId: propChallengeId }
           setSubmissions(Array.isArray(data?.items) ? data.items : []);
         }
       } catch (err) {
-        console.error("Errore fetch submissions:", err);
-        if (!cancel) setError("Errore durante il caricamento delle submission.");
+        console.error("Errore caricamento contributi:", err);
+        if (!cancel) setError("Errore durante il caricamento dei contributi.");
       } finally {
         if (!cancel) setLoading(false);
       }
@@ -45,35 +45,39 @@ export default function ChallengeSubmissionList({ challengeId: propChallengeId }
   if (loading) return <TextBlock>Caricamento in corso…</TextBlock>;
   if (error) return <TextBlock>{error}</TextBlock>;
   if (submissions.length === 0) {
-    return <TextBlock>Nessuna sottomissione trovata per questa sfida.</TextBlock>;
+    return <TextBlock>Nessun contributo ancora registrato/validato per questa sfida.</TextBlock>;<h2> DEPRECATO</h2>
   }
 
   return (
-    <ul className="space-y-4">
-      {submissions.map((sub) => (
-        <li key={sub.id} className="rounded-xl border p-4 space-y-2">
-          <div className="text-sm text-white/80">
-            <strong>Autore:</strong>{" "}
-            {sub.author?.name || `user#${sub.author?.id ?? "?"}`}{" "}
-            &middot; <strong>Data:</strong>{" "}
-            {new Date(sub.createdAt).toLocaleString()}
-          </div>
+    <li key={sub.id} className="rounded-xl border p-4 space-y-3">
+  <div className="text-sm text-white/80">
+    <strong>Contributo di</strong>{" "}
+    {sub.author?.name || `utente #${sub.author?.id ?? "?"}`}
+    {" · "}
+    <span>
+      {new Date(sub.createdAt).toLocaleDateString()}
+    </span>
+  </div>
 
-          {sub.activity_description && (
-            <p className="text-white">{sub.activity_description}</p>
-          )}
+  {sub.activity_description && (
+    <p className="text-white leading-relaxed">
+      {sub.activity_description}
+    </p>
+  )}
 
-          {sub.payload?.evidences?.length > 0 && (
-  <ul className="list-disc pl-5 space-y-1 text-white">
-    {sub.payload.evidences.map((ev, i) => (
-      <li key={i}>{ev}</li>
-    ))}
-  </ul>
-)}
-
-        </li>
-      ))}
-    </ul>
+  {sub.payload?.evidences?.length > 0 && (
+    <div className="space-y-1">
+      <div className="text-sm text-white/70 font-medium">
+        Evidenze fornite
+      </div>
+      <ul className="list-disc pl-5 space-y-1 text-white">
+        {sub.payload.evidences.map((ev, i) => (
+          <li key={i}>{ev}</li>
+        ))}
+      </ul>
+    </div>
+  )}
+</li>
   );
 }
 

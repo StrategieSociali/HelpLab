@@ -1,15 +1,51 @@
 // src/pages/judge/JudgeChallengeOverview.jsx
 /**
- * Scopo: vista operativa del giudice su una challenge
+ * JudgeChallengeOverview.jsx
+ * --------------------------
+ * Vista operativa principale del giudice su una singola challenge assegnata.
  *
- * Attualmente supporta:
- * - overview challenge + tasks (GET /api/v1/judge/challenges/:id/overview)
- * - lista submissions della challenge (GET /api/v1/challenges/:id/submissions)
- * - approva/rifiuta submission con punti e task_id (POST /api/v1/submissions/:id/review)
+ * SCOPO
+ * Questo componente rappresenta il cuore del lavoro del giudice.
+ * Permette di:
+ * - comprendere la struttura della challenge (task, limiti, metriche)
+ * - analizzare le submission inviate dai volontari
+ * - validare o rifiutare i contributi in modo strutturato e tracciabile
  *
- * Note:
- * - usa endpoint definitivi v1.0 (no legacy /judge/my-queue)
- * - task_id è obbligatorio in review
+ * CONTESTO ARCHITETTURALE
+ * - Fa parte del nuovo flusso USER-CENTRICO.
+ * - È accessibile esclusivamente dal percorso giudice
+ *   (es. JudgeDashboard → JudgeChallengeCard → questa pagina).
+ * - Sostituisce definitivamente le vecchie viste legacy di moderazione.
+ *
+ * FUNZIONALITÀ SUPPORTATE
+ * - Overview challenge e task associati
+ *   GET /api/v1/judge/challenges/:id/overview
+ *
+ * - Lista paginata delle submission della challenge
+ *   GET /api/v1/challenges/:id/submissions
+ *
+ * - Revisione submission (approvazione / rifiuto)
+ *   POST /api/v1/submissions/:id/review
+ *
+ *   Regole di revisione:
+ *   - task_id è SEMPRE obbligatorio
+ *   - points è obbligatorio solo in caso di approvazione
+ *   - note è facoltativa ma consigliata
+ *
+ * RESPONSABILITÀ UX
+ * - Guidare il giudice verso decisioni coerenti e oggettive
+ * - Fornire contesto (task, punti residui, CO₂, assegnazioni)
+ * - Ridurre errori di validazione lato frontend
+ *
+ * STATO ATTUALE
+ * - File ATTIVO e STRATEGICO
+ * - Usa esclusivamente endpoint v1 (no legacy, no fallback)
+ * - Punto di riferimento per la validazione dei contributi volontari
+ *
+ * EVOLUZIONI PREVISTE
+ * - Supporto a metriche ESG aggregate
+ * - Linee guida di valutazione per i giudici
+ * - Miglioramento UX su evidenze e confronti submission
  */
 
 import React, { useEffect, useMemo, useState } from "react";

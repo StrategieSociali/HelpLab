@@ -1,4 +1,4 @@
-// src/components/JudgeModerationPanel.jsx
+// src/components/JudgeModerationPanel.jsx DEPRECATO SOSTITUITO DA JudgeChallengeOverview.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import TextBlock from "@/components/UI/TextBlock";
@@ -92,8 +92,12 @@ export default function JudgeModerationPanel({ challengeId, token, pageSize = 10
     }
   }
 
-  const pending = items.filter(x => x.status === "pending");
-  const others = items.filter(x => x.status !== "pending");
+const pending = items.filter(
+  x => !x.status || x.status === "pending" || x.status === "submitted"
+);
+const others = items.filter(
+  x => x.status && x.status !== "pending" && x.status !== "submitted"
+);
 
 return (
   <div className={`space-y-8 ${className}`}>
@@ -114,10 +118,34 @@ return (
                 <span className="text-xs px-2 py-1 rounded-full badge badge-pending">pending</span>
               </div>
 
-              <ThumbStrip photos={sub.photos} />
+          {/*    <ThumbStrip photos={sub.photos} /> rimossa temporaneamente */ }
               {sub.activity_description && (
                 <TextBlock>{sub.activity_description}</TextBlock>
               )}
+              
+              {sub.payload?.evidences?.length > 0 && (
+  <div className="space-y-1">
+    <div className="text-sm font-medium">Evidenze fornite:</div>
+    <ul className="list-disc pl-5 text-sm text-white/90">
+      {sub.payload.evidences.map((ev, i) => (
+        <li key={i}>
+          {typeof ev === "string" && ev.startsWith("http") ? (
+            <a
+              href={ev}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline text-green-400"
+            >
+              {ev}
+            </a>
+          ) : (
+            ev
+          )}
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
 
               <div className="flex items-center gap-2">
                 <input
@@ -147,6 +175,7 @@ return (
     </section>
 
     <section>
+      <h3 className="page-subtitle">Componente deprecato</h3>
       <h3 className="page-subtitle">Revisionate</h3>
       {others.length === 0 ? (
         <TextBlock>Nessuna submission revisionata.</TextBlock>
