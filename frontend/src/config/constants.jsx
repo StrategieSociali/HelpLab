@@ -1,3 +1,3 @@
 // src/config/constants.js
-export const APP_VERSION = '0.9.1';
+export const APP_VERSION = 'RC 1.0.1';
 

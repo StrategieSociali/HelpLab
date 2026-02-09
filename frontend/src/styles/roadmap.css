@@ -1,0 +1,266 @@
+/* =========================================================================
+   ROADMAP.CSS - Stili dedicati per la pagina Roadmap
+   Namespace: .roadmap-*
+   ========================================================================= */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   HEADER
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.roadmap-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  margin-bottom: 48px;
+}
+
+.roadmap-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(24px, 3vw, 36px);
+  color: #ffffff;
+}
+
+.roadmap-subtitle {
+  color: rgba(255,255,255,.85);
+  font-size: 1rem;
+  margin: 4px 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GRID SYSTEM
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+/* Griglia featured (community requests) */
+.roadmap-grid--featured {
+  margin-bottom: 64px; /* più spazio dopo le featured */
+}
+
+/* Griglia timeline (roadmap storica) */
+.roadmap-grid--timeline {
+  margin-bottom: 48px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CARDS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Card base */
+.roadmap-card {
+  background: rgba(255,255,255, 0.08);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 16px;
+  padding: 24px;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.roadmap-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+}
+
+/* Card featured (prime 3 - community requests) */
+.roadmap-card--featured {
+  background: linear-gradient(
+    135deg, 
+    rgba(16,185,129,0.18) 0%,
+    rgba(59,130,246,0.12) 100%
+  );
+  border: 2px solid rgba(16,185,129,0.6);
+  padding: 28px;
+  box-shadow: 0 6px 24px rgba(16,185,129,0.3);
+}
+
+.roadmap-card--featured:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 40px rgba(16,185,129,0.45);
+  border-color: rgba(16,185,129,0.8);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CARD CONTENT
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Titoli */
+.roadmap-card__title {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roadmap-card--featured .roadmap-card__title {
+  font-size: 1.45rem;
+  margin-bottom: 18px;
+}
+
+/* Divider (hr nelle featured) */
+.roadmap-card__divider {
+  border: none;
+  border-top: 1px solid rgba(16,185,129,0.35);
+  margin: 0 0 18px 0;
+}
+
+/* Content container */
+.roadmap-card__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Singolo item (paragrafo lista) */
+.roadmap-card__item {
+  color: rgba(255,255,255,0.88);
+  line-height: 1.6;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.roadmap-card--featured .roadmap-card__item {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.92);
+}
+
+/* Description (card timeline) */
+.roadmap-card__description {
+  color: rgba(255,255,255,0.85);
+  line-height: 1.6;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CTA SECTION
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.roadmap-cta {
+  background: rgba(255,255,255, 0.08);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  margin-top: 48px;
+}
+
+.roadmap-cta__title {
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.roadmap-cta__subtitle {
+  color: rgba(255,255,255,.85);
+  font-size: 1.05rem;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.roadmap-cta__actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Tablet (2 colonne) */
+@media (max-width: 1024px) {
+  .roadmap-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .roadmap-header {
+    margin-bottom: 36px;
+  }
+
+  .roadmap-card {
+    padding: 20px;
+  }
+
+  .roadmap-card--featured {
+    padding: 24px;
+  }
+
+  .roadmap-cta {
+    padding: 28px;
+  }
+}
+
+/* Mobile (1 colonna) */
+@media (max-width: 640px) {
+  .roadmap-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .roadmap-grid--featured {
+    margin-bottom: 40px;
+  }
+
+  .roadmap-header {
+    margin-bottom: 28px;
+  }
+
+  .roadmap-title {
+    font-size: clamp(20px, 5vw, 28px);
+  }
+
+  .roadmap-card {
+    padding: 18px;
+  }
+
+  .roadmap-card--featured {
+    padding: 22px;
+  }
+
+  .roadmap-card__title {
+    font-size: 1.15rem;
+  }
+
+  .roadmap-card--featured .roadmap-card__title {
+    font-size: 1.3rem;
+  }
+
+  .roadmap-cta {
+    padding: 24px;
+  }
+
+  .roadmap-cta__title {
+    font-size: 1.5rem;
+  }
+
+  .roadmap-cta__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .roadmap-cta__actions .btn {
+    width: 100%;
+    max-width: 320px;
+  }
+}

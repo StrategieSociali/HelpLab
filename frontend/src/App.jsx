@@ -40,7 +40,7 @@ import SponsorsList from "./pages/sponsors/SponsorsList";
 import SponsorProfileEditor from "./pages/sponsors/SponsorProfileEditor";
 
 import '@/styles/styles.css';
-import './App.css';
+
 
 export default function App() {
   return (
