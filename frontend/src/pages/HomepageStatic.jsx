@@ -1,24 +1,26 @@
-// src/pages/HomeStatic.jsx
+// src/pages/HomepageStatic.jsx
 /**
- * Scopo: accogliere l'utente
+ * Scopo: accogliere l'utente (landing page principale)
  *
-  * Attualmente contiene:
-  * HERO (aziende/PA)
-  * Benefici imprese
-  * Come funziona
-  * Valore concreto
-  * Testimonianze
-  * CTA finale imprese
-  * HERO cittadini
-  * Benefici cittadini
-  * Tabella piani
+ * Attualmente contiene:
+ * - HERO Business/PA
+ * - Benefici imprese (3 pilastri)
+ * - Testimonianze
+ * - HERO Cittadini
+ * - CTA finale imprese
+ * - Come funziona
+ * - Tabella membership
+ *
+ * Note: Mantiene classi globali (.hero-section, .community-section, etc.)
+ *       Stili specifici home in home.css
  */
+
 import React from 'react';
 import { useNavigate } from "react-router-dom";
-import FormNotice from "@/components/common/FormNotice.jsx";
 import { Wrench, Gift, Users } from "lucide-react";
 import heroBg from '@/assets/sustainability-hero.jpg';
 import { useTranslation } from "react-i18next";
+import "../styles/home.css";
 
 const HomepageStatic = () => {
   const { t } = useTranslation("pages/home", {
@@ -27,7 +29,7 @@ const HomepageStatic = () => {
 
   const navigate = useNavigate();
   
-    const businessBenefitsItems = t("businessBenefits.items", {
+  const businessBenefitsItems = t("businessBenefits.items", {
     returnObjects: true,
     defaultValue: [],
   });
@@ -37,17 +39,7 @@ const HomepageStatic = () => {
     defaultValue: [],
   });
 
-  const businessValueRows = t("businessValue.rows", {
-    returnObjects: true,
-    defaultValue: [],
-  });
-
   const testimonialItems = t("testimonials.items", {
-    returnObjects: true,
-    defaultValue: [],
-  });
-
-  const citizenBenefitsItems = t("citizens.benefits.items", {
     returnObjects: true,
     defaultValue: [],
   });
@@ -62,33 +54,29 @@ const HomepageStatic = () => {
     defaultValue: [],
   });
 
-
   return (
     <>
-      {/* 1) HERO INIZIALE*/}
+      {/* ═══════════════════════════════════════════════════════════
+          1) HERO BUSINESS/PA
+          ═══════════════════════════════════════════════════════════ */}
       <section
-      className="hero-section"
- 	 style={{
-  	  backgroundImage: `url(${heroBg})`,
-  	  backgroundSize: 'cover',
-  	  backgroundPosition: 'center',
- 	 }}
->
+        className="hero-section home-hero-business"
+        style={{
+          backgroundImage: `url(${heroBg})`,
+        }}
+      >
         <div className="hero-overlay"></div>
         <div className="hero-content">
           <div className="hero-text">
             <h1>{t("hero.title")}</h1>
-            <p className="page-subtitle" style={{maxWidth: 860}}>
+            <p className="home-hero__subtitle">
               {t("hero.subtitle")}
-            </p><p className="page-subtitle" style={{maxWidth: 860}}>
-              <strong>{t("hero.note.label")}</strong>{t("hero.note.text")}
+            </p>
+            <p className="home-hero__note">
+              <strong>{t("hero.note.label")}</strong> {t("hero.note.text")}
             </p>
 
-            {/* CTA HERO INIZIALE */}
-            <div
-  className="cta-row"
-  style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}
->
+            <div className="home-hero__actions">
               <button
                 className="btn btn-outline"
                 onClick={() => navigate('/challenges')}
@@ -108,211 +96,215 @@ const HomepageStatic = () => {
         </div>
       </section>
 
-{/* 2) UN ECOSISTEMA 3 PILASTRI */}
-<section className="community-section">
-  <div className="community-bg"></div>
+      {/* ═══════════════════════════════════════════════════════════
+          2) BUSINESS BENEFITS (3 Pilastri)
+          ═══════════════════════════════════════════════════════════ */}
+      <section className="community-section">
+        <div className="community-bg"></div>
+        <div className="container">
+          <h2>{t("businessBenefits.title")}</h2>
 
-  <div className="container">
-    <h2>{t("businessBenefits.title")}</h2>
-
-    <div className="home-grid home-grid--benefits">
-      {Array.isArray(businessBenefitsItems) &&
-        businessBenefitsItems.map((item, i) => (
-          <div className="benefit-card" key={i}>
-            <h3>{item.title}</h3>
-            <p className="small muted" style={{ marginBottom: 8 }}>
-            {item.tagline}
-            </p>
-             <p><p>
-  <strong>{item.highlight}</strong>.
-</p>{item.text}</p>
-           
+          <div className="home-grid home-grid--benefits">
+            {Array.isArray(businessBenefitsItems) &&
+              businessBenefitsItems.map((item, i) => (
+                <div className="benefit-card" key={i}>
+                  <h3>{item.title}</h3>
+                  <p className="benefit-card__tagline">
+                    {item.tagline}
+                  </p>
+                  <p>
+                    <strong>{item.highlight}</strong>. {item.text}
+                  </p>
+                </div>
+              ))}
           </div>
-        ))}
-    </div>
-  </div>
-</section>
+        </div>
+      </section>
 
-      {/* 3) ECOSISTEMA DOVE VALORE GENERA VALORE) */}
-<section className="community-section">
-  <div className="community-bg"></div>
+      {/* ═══════════════════════════════════════════════════════════
+          3) TESTIMONIALS
+          ═══════════════════════════════════════════════════════════ */}
+      <section className="community-section">
+        <div className="community-bg"></div>
+        <div className="container">
+          <h2>{t("testimonials.title")}</h2>
 
-  <div className="container">
-    <h2>{t("testimonials.title")}</h2>
+          <div className="home-grid home-grid--benefits">
+            {Array.isArray(testimonialItems) &&
+              testimonialItems.map((item, i) => (
+                <div className="benefit-card" key={i}>
+                  <div className="benefit-icon">
+                    {i === 0 && "💬"}
+                    {i === 1 && "🏢"}
+                    {i === 2 && "📸"}
+                  </div>
+                  <h3>{item.title}</h3>
+                  <p>
+                    "{item.quote}"
+                    {item.note && (
+                      <>
+                        <br />
+                        <span className="muted small">{item.note}</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+              ))}
+          </div>
+        </div>
+      </section>
 
-    <div className="home-grid home-grid--benefits">
-      {Array.isArray(testimonialItems) &&
-  testimonialItems.map((item, i) => (
-    <div className="benefit-card" key={i}>
-      <div className="benefit-icon">
-        {i === 0 && "💬"}
-        {i === 1 && "🏢"}
-        {i === 2 && "📸"}
-      </div>
-      <h3>{item.title}</h3>
-      <p>
-        “{item.quote}”
-        {item.note && (
-          <>
-            <br />
-            <span className="muted small">{item.note}</span>
-          </>
-        )}
-      </p>
-    </div>
-))}
-
-    </div>
-  </div>
-</section>
-     
-      {/* 4) HERO CITTADINI  IL TUO TEMPO*/}
-<section className="hero-section  hero-section--citizens" style={{
-    backgroundImage: `url(/assets/hero-citizens.jpg)`
-  }}>
-  <div className="hero-overlay"></div>
-  <div className="hero-content">
-    <div className="hero-text">
-      <h1>{t("citizens.hero.title")}</h1>
-
-      <p className="page-subtitle" style={{ maxWidth: 860 }}>
-        {t("citizens.hero.subtitle")}
-      </p>
-
-      <div className="cta-row" style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-        <button className="btn btn-outline" onClick={() => navigate("/challenges")}>
-          {t("citizens.hero.cta.join")}
-        </button>
-        <button className="btn btn-outline" onClick={() => navigate("/register")}>
-          {t("citizens.hero.cta.register")}
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-      {/* 5) CALL DALLA PARTECIPAZIONE OCCASIONALE */}
-<section className="support-section">
-  <div className="container">
-    <div className="card" style={{ padding: 20 }}>
-      <h2 style={{ marginBottom: 6 }}>
-        {t("finalCta.title")}
-      </h2>
-
-      <p className="page-subtitle" style={{ marginBottom: 12 }}>
-        {t("finalCta.subtitle")}
-      </p>
-
-      <div
-        className="cta-row"
+      {/* ═══════════════════════════════════════════════════════════
+          4) HERO CITIZENS
+          ═══════════════════════════════════════════════════════════ */}
+      <section
+        className="hero-section hero-section--citizens home-hero-citizens"
         style={{
-          display: "flex",
-          gap: 12,
-          flexWrap: "wrap",
-          justifyContent: "center",
-          alignItems: "center",
+          backgroundImage: `url(/assets/hero-citizens.jpg)`,
         }}
       >
-        <button
-          className="btn btn-outline"
-          onClick={() => {
-            const email = t("finalCta.contact.email");
-            const subject = encodeURIComponent(t("finalCta.contact.subject"));
-            const body = encodeURIComponent(t("finalCta.contact.body"));
+        <div className="hero-overlay"></div>
+        <div className="hero-content">
+          <div className="hero-text">
+            <h1>{t("citizens.hero.title")}</h1>
+            <p className="home-hero__subtitle">
+              {t("citizens.hero.subtitle")}
+            </p>
 
-            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-          }}
-        >
-          {t("finalCta.contact.label")}
-        </button>
+            <div className="home-hero__actions">
+              <button
+                className="btn btn-outline"
+                onClick={() => navigate("/challenges")}
+              >
+                {t("citizens.hero.cta.join")}
+              </button>
+              <button
+                className="btn btn-outline"
+                onClick={() => navigate("/register")}
+              >
+                {t("citizens.hero.cta.register")}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <button
-          className="btn btn-outline"
-          onClick={() => navigate("/business/packages")}
-        >
-          {t("finalCta.packages")}
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
-
-           {/* 6) DALL'INVESTIMENTO AL DATO */}
+      {/* ═══════════════════════════════════════════════════════════
+          5) CTA BUSINESS
+          ═══════════════════════════════════════════════════════════ */}
       <section className="support-section">
-  <div className="container">
-    <h2>{t("howItWorks.title")}</h2>
+        <div className="container">
+          <div className="home-cta">
+            <h2 className="home-cta__title">{t("finalCta.title")}</h2>
+            <p className="home-cta__subtitle">{t("finalCta.subtitle")}</p>
 
-    <div className="home-grid home-grid--support">
-     {Array.isArray(howItWorksSteps) &&
-  howItWorksSteps.map((step, i) => (
-    <div className="support-card" key={i}>
-      <div className="support-icon">
-        {i === 0 && "🧭"}
-        {i === 1 && "💸"}
-        {i === 2 && "✅"}
-      </div>
-      <h3>{i + 1}. {step.title}</h3>
-      <p>{step.text}</p>
-    </div>
-))}
-    </div>
-  </div>
-</section>
+            <div className="home-cta__actions">
+              <button
+                className="btn btn-outline"
+                onClick={() => {
+                  const email = t("finalCta.contact.email");
+                  const subject = encodeURIComponent(t("finalCta.contact.subject"));
+                  const body = encodeURIComponent(t("finalCta.contact.body"));
+                  window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+                }}
+              >
+                {t("finalCta.contact.label")}
+              </button>
+              <button
+                className="btn btn-outline"
+                onClick={() => navigate("/business/packages")}
+              >
+                {t("finalCta.packages")}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-{/* 7) SERVIZI E OPPORTUNITÀ */}
-   <section className="features-section">
-  <div className="container">
-    <h2>{t("membership.title")}</h2>
+      {/* ═══════════════════════════════════════════════════════════
+          6) HOW IT WORKS
+          ═══════════════════════════════════════════════════════════ */}
+      <section className="support-section">
+        <div className="container">
+          <h2>{t("howItWorks.title")}</h2>
 
-    {/* DESKTOP */}
-    <div className="desktop-table">
-      <div className="table-header">
-        <div className="feature-column"></div>
-       {Array.isArray(membershipPlans) &&
-  membershipPlans.map((plan, i) => (
-    <div className={`plan-column ${i === 1 ? "premium" : ""}`} key={i}>
-      {plan}
-    </div>
-))}
-      </div>
+          <div className="home-grid home-grid--support">
+            {Array.isArray(howItWorksSteps) &&
+              howItWorksSteps.map((step, i) => (
+                <div className="support-card" key={i}>
+                  <div className="support-icon">
+                    {i === 0 && "🧭"}
+                    {i === 1 && "💸"}
+                    {i === 2 && "✅"}
+                  </div>
+                  <h3>
+                    {i + 1}. {step.title}
+                  </h3>
+                  <p>{step.text}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      </section>
 
-    {Array.isArray(membershipFeatures) &&
-  membershipFeatures.map((feature, i) => (
-    <div className="table-row" key={i}>
-      <div className="feature-cell">{feature.label}</div>
-      {Array.isArray(feature.values) &&
-        feature.values.map((value, j) => (
-          <div className="plan-cell" key={j}>{value}</div>
-        ))}
-    </div>
-))}
-    </div>
-    
-    {/* MOBILE */}
-    <div className="mobile-plan-cards">
-     {Array.isArray(membershipPlans) &&
-  membershipPlans.map((plan, planIdx) => (
-    <div className="plan-card" key={planIdx}>
-      <h3 className="plan-title">{plan}</h3>
-      <ul className="plan-features">
-        {Array.isArray(membershipFeatures) &&
-          membershipFeatures.map((feature, i) => (
-            <li key={i}>
-              <strong>{feature.label}:</strong>{" "}
-              {feature.values?.[planIdx]}
-            </li>
-          ))}
-      </ul>
-    </div>
-))}
-    </div>
-  </div>
-</section>
+      {/* ═══════════════════════════════════════════════════════════
+          7) MEMBERSHIP TABLE
+          ═══════════════════════════════════════════════════════════ */}
+      <section className="features-section">
+        <div className="container">
+          <h2>{t("membership.title")}</h2>
 
+          {/* DESKTOP TABLE */}
+          <div className="home-membership-table desktop-table">
+            <div className="table-header">
+              <div className="feature-column"></div>
+              {Array.isArray(membershipPlans) &&
+                membershipPlans.map((plan, i) => (
+                  <div
+                    className={`plan-column ${i === 1 ? "premium" : ""}`}
+                    key={i}
+                  >
+                    {plan}
+                  </div>
+                ))}
+            </div>
+
+            {Array.isArray(membershipFeatures) &&
+              membershipFeatures.map((feature, i) => (
+                <div className="table-row" key={i}>
+                  <div className="feature-cell">{feature.label}</div>
+                  {Array.isArray(feature.values) &&
+                    feature.values.map((value, j) => (
+                      <div className="plan-cell" key={j}>
+                        {value}
+                      </div>
+                    ))}
+                </div>
+              ))}
+          </div>
+
+          {/* MOBILE CARDS */}
+          <div className="home-membership-cards mobile-plan-cards">
+            {Array.isArray(membershipPlans) &&
+              membershipPlans.map((plan, planIdx) => (
+                <div className="plan-card" key={planIdx}>
+                  <h3 className="plan-title">{plan}</h3>
+                  <ul className="plan-features">
+                    {Array.isArray(membershipFeatures) &&
+                      membershipFeatures.map((feature, i) => (
+                        <li key={i}>
+                          <strong>{feature.label}:</strong>{" "}
+                          {feature.values?.[planIdx]}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ))}
+          </div>
+        </div>
+      </section>
     </>
   );
 };
 
 export default HomepageStatic;
-
