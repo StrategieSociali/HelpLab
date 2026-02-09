@@ -1,16 +1,19 @@
 // src/pages/JoinHelpLab.jsx
 /**
- * Scopo: Presentare la community 
+ * Scopo: Presentare la community e raccogliere contatti via Mautic
  *
  * Attualmente supporta:
- * Breve presentazione
- * Iscrizione a Mautic
+ * - Hero section accattivante
+ * - Form integrazione Mautic (community mailing list)
+ * - Gestione interessi utente
+ * - Stili dedicati e namespaced (.join-*)
  */
- 
+
 import React, { useEffect, useState } from "react";
 import FormNotice from "@/components/common/FormNotice.jsx";
 import communityHero from "@/assets/community-hero.jpg";
 import { useTranslation } from "react-i18next";
+import "../styles/joinhelplab.css";
 
 export default function JoinHelpLab() {
   const { t } = useTranslation("pages/join", {
@@ -35,6 +38,7 @@ export default function JoinHelpLab() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
+  // Mautic SDK initialization
   useEffect(() => {
     if (!window.MauticSDKLoaded) {
       const script = document.createElement("script");
@@ -105,151 +109,136 @@ export default function JoinHelpLab() {
 
   return (
     <>
-      {/* --- HERO SECTION con immagine di sfondo --- */}
+      {/* HERO SECTION */}
       <section
-        className="hero-section join-hero"
+        className="join-hero"
         style={{
           backgroundImage: `url(${communityHero})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          position: "relative",
         }}
       >
-        <div className="hero-overlay"></div>
-        <div className="hero-content">
-         <h1 className="section-title">
-         {t("hero.title")}
-         </h1>
-
-        <p className="section-subtitle">
-         {t("hero.text")}
-        </p>
-
+        <div className="join-hero__overlay"></div>
+        <div className="join-hero__content">
+          <h1 className="join-hero__title">{t("hero.title")}</h1>
+          <p className="join-hero__subtitle">{t("hero.text")}</p>
         </div>
       </section>
 
-      {/* --- CTA SECTION (testo bianco) --- */}
-      <section className="cta-section" style={{ backgroundColor: "#0f172a" }}>
-        <div className="container text-center" style={{ color: "white" }}>
-          <h1 className="section-title">
-           {t("hero.title")}
-          </h1>
-
-          <p className="section-subtitle">
-             {t("hero.text")}
-          </p>
-
+      {/* INTRO SECTION */}
+      <section className="join-intro">
+        <div className="container">
+          <h2 className="join-intro__title">{t("hero.title")}</h2>
+          <p className="join-intro__text">{t("hero.text")}</p>
         </div>
       </section>
 
-      {/* --- FORM SECTION --- 
-       ⚠️ ATTENZIONE:
-       Le chiavi "mauticform[...]" sono CONTRATTO con Mautic.
-       Non tradurre né rinominare. */}
+      {/* FORM SECTION
+          ⚠️ ATTENZIONE: Le chiavi "mauticform[...]" sono CONTRATTO con Mautic.
+          Non tradurre né rinominare. */}
+      <section className="join-form-section">
+        <div className="container">
+          <div className="join-form">
+            <FormNotice className="join-form__notice" />
 
-      <section className="registration-form">
-        <div className="mauticform-innerform">
-          <FormNotice className="notice--center" />
-          <form className="registration-form" onSubmit={onSubmit}>
-            <div className="form-group mauticform-row">
-	  <label htmlFor="name" className="mauticform-label">
-	    {t("form.name.label")} <span className="required">*</span>
-	  </label>
-	  <input
-	    id="name"
- 	   name="name"
- 	   type="text"
- 	   className="mauticform-input"
- 	   placeholder={t("form.name.placeholder")}
- 	   value={form.name}
- 	   onChange={onChange}
- 	   required
- 	   autoComplete="name"
- 	 />
-	</div>
-
-            <div className="form-group mauticform-row">
-              <label htmlFor="email" className="mauticform-label">
-                {t("form.email.label")} <span className="required">*</span>
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                className="mauticform-input"
-                placeholder={t("form.email.placeholder")}
-                value={form.email}
-                onChange={onChange}
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="form-group mauticform-row">
-              <label className="mauticform-label">{t("form.interests.label")}</label>
-              <div className="checkbox-grid">
-                {INTEREST_OPTIONS.map((opt) => (
-                  <label key={opt.value} className="checkbox-item">
-                    <input
-                      type="checkbox"
-                      name="interests"
-                      value={opt.value}
-                      checked={form.interests.includes(opt.value)}
-                      onChange={onChange}
-                      className="mauticform-checkboxgrp-checkbox"
-                    />
-                    <span>{opt.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="form-group mauticform-row">
-              <label className="checkbox-item checkbox-single">
+            <form onSubmit={onSubmit}>
+              {/* Nome */}
+              <div className="join-form__group">
+                <label htmlFor="name" className="join-form__label">
+                  {t("form.name.label")} <span className="required">*</span>
+                </label>
                 <input
-                  type="checkbox"
-                  id="newsletter"
-                  name="newsletter"
-                  checked={form.newsletter}
+                  id="name"
+                  name="name"
+                  type="text"
+                  className="join-form__input"
+                  placeholder={t("form.name.placeholder")}
+                  value={form.name}
                   onChange={onChange}
-                  className="mauticform-checkboxgrp-checkbox"
+                  required
+                  autoComplete="name"
                 />
-                <span>
-                  {t("form.newsletter")}
-                </span>
-              </label>
-            </div>
+              </div>
 
-               {error && (
-                 <div className="mauticform-error">
+              {/* Email */}
+              <div className="join-form__group">
+                <label htmlFor="email" className="join-form__label">
+                  {t("form.email.label")} <span className="required">*</span>
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  className="join-form__input"
+                  placeholder={t("form.email.placeholder")}
+                  value={form.email}
+                  onChange={onChange}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              {/* Interessi (checkbox grid) */}
+              <div className="join-form__group">
+                <label className="join-form__label">
+                  {t("form.interests.label")}
+                </label>
+                <div className="join-form__checkbox-grid">
+                  {INTEREST_OPTIONS.map((opt) => (
+                    <label key={opt.value} className="join-form__checkbox-item">
+                      <input
+                        type="checkbox"
+                        name="interests"
+                        value={opt.value}
+                        checked={form.interests.includes(opt.value)}
+                        onChange={onChange}
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Newsletter */}
+              <div className="join-form__group">
+                <label className="join-form__checkbox-single">
+                  <input
+                    type="checkbox"
+                    id="newsletter"
+                    name="newsletter"
+                    checked={form.newsletter}
+                    onChange={onChange}
+                  />
+                  <span>{t("form.newsletter")}</span>
+                </label>
+              </div>
+
+              {/* Messages */}
+              {error && (
+                <div className="join-form__message join-form__message--error">
                   {t("form.errors.required")}
-                 </div>
-               )}
+                </div>
+              )}
 
-               {success && (
-                 <div className="mautic-message">
+              {success && (
+                <div className="join-form__message join-form__message--success">
                   {t("form.success")}
-                 </div>
-               )}
+                </div>
+              )}
 
-
-            <div className="mauticform-row mauticform-button-wrapper">
-              <button
-                type="submit"
-                className="btn btn-ghost mauticform-button"
-                disabled={submitting}
-                aria-busy={submitting}
-              >
-                {submitting
-                  ? t("form.submitting")
-                  : t("form.submit")}
-              </button>
-            </div>
-          </form>
+              {/* Submit */}
+              <div className="join-form__actions">
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={submitting}
+                  aria-busy={submitting}
+                >
+                  {submitting ? t("form.submitting") : t("form.submit")}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </section>
     </>
   );
 }
-

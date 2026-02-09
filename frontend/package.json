@@ -1,6 +1,6 @@
 {
   "name": "helplab-frontend",
-  "version": "RC 1.0.3",
+  "version": "RC 1.0.4",
   "private": true,
   "scripts": {
     "dev": "vite",

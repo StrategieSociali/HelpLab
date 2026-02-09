@@ -1656,48 +1656,22 @@ select.control {
   border-color: transparent;
   color: #fff;
 }
-/* ===============================================================================
-   SEZIONE 6: PAGINE SPECIFICHE (Welcome, Join, Sponsors, Mautic)
-   =============================================================================== */
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   WELCOME / INFO PAGES
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.welcome-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-top: 24px;
-}
-
-.welcome-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.welcome-icon {
-  line-height: 1;
-  display: flex;
-  align-items: center;
-}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    JOIN / UNISCITI PAGE
    ───────────────────────────────────────────────────────────────────────────── */
 
-/* Hero consolidato - unificando righe 1035 e 1074 */
+/* Hero consolidato - unificando righe 1035 e 1074 
 .join-hero {
   background-image: url('./assets/community-hero.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   display: flex;
-  align-items: flex-end; /* sposta il contenuto più in basso */
+  align-items: flex-end; /* sposta il contenuto più in basso 
   justify-content: center;
-  min-height: 70vh; /* più basso del 100vh */
-  padding-bottom: 120px; /* distanza dal bordo inferiore */
+  min-height: 70vh; /* più basso del 100vh 
+  padding-bottom: 120px; /* distanza dal bordo inferiore 
   text-align: center;
   color: white;
   position: relative;
@@ -1730,7 +1704,7 @@ select.control {
 .join-hero .section-subtitle {
   font-size: 1.125rem;
   line-height: 1.6;
-}
+} */
 
 /* Audience Section */
 .audience-section {
@@ -1933,7 +1907,7 @@ select.control {
 
 /* ─────────────────────────────────────────────────────────────────────────────
    GRID RESPONSIVE BASE
-   Sistema unificato per sostituire: home-grid, welcome-grid, benefits-grid,
+   Sistema unificato per sostituire: home-grid, benefits-grid,
    support-grid, audience-grid, sponsors-grid
    Pattern: 3→2→1 colonne con breakpoint standard
    ───────────────────────────────────────────────────────────────────────────── */
@@ -1974,13 +1948,6 @@ select.control {
   grid-template-columns: repeat(3, 1fr);
 }
 
-/* Welcome grid */
-.welcome-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-top: 24px;
-}
 
 /* Benefits grid */
 .benefits-grid {
@@ -2032,7 +1999,6 @@ select.control {
   /* Griglie → 1 colonna */
   .home-grid,
   .content-grid,
-  .welcome-grid,
   .grid-responsive {
     grid-template-columns: 1fr;
   }
@@ -2341,7 +2307,6 @@ select.control {
   /* Griglie → 2 colonne */
   .home-grid,
   .content-grid,
-  .welcome-grid,
   .grid-responsive {
     grid-template-columns: repeat(2, 1fr);
   }
