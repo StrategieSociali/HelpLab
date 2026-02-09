@@ -3,114 +3,72 @@
  * Scopo: presentare all'utente appena registrato o al visitatore le opportunità di HelpLab
  *
  * Attualmente ci sono contenuti per:
- * - Informare l’utente appena registrato sulle possibilità offerte dalla piattaforma.
- * - Guidarlo nella scelta del suo ruolo o attività preferita.
- * - Stimolare l’interazione con sfide, community, e percorsi formativi.
- * - Formato coerente con lo stile già presente
-*/
+ * - Informare l'utente appena registrato sulle possibilità offerte dalla piattaforma
+ * - Guidarlo nella scelta del suo ruolo o attività preferita
+ * - Stimolare l'interazione con sfide, community, e percorsi formativi
+ * - Stili dedicati e namespaced (.welcome-*)
+ */
 
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import "../styles/welcomeinfo.css";
 
 export default function WelcomeInfo() {
-const { t } = useTranslation("pages/welcome", {
-  useSuspense: false,
-});
+  const { t } = useTranslation("pages/welcome", {
+    useSuspense: false,
+  });
+
+  const sections = [
+    { key: "path", icon: t("sections.path.icon") },
+    { key: "challenges", icon: t("sections.challenges.icon") },
+    { key: "judge", icon: t("sections.judge.icon") },
+    { key: "sponsor", icon: t("sections.sponsor.icon") },
+    { key: "learning", icon: t("sections.learning.icon") },
+    { key: "community", icon: t("sections.community.icon") },
+  ];
+
   return (
     <section className="page-section page-text">
       <div className="container">
-        <h2 className="page-title">{t("hero.title")}</h2>
-        <p className="muted">{t("hero.subtitle")}</p>
+        {/* HEADER */}
+        <header className="welcome-header">
+          <h1 className="welcome-title">{t("hero.title")}</h1>
+          <p className="welcome-subtitle">{t("hero.subtitle")}</p>
+        </header>
 
+        {/* GRID OPPORTUNITÀ */}
+        <div className="welcome-grid">
+          {sections.map((section, i) => (
+            <div className="welcome-card" key={i}>
+              <h2 className="welcome-card__title">
+                <span className="welcome-card__icon">{section.icon}</span>
+                <span>{t(`sections.${section.key}.title`)}</span>
+              </h2>
+              <h3 className="welcome-card__subtitle">
+                {t(`sections.${section.key}.subtitle`)}
+              </h3>
+              <p className="welcome-card__text">
+                {t(`sections.${section.key}.text`)}
+              </p>
+            </div>
+          ))}
+        </div>
 
-<div className="welcome-grid">
-
-<div className="card">
-  <h2 className="page-title welcome-title">
-    <span className="welcome-icon">{t("sections.path.icon")}</span>
-    <span>{t("sections.path.title")}</span>
-  </h2>
-  <h3 className="page-subtitle">{t("sections.path.subtitle")}</h3>
-  <p>{t("sections.path.text")}</p>
-</div>
-        
-<div className="card">
-  <h2 className="page-title welcome-title">
-    <span className="welcome-icon">{t("sections.challenges.icon")}</span>
-    <span>{t("sections.challenges.title")}</span>
-  </h2>
-  <h3 className="page-subtitle">{t("sections.challenges.subtitle")}</h3>
-  <p>{t("sections.challenges.text")}</p>
-</div>
-
-<div className="card">
-  <h2 className="page-title welcome-title">
-    <span className="welcome-icon">{t("sections.judge.icon")}</span>
-    <span>{t("sections.judge.title")}</span>
-  </h2>
-  <h3 className="page-subtitle">{t("sections.judge.subtitle")}</h3>
-  <p>{t("sections.judge.text")}</p>
-</div>
-
-<div className="card">
-  <h2 className="page-title welcome-title">
-    <span className="welcome-icon">{t("sections.sponsor.icon")}</span>
-    <span>{t("sections.sponsor.title")}</span>
-  </h2>
-  <h3 className="page-subtitle">{t("sections.sponsor.subtitle")}</h3>
-  <p>{t("sections.sponsor.text")}</p>
-</div>
-
-<div className="card">
-  <h2 className="page-title welcome-title">
-    <span className="welcome-icon">{t("sections.learning.icon")}</span>
-    <span>{t("sections.learning.title")}</span>
-  </h2>
-  <h3 className="page-subtitle">{t("sections.learning.subtitle")}</h3>
-  <p>{t("sections.learning.text")}</p>
-</div>
-
-<div className="card">
-  <h2 className="page-title welcome-title">
-    <span className="welcome-icon">{t("sections.community.icon")}</span>
-    <span>{t("sections.community.title")}</span>
-  </h2>
-  <h3 className="page-subtitle">{t("sections.community.subtitle")}</h3>
-  <p>{t("sections.community.text")}</p>
-</div>
-</div>
-
-        <div className="card welcome-cta" style={{ marginTop: 48 }}>
-  <h3 className="page-title" style={{ marginBottom: 8 }}>
-    {t("cta.title")}
-  </h3>
-
-  <p className="page-subtitle" style={{ marginBottom: 20 }}>
-     {t("cta.subtitle")}
-  </p>
-
-  <div
-    className="cta-row"
-    style={{
-      display: "flex",
-      gap: 12,
-      flexWrap: "wrap",
-      justifyContent: "center",
-    }}
-  >
-<Link to="/dashboard/profile" className="btn btn-primary btn-pill">
-  {t("cta.profile")}
-</Link>
-
-<Link to="/challenges" className="btn btn-outline btn-pill">
-  {t("cta.challenges")}
-</Link>
-  </div>
-</div>
-
+        {/* CTA */}
+        <div className="welcome-cta">
+          <h3 className="welcome-cta__title">{t("cta.title")}</h3>
+          <p className="welcome-cta__subtitle">{t("cta.subtitle")}</p>
+          <div className="welcome-cta__actions">
+            <Link to="/dashboard/profile" className="btn btn-primary btn-pill">
+              {t("cta.profile")}
+            </Link>
+            <Link to="/challenges" className="btn btn-outline btn-pill">
+              {t("cta.challenges")}
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
-

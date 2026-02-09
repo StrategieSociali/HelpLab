@@ -1,0 +1,231 @@
+/* =========================================================================
+   WELCOMEINFO.CSS - Stili dedicati per Welcome/Info page
+   Namespace: .welcome-*
+   Style: Informativo, accogliente, con card ben organizzate
+   ========================================================================= */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   HEADER
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.welcome-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  margin-bottom: 48px;
+}
+
+.welcome-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(28px, 4vw, 40px);
+  color: #ffffff;
+}
+
+.welcome-subtitle {
+  color: rgba(255,255,255,.85);
+  font-size: 1.1rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 640px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GRID
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.welcome-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CARDS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.welcome-card {
+  background: rgba(255,255,255, 0.08);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 16px;
+  padding: 24px;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.welcome-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+  border-color: rgba(255,255,255,.35);
+}
+
+/* Card title (con icona) */
+.welcome-card__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+/* Icona */
+.welcome-card__icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Subtitle */
+.welcome-card__subtitle {
+  color: rgba(255,255,255,.75);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+/* Text */
+.welcome-card__text {
+  color: rgba(255,255,255,.85);
+  line-height: 1.6;
+  margin: 0;
+  font-size: 0.95rem;
+  flex: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CTA SECTION
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.welcome-cta {
+  background: rgba(255,255,255, 0.08);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  margin-top: 48px;
+}
+
+.welcome-cta__title {
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.welcome-cta__subtitle {
+  color: rgba(255,255,255,.85);
+  font-size: 1.05rem;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.welcome-cta__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Tablet (2 colonne) */
+@media (max-width: 1024px) {
+  .welcome-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .welcome-header {
+    margin-bottom: 40px;
+  }
+
+  .welcome-title {
+    font-size: clamp(24px, 4vw, 34px);
+  }
+
+  .welcome-card {
+    padding: 20px;
+  }
+
+  .welcome-cta {
+    padding: 28px;
+  }
+}
+
+/* Mobile (1 colonna) */
+@media (max-width: 640px) {
+  .welcome-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .welcome-header {
+    margin-bottom: 32px;
+  }
+
+  .welcome-title {
+    font-size: clamp(22px, 5vw, 30px);
+  }
+
+  .welcome-subtitle {
+    font-size: 1rem;
+  }
+
+  .welcome-card {
+    padding: 18px;
+  }
+
+  .welcome-card__title {
+    font-size: 1.2rem;
+  }
+
+  .welcome-card__icon {
+    font-size: 1.6rem;
+  }
+
+  .welcome-card__subtitle {
+    font-size: 0.95rem;
+  }
+
+  .welcome-card__text {
+    font-size: 0.9rem;
+  }
+
+  .welcome-cta {
+    padding: 24px;
+    margin-top: 40px;
+  }
+
+  .welcome-cta__title {
+    font-size: 1.5rem;
+  }
+
+  .welcome-cta__subtitle {
+    font-size: 1rem;
+  }
+
+  .welcome-cta__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .welcome-cta__actions .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}

@@ -1656,32 +1656,6 @@ select.control {
   border-color: transparent;
   color: #fff;
 }
-/* ===============================================================================
-   SEZIONE 6: PAGINE SPECIFICHE (Welcome, Join, Sponsors, Mautic)
-   =============================================================================== */
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   WELCOME / INFO PAGES
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.welcome-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-top: 24px;
-}
-
-.welcome-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.welcome-icon {
-  line-height: 1;
-  display: flex;
-  align-items: center;
-}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    JOIN / UNISCITI PAGE
@@ -1933,7 +1907,7 @@ select.control {
 
 /* ─────────────────────────────────────────────────────────────────────────────
    GRID RESPONSIVE BASE
-   Sistema unificato per sostituire: home-grid, welcome-grid, benefits-grid,
+   Sistema unificato per sostituire: home-grid, benefits-grid,
    support-grid, audience-grid, sponsors-grid
    Pattern: 3→2→1 colonne con breakpoint standard
    ───────────────────────────────────────────────────────────────────────────── */
@@ -1974,13 +1948,6 @@ select.control {
   grid-template-columns: repeat(3, 1fr);
 }
 
-/* Welcome grid */
-.welcome-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-top: 24px;
-}
 
 /* Benefits grid */
 .benefits-grid {
@@ -2032,7 +1999,6 @@ select.control {
   /* Griglie → 1 colonna */
   .home-grid,
   .content-grid,
-  .welcome-grid,
   .grid-responsive {
     grid-template-columns: 1fr;
   }
@@ -2341,7 +2307,6 @@ select.control {
   /* Griglie → 2 colonne */
   .home-grid,
   .content-grid,
-  .welcome-grid,
   .grid-responsive {
     grid-template-columns: repeat(2, 1fr);
   }
