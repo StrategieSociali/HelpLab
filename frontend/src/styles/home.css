@@ -48,35 +48,38 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 .home-cta {
-  background: rgba(255,255,255, 0.08);
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: 16px;
-  padding: 32px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #0f172a 100%);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 20px;
+  padding: 48px 40px;
   text-align: center;
-  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
 }
 
-.home-cta__title {
+.home-cta__title,
+.support-section .home-cta__title {  /* override specifico per battere .support-section h2 */
   color: #ffffff;
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin: 0 0 8px 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  margin: 0 0 16px 0;
+  line-height: 1.2;
 }
 
-.home-cta__subtitle {
-  color: rgba(255,255,255,.85);
-  font-size: 1.05rem;
-  margin: 0 0 0px 0;
-  line-height: 1.5;
+.home-cta__subtitle,
+.support-section .home-cta__subtitle {  /* override specifico per battere .support-section */
+  color: rgba(255,255,255,.82);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 640px;
+  margin: 0 auto 32px;
 }
 
 .home-cta__actions {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  margin-top: -20px;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -96,10 +99,9 @@
   background: linear-gradient(135deg, var(--brand-start), var(--brand-end));
 }
 
+/* .plan-column.premium: nessun override, eredita gradiente e colore dall'header */
 .home-membership-table .plan-column.premium {
-  background: rgba(16,185,129,0.15);
   font-weight: 700;
-  color: #10b981;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -126,15 +128,12 @@
   }
 
   .home-cta {
-    padding: 24px 20px;
-  }
-
-  .home-cta__title {
-    font-size: 1.5rem;
+    padding: 36px 24px;
   }
 
   .home-cta__subtitle {
     font-size: 1rem;
+    margin-bottom: 24px;
   }
 
   .home-cta__actions {
@@ -151,10 +150,6 @@
 /* Tablet */
 @media (max-width: 1024px) and (min-width: 769px) {
   .home-cta {
-    padding: 28px;
-  }
-
-  .home-cta__title {
-    font-size: 1.6rem;
+    padding: 40px 32px;
   }
 }

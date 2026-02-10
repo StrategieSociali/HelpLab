@@ -60,10 +60,10 @@ export default function WelcomeInfo() {
           <h3 className="welcome-cta__title">{t("cta.title")}</h3>
           <p className="welcome-cta__subtitle">{t("cta.subtitle")}</p>
           <div className="welcome-cta__actions">
-            <Link to="/dashboard/profile" className="btn btn-primary btn-pill">
+            <Link to="/dashboard/profile" className="btn btn-outline">
               {t("cta.profile")}
             </Link>
-            <Link to="/challenges" className="btn btn-outline btn-pill">
+            <Link to="/challenges" className="btn btn-outline">
               {t("cta.challenges")}
             </Link>
           </div>

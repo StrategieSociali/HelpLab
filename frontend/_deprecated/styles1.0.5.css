@@ -415,113 +415,80 @@ main {
 
 /* ─────────────────────────────────────────────────────────────────────────────
    BUTTONS
-   Sistema a 3 varianti:
-   - .btn-primary  → Verde pieno (azioni di conversione: contatta, iscriviti)
-   - .btn-outline  → Bordo bianco trasparente (navigazione interna)
-   - .btn-ghost    → Solo testo/bordo sottile (contesti home / narrativi)
-   
-   Regola: MAI sovrascrivere color o background nell'hover senza ridefinirli entrambi
    ───────────────────────────────────────────────────────────────────────────── */
 
-/* BASE (reset e proprietà comuni a tutti i bottoni) */
 .btn {
-  border: 1px solid var(--border);
-  padding: 10px 20px;
+  border: 1px solid var(--border); 
+  padding: 8px 12px; 
   border-radius: 10px;
-  text-decoration: none;
-  font-weight: 600;
-  font-family: inherit;
-  font-size: 1rem;
+  text-decoration: none; 
+  color: #111827; 
+  font-weight: 600; 
+  background: #fff; 
   cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, color .18s ease;
+  font-family: inherit;
+  font-size: 1rem;
 }
 
-/* ── PRIMARY (verde - azioni di conversione) ─────────────────────────────── */
+.btn:hover { 
+  background: #f9fafb; 
+  transform: translateY(-1px); 
+}
+
+/* Primary button (verde) */
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-green-1), var(--accent-green-2));
-  border-color: transparent;
+  border-color: transparent; 
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(16,185,129,.3);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #0ea572, #047857); /* verde più scuro */
-  border-color: transparent;
-  color: #ffffff;                                          /* testo sempre bianco */
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16,185,129,.45);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(16,185,129,.3);
-}
-
-/* ── OUTLINE (navigazione interna - sfondo scuro) ────────────────────────── */
-.btn-outline {
-  background: transparent;
-  border: 1.5px solid rgba(255,255,255,.55);
-  color: #ffffff;
-}
-
-.btn-outline:hover {
-  background: rgba(255,255,255,.12);   /* fill bianco sottilissimo */
-  border-color: rgba(255,255,255,.85);
-  color: #ffffff;                       /* testo sempre bianco */
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,.2);
-}
-
-.btn-outline:active {
-  transform: translateY(0);
-}
-
-/* ── GHOST (contesti narrativi / home / sfondo immagine) ─────────────────── */
-.btn-ghost {
-  background: transparent;
-  border: 1.5px solid rgba(255,255,255,.35);
-  color: #ffffff;
-}
-
-.btn-ghost:hover {
-  background: rgba(255,255,255,.15);
-  border-color: rgba(255,255,255,.6);
-  color: #ffffff;
   transform: translateY(-1px);
 }
 
-.btn-ghost:active {
-  transform: translateY(0);
-}
-
-/* ── VARIANTI DIMENSIONALI ───────────────────────────────────────────────── */
-.btn-small {
-  padding: 6px 14px;
-  font-size: 0.875rem;
-}
-
-.btn-large {
-  padding: 14px 28px;
-  font-size: 1.1rem;
-}
-
-/* ── Bottoni su pagine scure (override contestuale) ──────────────────────── */
-/* Nota: .btn-primary e .btn-outline sono già progettati per sfondi scuri.    */
-/* Questa regola copre solo il .btn base nudo usato in contesti dark.         */
-.page .btn:not(.btn-primary):not(.btn-outline):not(.btn-ghost) {
-  color: #ffffff;
+/* Ghost button (trasparente con bordo) */
+.btn-ghost {
+  background: transparent; 
+  color: #ffffff; 
   border-color: rgba(255,255,255,.35);
-  background: transparent;
 }
 
-.page .btn:not(.btn-primary):not(.btn-outline):not(.btn-ghost):hover {
-  background: rgba(255,255,255,.1);
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
 }
 
+/* Button variants */
+.btn-small { 
+  padding: 6px 10px; 
+  font-size: 0.9rem; 
+}
+
+.btn-pill { 
+  border-radius: var(--radius-pill); 
+}
+
+/* Buttons su pagine scure */
+.page .btn { 
+  color: #ffffff; 
+  border-color: rgba(255,255,255,.35); 
+  background: transparent; 
+}
+
+.page .btn:hover { 
+  background: rgba(255,255,255,.1); 
+}
+
+.page .btn-primary { 
+  background: linear-gradient(135deg, var(--accent-green-1), var(--accent-green-2)); 
+  border-color: transparent; 
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    CARDS
@@ -993,6 +960,40 @@ select.control {
   max-width: 42rem; 
   margin-left: auto; 
   margin-right: auto; 
+}
+
+/* Hero Stats 
+.hero-stats { 
+  display: flex; 
+  justify-content: center; 
+  gap: var(--space-2xl); 
+  margin-bottom: var(--space-2xl); 
+  flex-wrap: wrap; 
+}
+
+.stat { 
+  display: flex; 
+  align-items: center; 
+  gap: 1rem; 
+  background: rgba(255,255,255, var(--glass-opacity-light)); 
+  padding: 1rem var(--space-lg); 
+  border-radius: var(--radius-lg); 
+  backdrop-filter: var(--blur-strong); 
+  border: 1px solid rgba(255,255,255,.2); 
+}
+
+.stat-icon { 
+  font-size: 2rem; 
+}
+
+.stat-number { 
+  font-size: 1.5rem; 
+  font-weight: 700; 
+}
+
+.stat-label { 
+  font-size: 0.875rem; 
+  opacity: 0.8; 
 }
 
 /* CTA Button */
@@ -1657,6 +1658,43 @@ select.control {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+  AUDIENCE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Audience Section 
+.audience-section {
+  background: #f9fafb;
+  padding: 60px 0;
+}
+
+.audience-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  margin-top: 30px;
+}
+
+.audience-card {
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  text-align: left;
+}
+
+.audience-card h3 {
+  color: #1e3a8a;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+/* CTA Section 
+.cta-section {
+  padding: 60px 0 20px;
+  text-align: center;
+} */
+
+/* ─────────────────────────────────────────────────────────────────────────────
    SPONSORS
    ───────────────────────────────────────────────────────────────────────────── */
 
@@ -1801,7 +1839,7 @@ select.control {
 
 
 /* ===============================================================================
-   SEZIONE 6: SISTEMA DI GRIGLIE RESPONSIVE UNIFICATO
+   SEZIONE 7: SISTEMA DI GRIGLIE RESPONSIVE UNIFICATO
    =============================================================================== */
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -1835,9 +1873,53 @@ select.control {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   ALIAS SEMANTICI (per mantenere retrocompatibilità)
+   ───────────────────────────────────────────────────────────────────────────── */
 
+/* Home grid (benefits, support) 
+.home-grid {
+  display: grid;
+  gap: 32px;
+  align-items: stretch;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+
+/* Benefits grid 
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-xl);
+}
+
+/* Support grid 
+.support-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-xl);
+}
+
+/* Audience grid 
+.audience-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  margin-top: 30px;
+}
+
+/* Sponsors grid - mobile first 
+.sponsors-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr;
+} 
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   NOTA: Le media query responsive per tutte queste griglie sono nella SEZIONE 8
+   ───────────────────────────────────────────────────────────────────────────── */
 /* ===============================================================================
-   SEZIONE 7: RESPONSIVE (tutte le media query raggruppate per breakpoint)
+   SEZIONE 8: RESPONSIVE (tutte le media query raggruppate per breakpoint)
    =============================================================================== */
 
 /* ─────────────────────────────────────────────────────────────────────────────

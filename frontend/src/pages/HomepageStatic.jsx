@@ -78,14 +78,14 @@ const HomepageStatic = () => {
 
             <div className="home-hero__actions">
               <button
-                className="btn btn-outline"
+                className="btn btn-ghost"
                 onClick={() => navigate('/challenges')}
                 title={t("hero.cta.launchTitle")}
               >
                 {t("hero.cta.launch")}
               </button>
               <button
-                className="btn btn-outline"
+                className="btn btn-ghost"
                 onClick={() => navigate('/challenges')}
                 title={t("hero.cta.joinTitle")}
               >
@@ -173,13 +173,13 @@ const HomepageStatic = () => {
 
             <div className="home-hero__actions">
               <button
-                className="btn btn-outline"
+                className="btn btn-ghost"
                 onClick={() => navigate("/challenges")}
               >
                 {t("citizens.hero.cta.join")}
               </button>
               <button
-                className="btn btn-outline"
+                className="btn btn-ghost"
                 onClick={() => navigate("/register")}
               >
                 {t("citizens.hero.cta.register")}
@@ -200,7 +200,7 @@ const HomepageStatic = () => {
 
             <div className="home-cta__actions">
               <button
-                className="btn btn-outline"
+                className="btn btn-ghost"
                 onClick={() => {
                   const email = t("finalCta.contact.email");
                   const subject = encodeURIComponent(t("finalCta.contact.subject"));
@@ -211,7 +211,7 @@ const HomepageStatic = () => {
                 {t("finalCta.contact.label")}
               </button>
               <button
-                className="btn btn-outline"
+                className="btn btn-ghost"
                 onClick={() => navigate("/business/packages")}
               >
                 {t("finalCta.packages")}
