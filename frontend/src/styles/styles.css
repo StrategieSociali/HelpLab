@@ -339,6 +339,98 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   BURGER BUTTON (definizione base)
+   Le tre linee dell'hamburger. Nascosto di default su desktop,
+   mostrato dalla media query @media (max-width: 900px)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.burger {
+  display: none;            /* nascosto su desktop - media query lo mostra */
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  z-index: 60;
+}
+
+/* Le 3 linee */
+.burger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #ffffff;
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  transform-origin: center;
+}
+
+/* Stato aperto: trasforma in X */
+.burger.open span:nth-child(1) {
+  transform: translateY(9px) rotate(45deg);
+}
+
+.burger.open span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.burger.open span:nth-child(3) {
+  transform: translateY(-9px) rotate(-45deg);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   NAV AUTH ACTIONS
+   .desktop-only: nascosto di default, mostrato dalla media query desktop
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Il blocco auth desktop è nascosto di default (base mobile-first) */
+.nav-auth-actions.desktop-only {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SFIDE-MENU: gestione click su mobile
+   Su mobile i sottomenu si aprono con click (non hover).
+   La classe .open viene gestita dal componente React.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Su mobile il sottomenu è nel flusso normale (non absolute) */
+@media (max-width: 900px) {
+  .sfide-menu__list {
+    position: static;      /* non galleggia sopra - sta nel flusso del menu */
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+    background: rgba(255,255,255,.05);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-top: 4px;
+    display: none;         /* nascosto di default */
+  }
+
+  /* Quando il menu sfide è aperto (classe .open) */
+  .sfide-menu.open .sfide-menu__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Il trigger del sottomenu diventa cliccabile su mobile */
+  .sfide-menu > .nav-link {
+    cursor: pointer;
+    user-select: none;
+    width: 100%;
+    display: block;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    MAIN CONTENT AREA
    ───────────────────────────────────────────────────────────────────────────── */
 
