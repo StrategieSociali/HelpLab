@@ -28,27 +28,23 @@ export const routes = {
   dashboard: {
     challenges: '/challenges',
     challengeSubmit: '/challenges/:id/submit',
-    challengeSubmissions: '/challenges/:challengeId/submissions',
     learningPaths: '/learning-paths',
-    
-    /* ======================
-   * USER / AREA PERSONALE
-   * ====================== */
-  me: {
-    contributions: '/me/contributi',
-  },
-
-
     // protette
     userProfile: '/dashboard/profile',
     challengeCreate: '/dashboard/challenges/create',
   },
 
   /* ======================
+   * USER / AREA PERSONALE
+   * ====================== */
+  me: {
+    contributions: '/me/contributi',
+  },
+
+  /* ======================
    * BUSINESS
    * ====================== */
   business: {
-    root: '/business',
     packages: '/business/packages',
   },
 
@@ -56,7 +52,8 @@ export const routes = {
    * JUDGES
    * ====================== */
   judge: {
-    moderation: '/modera',
+    dashboard: '/judge',
+    challengeOverview: (id = ':id') => `/judge/challenges/${id}`,
   },
 
   /* ======================

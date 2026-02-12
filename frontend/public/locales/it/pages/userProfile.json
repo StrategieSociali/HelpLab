@@ -19,8 +19,8 @@
   },
 
   "submissions": {
-    "title": "Le tue submission",
-    "challenge": "Challenge",
+    "title": "I tuoi contributi",
+    "challenge": "Sfide",
     "activity": "Attività",
     "status": "Stato",
     "points": "Punti",
@@ -31,7 +31,7 @@
   "judge": {
     "title": "Le mie sfide da giudicare",
     "refresh": "Aggiorna",
-    "moderateAll": "Modera le submission",
+    "moderateAll": "Modera i contributi",
     "loading": "Caricamento…",
     "empty": "Nessuna sfida in coda al momento.",
     "loadError": "Errore nel caricamento della coda",
@@ -40,7 +40,7 @@
       "location": "Luogo",
       "deadline": "Scadenza",
       "updatedAt": "Aggiornata",
-      "moderate": "Modera la submission"
+      "moderate": "Modera il contributo"
     },
     "errors": {
     "load_error": "Errore nel caricamento della coda",

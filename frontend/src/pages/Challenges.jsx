@@ -312,7 +312,7 @@ export default function Challenges() {
                     {!isJudgeUser && (
                       <button
                         className="btn btn-outline"
-                        onClick={() => navigate(`${routes.dashboard.me.contributions}?challenge=${encodeURIComponent(ch.id)}`)}
+                        onClick={() => navigate(`${routes.me.contributions}?challenge=${encodeURIComponent(ch.id)}`)}
                       >
                         I miei contributi
                       </button>

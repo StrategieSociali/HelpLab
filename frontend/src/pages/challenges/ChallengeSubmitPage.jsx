@@ -16,6 +16,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { routes } from '@/routes';
 
 export default function ChallengeSubmitPage() {
   const { id: challengeId } = useParams();
@@ -93,7 +94,7 @@ export default function ChallengeSubmitPage() {
       }
 
       // ✅ user-centric: rimando alla pagina "I miei contributi"
-      navigate(`/me/contributi?challenge=${challengeId}`);
+      navigate(`${routes.me.contributions}?challenge=${challengeId}`);
     } catch (err) {
       console.error(err);
       setError(err.message || "Invio non riuscito. Riprova tra qualche istante.");

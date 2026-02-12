@@ -88,7 +88,7 @@ export default function App() {
 
                {/* ===== ME / USER AREA ===== */}
 <Route
-  path="/me/contributi"
+  path={routes.me.contributions}
   element={
     <ProtectedRoute allowedRoles={['user', 'judge', 'admin']}>
       <MyContributions />
@@ -126,9 +126,9 @@ export default function App() {
                 }
               />
 
-              {/* ===== GIUDICI v0.8 ===== */}
+              {/* ===== GIUDICI ===== */}
               <Route
-                path="/judge"
+                path={routes.judge.dashboard}
                 element={
                   <ProtectedRoute allowedRoles={['judge', 'admin']}>
                     <JudgeDashboard />
@@ -137,7 +137,7 @@ export default function App() {
               />
 
               <Route
-                path="/judge/challenges/:id"
+               path={routes.judge.challengeOverview()}
                 element={
                   <ProtectedRoute allowedRoles={['judge', 'admin']}>
                     <JudgeChallengeOverview />
