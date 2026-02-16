@@ -1,50 +1,17 @@
 // src/routes/v1/judges.ts
 /**
- * Scopo: Gestione delle attività dei giudici -> DEPRECATED FROM V0.7
+ * Scopo: gestione operativa dei giudici e assegnazione a challenge
  *
- * Attualmente supporta:
- * assegnazione a challenge,
- * consultazione coda personale
- * gestione challenge non assegnate
-*/
-import { FastifyInstance, FastifyReply } from 'fastify'
+ * Funzionalità:
+ * - GET /challenges/unassigned → lista challenge aperte senza giudice (solo admin)
+ * - POST /challenges/:id/assign-judge → assegna un giudice a una challenge (solo admin)
+ * - GET /judge/my-queue → coda personale del giudice: challenge assegnate e aperte (solo judge)
+ */
+import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../../db/client.js'
-import { verifyAccessToken } from '../../utils/jwt.js'
+import { requireAuth } from '../../utils/requireAuth.js'
 import { users_role } from '@prisma/client'
-
-
-/**
- * Auth helper locale: verifica Bearer JWT e (opzionalmente) ruolo richiesto.
- * Se si richiede 'judge' o 'admin', l'admin passa sempre (super-ruolo).
- */
-function requireAuth(role?: 'admin' | 'judge') {
-  return async (req: any, reply: FastifyReply) => {
-    const auth = req.headers?.authorization || ''
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
-    if (!token) return reply.code(401).send({ error: 'unauthorized' })
-
-    try {
-      const p = verifyAccessToken(token) as any
-      const userId = BigInt(p.sub)
-
-      // carica ruolo dal DB
-      const user = await prisma.users.findFirst({
-        where: { id: userId as any },
-        select: { role: true }
-      })
-      if (!user) return reply.code(401).send({ error: 'unauthorized' })
-
-      if (role && user.role !== role && user.role !== 'admin') {
-        return reply.code(403).send({ error: 'forbidden' })
-      }
-
-      req.user = { id: userId, email: p.email, role: user.role }
-    } catch {
-      return reply.code(401).send({ error: 'unauthorized' })
-    }
-  }
-}
 
 export async function judgesV1Routes(app: FastifyInstance) {
   /**
@@ -80,7 +47,7 @@ export async function judgesV1Routes(app: FastifyInstance) {
                   type:      { type: 'string' },
                   location:  { anyOf: [{ type: 'string' }, { type: 'null' }] },
                   rules:     { type: 'string' },
-                  deadline:  { anyOf: [{ type: 'string' }, { type: 'null' }] }, // YYYY-MM-DD
+                  deadline:  { anyOf: [{ type: 'string' }, { type: 'null' }] },
                   status:    { type: 'string' },
                   budget: {
                     anyOf: [
@@ -156,8 +123,8 @@ export async function judgesV1Routes(app: FastifyInstance) {
         judge_user_id: true,
         target_json: true,
         updated_at: true,
-        sponsors: { select: { name: true } },      // sponsor.name
-        users:    { select: { username: true } },  // judge.username (qui sarà null)
+        sponsors: { select: { name: true } },
+        users:    { select: { username: true } },
       },
       orderBy: { updated_at: 'desc' },
       take: limit + 1
@@ -272,7 +239,7 @@ export async function judgesV1Routes(app: FastifyInstance) {
         type: 'object',
         properties: {
           limit: { type: 'number' },
-          cursor: { type: 'string' } // ISO date
+          cursor: { type: 'string' }
         }
       },
       response: {
@@ -291,7 +258,7 @@ export async function judgesV1Routes(app: FastifyInstance) {
                   type: { anyOf: [{ type: 'string' }, { type: 'null' }] },
                   location:{ anyOf: [{ type: 'string' }, { type: 'null' }] },
                   status:{ anyOf: [{ type: 'string' }, { type: 'null' }] },
-                  deadline:{ anyOf: [{ type: 'string' }, { type: 'null' }] }, // YYYY-MM-DD
+                  deadline:{ anyOf: [{ type: 'string' }, { type: 'null' }] },
                   sponsor: {
                     anyOf: [
                       { type: 'null' },
@@ -299,7 +266,7 @@ export async function judgesV1Routes(app: FastifyInstance) {
                     ]
                   },
                   target:   { anyOf: [{ type: 'object' }, { type: 'null' }] },
-                  updatedAt:{ anyOf: [{ type: 'string' }, { type: 'null' }] } // ISO
+                  updatedAt:{ anyOf: [{ type: 'string' }, { type: 'null' }] }
                 },
                 required: ['id']
               }

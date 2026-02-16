@@ -1,9 +1,9 @@
 // src/routes/v1/index.ts
 /**
- * Scopo: gestisce le route V1 chiamate da Server.ts
+ * Scopo: registra tutte le route v1 sotto il prefisso /api/v1
  *
- * Attualmente supporta:
- * - l'esposizione e registrazione delle route
+ * Questo file è il router aggregato chiamato da server.ts.
+ * Ogni modulo di route viene registrato qui.
  */
 import { FastifyInstance } from 'fastify'
 import { leaderboardV1Routes } from './leaderboard.js'
@@ -19,6 +19,7 @@ import { judgeDashboardV1Routes } from './judgeDashboard.js'
 import { authV1Routes } from './auth.js'
 import { sponsorRoutes } from './sponsor.js'
 import { sponsorRatingsRoutes } from './sponsorRatings.js'
+import { learningPathsV1Routes } from './learningPaths.js'
 
 
 
@@ -36,4 +37,5 @@ export async function v1Routes(app: FastifyInstance) {
   await app.register(judgeDashboardV1Routes)
   await app.register(sponsorRatingsRoutes)
   await app.register(authV1Routes, { prefix: '/auth' })
+  await app.register(learningPathsV1Routes)
 }

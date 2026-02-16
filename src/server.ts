@@ -1,11 +1,10 @@
 // src/server.ts
-
 /**
- * Scopo: Istanziare Fastify, registrare middleware e route,
+ * Scopo: istanziare Fastify, registrare middleware e route,
  * abilitare Swagger, CORS, Rate Limit, Cookie e sicurezza.
  *
- * NOTA: Nessuna cache esterna. La cache delle leaderboard
- *       è ora gestita in-memory via utils/memoryCache.ts
+ * Entry point dell'applicazione.
+ * Tutte le route v1 sono registrate tramite il router aggregato in routes/v1/index.ts
  */
 
 import Fastify from 'fastify'
@@ -19,15 +18,7 @@ import cookie from '@fastify/cookie'
 
 dotenv.config()
 
-// Routes
-import { learningPathsRoutes } from './routes/learningPaths.js'
-import { scoringV1Routes } from './routes/v1/scoring.js'
-import { proposalsV1Routes } from './routes/v1/proposals.js'
-import { judgesV1Routes } from './routes/v1/judges.js'
-import { adminJudgesV1Routes } from './routes/v1/adminJudges.js'
-import { challengesV1Routes } from './routes/v1/challenges.js'
-import { submissionsV1Routes } from './routes/v1/submissions.js'
-import { leaderboardV1Routes } from './routes/v1/leaderboard.js'
+// Route v1 (router aggregato)
 import { v1Routes } from './routes/v1/index.js'
 
 async function start() {
@@ -78,11 +69,11 @@ async function start() {
   // === Swagger
   await server.register(swagger, {
     openapi: {
-      info: { title: 'HelpLab API', version: process.env.npm_package_version || '0.6.4' },
+      info: { title: 'HelpLab API', version: process.env.npm_package_version || '0.7.1' },
       servers: [{ url: '/api' }],
       tags: [
         { name: 'Auth', description: 'Registrazione, login, sessione (v1)' },
-        { name: 'Learning', description: 'Percorsi formativi (legacy)' },
+        { name: 'Learning v1', description: 'Percorsi formativi' },
         { name: 'Scoring v1', description: 'Configurazione e anteprima punteggi sfide' },
         { name: 'Proposals v1', description: 'Proposte utenti' },
         { name: 'Judges v1', description: 'Revisione giudici' },
@@ -114,9 +105,6 @@ async function start() {
 
   // === Health check
   server.get('/api/health', async () => ({ status: 'ok' }))
-
-  // === Rotte v0
-  await server.register(learningPathsRoutes, { prefix: '/api/learning-paths' })
 
   // === Rotte v1
   await server.register(v1Routes, { prefix: '/api/v1' })

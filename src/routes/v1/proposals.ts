@@ -1,8 +1,17 @@
 // src/routes/v1/proposals.ts
+/**
+ * Scopo: gestione del ciclo di vita delle proposte di challenge
+ *
+ * Funzionalità:
+ * - GET /admin/proposals → lista paginata delle proposte (solo admin)
+ * - POST /challenge-proposals → creazione di una nuova proposta (utente autenticato)
+ * - PATCH /challenge-proposals/:id/approve → approvazione proposta e creazione challenge (solo admin)
+ * - PATCH /challenge-proposals/:id/reject → rifiuto proposta con motivazione (solo admin)
+ */
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
-import { previewBodySchema, proposalBodySchema } from '../../schemas/scoringSchemas.js'
-import { verifyAccessToken } from '../../utils/jwt.js'
+import { proposalBodySchema } from '../../schemas/scoringSchemas.js'
+import { requireAuth } from '../../utils/requireAuth.js'
 import { copyProposalTasks } from '../../utils/copyProposalTasks.js'
 import { users_role } from '@prisma/client'
 
@@ -29,140 +38,84 @@ function cleanPayload(input: any): any {
   return input
 }
 
-// --- AUTH GUARD: restituisce una funzione preHandler ---
-// role:
-//  - undefined  => basta essere autenticati
-//  - 'admin'    => solo admin (o admin “pieno” se in futuro differenziamo)
-//  - 'judge'    => giudici o admin
-function requireAuth(role?: 'admin' | 'judge') {
-  return async (req: any, reply: any) => {
-    const auth = (req.headers?.authorization || '').toString()
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
-    if (!token) return reply.code(401).send({ error: 'unauthorized' })
-    try {
-      const p = verifyAccessToken(token) as any
-      req.user = { id: BigInt(p.sub), email: p.email }
-
-      if (role) {
-        const u = await prisma.users.findUnique({
-          where: { id: req.user.id as any },
-          select: { role: true }
-        })
-        if (!u) return reply.code(401).send({ error: 'unauthorized' })
-        if (u.role !== role && u.role !== 'admin') {
-          return reply.code(403).send({ error: 'forbidden' })
-        }
-        req.user.role = u.role
-      }
-    } catch {
-      return reply.code(401).send({ error: 'unauthorized' })
-    }
-  }
-}
-
 export async function proposalsV1Routes(app: FastifyInstance) {
   // =========================
-  // GET /api/v1/scoring/preview (se la usi)
+  // GET /api/v1/admin/proposals  (SOLO ADMIN) – listing paginato
   // =========================
-  app.post('/scoring/preview', {
-    config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+  app.get('/admin/proposals', {
     schema: {
       tags: ['Proposals v1'],
-      summary: 'Preview punteggio (bozza non salvata)',
-      body: { type: 'object' },
-      response: {
-        200: { type: 'object', properties: { score: { type: 'number' } } },
-        400: { type: 'object', properties: { error: { type: 'string' } } }
-      }
-    }
-  }, async (req: any, reply) => {
-    const parsed = previewBodySchema.safeParse(req.body)
-    if (!parsed.success) {
-      const issues = parsed.error.issues.map(i => (i.path.join('.') || '(root)') + ': ' + i.message)
-      return reply.code(400).send({ error: issues.join('; ') || 'invalid body' })
-    }
-    // placeholder: restituiamo 0 (implementerai la logica vera se serve)
-    return reply.send({ score: 0 })
-  })
-  
-  // =========================
-// GET /api/v1/admin/proposals  (SOLO ADMIN) – listing paginato
-// =========================
-app.get('/admin/proposals', {
-  schema: {
-    tags: ['Proposals v1'],
-    summary: 'Lista challenge proposals (solo admin, paginato)',
-    querystring: {
-      type: 'object',
-      properties: {
-        status: { type: 'string', enum: ['pending_review', 'approved', 'rejected'] },
-        limit:  { type: 'number' },
-        cursor: { type: 'string' } // ISO data opzionale (paginazione)
-      }
-    },
-    response: {
-  200: {
-    type: 'object',
-    properties: {
-      items: {
-        type: 'array',
-        // 👇 permette tutte le proprietà degli oggetti item
-        items: { type: 'object', additionalProperties: true }
+      summary: 'Lista challenge proposals (solo admin, paginato)',
+      querystring: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', enum: ['pending_review', 'approved', 'rejected'] },
+          limit:  { type: 'number' },
+          cursor: { type: 'string' }
+        }
       },
-      nextCursor: { anyOf: [{ type: 'string' }, { type: 'null' }] }
-    }
-  },
-  401: { type: 'object', properties: { error: { type: 'string' } } },
-  403: { type: 'object', properties: { error: { type: 'string' } } }
-}
-  },
-  preHandler: requireAuth(users_role.admin)
-}, async (req: any, reply) => {
-  const q = (req.query || {}) as { status?: string; limit?: number; cursor?: string }
-
-  const limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)))
-
-  // cursor su updated_at se valido
-  let cursorDate: Date | null = null
-  if (q.cursor) {
-    const d = new Date(String(q.cursor))
-    if (!isNaN(d.getTime())) cursorDate = d
-  }
-
-  const where: any = {}
-  if (q.status) where.status = q.status
-  if (cursorDate) where.updated_at = { lt: cursorDate }
-
-  const rows = await prisma.challenge_proposals.findMany({
-    where,
-    select: {
-      id: true,
-      title: true,
-      status: true,
-      updated_at: true,
-      users: { select: { id: true, username: true } } // autore
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            items: {
+              type: 'array',
+              items: { type: 'object', additionalProperties: true }
+            },
+            nextCursor: { anyOf: [{ type: 'string' }, { type: 'null' }] }
+          }
+        },
+        401: { type: 'object', properties: { error: { type: 'string' } } },
+        403: { type: 'object', properties: { error: { type: 'string' } } }
+      }
     },
-    orderBy: { updated_at: 'desc' },
-    take: limit + 1
+    preHandler: requireAuth(users_role.admin)
+  }, async (req: any, reply) => {
+    const q = (req.query || {}) as { status?: string; limit?: number; cursor?: string }
+
+    const limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)))
+
+    // cursor su updated_at se valido
+    let cursorDate: Date | null = null
+    if (q.cursor) {
+      const d = new Date(String(q.cursor))
+      if (!isNaN(d.getTime())) cursorDate = d
+    }
+
+    const where: any = {}
+    if (q.status) where.status = q.status
+    if (cursorDate) where.updated_at = { lt: cursorDate }
+
+    const rows = await prisma.challenge_proposals.findMany({
+      where,
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        updated_at: true,
+        users: { select: { id: true, username: true } }
+      },
+      orderBy: { updated_at: 'desc' },
+      take: limit + 1
+    })
+
+    const more = rows.length > limit
+    const slice = rows.slice(0, limit)
+
+    const items = slice.map(r => ({
+      id: r.id,
+      title: r.title,
+      status: r.status,
+      updatedAt: r.updated_at?.toISOString() ?? null,
+      author: r.users ? { id: Number(r.users.id), name: r.users.username } : null
+    }))
+
+    const nextCursor = more && rows[limit]?.updated_at
+      ? rows[limit].updated_at.toISOString()
+      : null
+
+    return reply.send({ items, nextCursor })
   })
-
-  const more = rows.length > limit
-  const slice = rows.slice(0, limit)
-
-  const items = slice.map(r => ({
-    id: r.id,
-    title: r.title,
-    status: r.status,
-    updatedAt: r.updated_at?.toISOString() ?? null,
-    author: r.users ? { id: Number(r.users.id), name: r.users.username } : null
-  }))
-
-  const nextCursor = more && rows[limit]?.updated_at
-    ? rows[limit].updated_at.toISOString()
-    : null
-
-  return reply.send({ items, nextCursor })
-})
 
 
   // =========================
@@ -170,7 +123,7 @@ app.get('/admin/proposals', {
   // =========================
   app.post('/challenge-proposals', {
     config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
-    preHandler: requireAuth(), // <— basta essere loggati
+    preHandler: requireAuth(),
     schema: {
       tags: ['Proposals v1'],
       summary: 'Crea una proposta di challenge (protetto con Bearer)',
@@ -258,147 +211,149 @@ app.get('/admin/proposals', {
   // - Segna la proposal "approved"
   // - Crea/aggiorna la riga su "challenges" (idempotente via slug)
   // =========================
-// Helper: slug base + suffisso breve (evita collisioni)
-// ====== util per slug breve ======
 
-function toSlugBase(s: string) {
-  return (s || '')
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60);
-}
-function shortId(n = 6) {
-  return Math.random().toString(36).slice(2, 2 + n);
-}
-
-// PATCH /api/v1/challenge-proposals/:id/approve — SOLO ADMIN
-app.patch('/challenge-proposals/:id/approve', {
-  schema: {
-    tags: ['Proposals v1'],
-    summary: 'Approva una proposal e crea/aggiorna la challenge collegata',
-    security: [{ bearerAuth: [] }],
-    body: {
-      type: 'object',
-      properties: {
-        approved_co2: { type: 'number', nullable: true },
-        max_points:   { type: 'number', nullable: true }
-      }
-    },
-    response: {
-      200: {
-        type: 'object',
-        properties: {
-          proposalId:  { type: 'string' },
-          challengeId: { anyOf: [{ type: 'number' }, { type: 'null' }] },
-          status:      { type: 'string' },
-          updatedAt:   { type: 'string' }
-        }
-      },
-      401: { type: 'object', properties: { error: { type: 'string' } } },
-      403: { type: 'object', properties: { error: { type: 'string' } } },
-      404: { type: 'object', properties: { error: { type: 'string' } } },
-      409: { type: 'object', properties: { error: { type: 'string' } } }
-    }
-  },
-  preHandler: requireAuth(users_role.admin)
-}, async (req: any, reply) => {
-  const id = String((req.params as any).id || '')
-  if (!id) return reply.code(404).send({ error: 'not found' })
-
-  const { approved_co2, max_points } = req.body || {}
-
-  const p = await prisma.challenge_proposals.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      status: true,
-      title: true,
-      impact_type: true,
-      location_address: true,
-      deadline: true,
-      target: true,
-      challenge_id: true
-    }
-  })
-
-  if (!p) return reply.code(404).send({ error: 'proposal not found' })
-  if (p.status !== 'pending_review') {
-    return reply.code(409).send({ error: 'invalid status transition' })
+  // Helper: slug base + suffisso breve (evita collisioni)
+  function toSlugBase(s: string) {
+    return (s || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+  }
+  function shortId(n = 6) {
+    return Math.random().toString(36).slice(2, 2 + n);
   }
 
-  const now = new Date()
-  const title = p.title ?? '(senza titolo)'
-  const type = p.impact_type ?? 'generic'
-  const slug = `${toSlugBase(title) || 'challenge'}-${shortId(6)}`
-  const challengeId: bigint | null = (p as any).challenge_id ?? null
-
-  const { outId, outUpdatedAt } = await prisma.$transaction(async (tx) => {
-    const challengeData: any = {
-      title,
-      type,
-      location: p.location_address ?? null,
-      rules: '',
-      deadline: p.deadline ? new Date(p.deadline) : null,
-      target_json: p.target as any,
-      status: 'open'
-    }
-
-    // Solo se tipo "climate"
-    if (type === 'climate' && approved_co2 !== undefined) {
-      challengeData.approved_co2 = approved_co2
-    }
-
-    if (max_points !== undefined) {
-      challengeData.max_points = max_points
-    }
-
-    let createdOrUpdatedId: bigint
-    let updatedAt: Date | null = null
-
-    if (challengeId) {
-      const upd = await tx.challenges.update({
-        where: { id: challengeId as any },
-        data: challengeData,
-        select: { id: true, updated_at: true }
-      })
-      createdOrUpdatedId = upd.id
-      updatedAt = upd.updated_at
-    } else {
-      const crt = await tx.challenges.create({
-        data: {
-          ...challengeData,
-          proposal_uuid: p.id,
-          slug,
-          budget_currency: 'EUR',
-          judge_user_id: null
+  app.patch('/challenge-proposals/:id/approve', {
+    schema: {
+      tags: ['Proposals v1'],
+      summary: 'Approva una proposal e crea/aggiorna la challenge collegata',
+      security: [{ bearerAuth: [] }],
+      body: {
+        type: 'object',
+        properties: {
+          approved_co2: { type: 'number', nullable: true },
+          max_points:   { type: 'number', nullable: true }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            proposalId:  { type: 'string' },
+            challengeId: { anyOf: [{ type: 'number' }, { type: 'null' }] },
+            status:      { type: 'string' },
+            updatedAt:   { type: 'string' }
+          }
         },
-        select: { id: true, updated_at: true }
-      })
-      createdOrUpdatedId = crt.id
-      updatedAt = crt.updated_at
-    }
+        401: { type: 'object', properties: { error: { type: 'string' } } },
+        403: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } },
+        409: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    },
+    preHandler: requireAuth(users_role.admin)
+  }, async (req: any, reply) => {
+    const id = String((req.params as any).id || '')
+    if (!id) return reply.code(404).send({ error: 'not found' })
 
-    await tx.challenge_proposals.update({
-      where: { id: p.id },
-      data: {
-        status: 'approved',
-        approved_at: now,
-        challenge_id: createdOrUpdatedId
+    const { approved_co2, max_points } = req.body || {}
+
+    const p = await prisma.challenge_proposals.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        title: true,
+        impact_type: true,
+        location_address: true,
+        deadline: true,
+        target: true,
+        challenge_id: true
       }
     })
 
-    return { outId: createdOrUpdatedId, outUpdatedAt: updatedAt }
-  })
+    if (!p) return reply.code(404).send({ error: 'proposal not found' })
+    if (p.status !== 'pending_review') {
+      return reply.code(409).send({ error: 'invalid status transition' })
+    }
 
-  return reply.send({
-    proposalId: id,
-    status: 'approved',
-    challengeId: Number(outId),
-    updatedAt: (outUpdatedAt ?? now).toISOString()
+    const now = new Date()
+    const title = p.title ?? '(senza titolo)'
+    const type = p.impact_type ?? 'generic'
+    const slug = `${toSlugBase(title) || 'challenge'}-${shortId(6)}`
+    const challengeId: bigint | null = (p as any).challenge_id ?? null
+
+    const { outId, outUpdatedAt } = await prisma.$transaction(async (tx) => {
+      const challengeData: any = {
+        title,
+        type,
+        location: p.location_address ?? null,
+        rules: '',
+        deadline: p.deadline ? new Date(p.deadline) : null,
+        target_json: p.target as any,
+        status: 'open'
+      }
+
+      // Solo se tipo "climate"
+      if (type === 'climate' && approved_co2 !== undefined) {
+        challengeData.approved_co2 = approved_co2
+      }
+
+      if (max_points !== undefined) {
+        challengeData.max_points = max_points
+      }
+
+      let createdOrUpdatedId: bigint
+      let updatedAt: Date | null = null
+
+      if (challengeId) {
+        const upd = await tx.challenges.update({
+          where: { id: challengeId as any },
+          data: challengeData,
+          select: { id: true, updated_at: true }
+        })
+        createdOrUpdatedId = upd.id
+        updatedAt = upd.updated_at
+      } else {
+        const crt = await tx.challenges.create({
+          data: {
+            ...challengeData,
+            proposal_uuid: p.id,
+            slug,
+            budget_currency: 'EUR',
+            judge_user_id: null
+          },
+          select: { id: true, updated_at: true }
+        })
+        createdOrUpdatedId = crt.id
+        updatedAt = crt.updated_at
+      }
+
+      // Copia i task dalla proposal alla tabella challenge_tasks
+      // Usa il client di transazione (tx) per garantire atomicità
+      await copyProposalTasks(p.id, createdOrUpdatedId, tx as any)
+
+      await tx.challenge_proposals.update({
+        where: { id: p.id },
+        data: {
+          status: 'approved',
+          approved_at: now,
+          challenge_id: createdOrUpdatedId
+        }
+      })
+
+      return { outId: createdOrUpdatedId, outUpdatedAt: updatedAt }
+    })
+
+    return reply.send({
+      proposalId: id,
+      status: 'approved',
+      challengeId: Number(outId),
+      updatedAt: (outUpdatedAt ?? now).toISOString()
+    })
   })
-})
 
 
   // =========================
@@ -432,7 +387,7 @@ app.patch('/challenge-proposals/:id/approve', {
         401: { type: 'object', properties: { error: { type: 'string' } } },
         403: { type: 'object', properties: { error: { type: 'string' } } },
         404: { type: 'object', properties: { error: { type: 'string' } } },
-		409: { type: 'object', properties: { error: { type: 'string' } } },
+        409: { type: 'object', properties: { error: { type: 'string' } } },
         500: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
@@ -443,7 +398,6 @@ app.patch('/challenge-proposals/:id/approve', {
       if (!p) return reply.code(404).send({ error: 'not found' })
 
       if (p.status === 'approved') {
-        // blocchiamo reject se già approved (regola semplice)
         return reply.code(409).send({ error: 'invalid status transition' })
       }
 

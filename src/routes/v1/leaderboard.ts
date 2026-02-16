@@ -1,9 +1,30 @@
 // src/routes/v1/leaderboard.ts
-
+/**
+ * Scopo: classifiche utenti aggregate per punteggi verificati
+ *
+ * Funzionalità:
+ * - GET /leaderboard/users → classifica globale (tutti gli utenti)
+ * - GET /challenges/:id/leaderboard → classifica per singola challenge
+ *
+ * Entrambi supportano filtro temporale (window: all, this_week, this_month)
+ * e paginazione (limit, offset).
+ */
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { generateLeaderboardCacheKey } from '../../services/leaderboardService.js'
 import { getCache, setCache } from '../../utils/memoryCache.js'
+
+// Helper: calcola data "since" dal parametro window
+function computeSince(window: string): Date | null {
+  if (window === 'this_week') {
+    return new Date(Date.now() - 7 * 86400000)
+  }
+  if (window === 'this_month') {
+    const t = new Date()
+    return new Date(t.getFullYear(), t.getMonth(), 1)
+  }
+  return null
+}
 
 export async function leaderboardV1Routes(app: FastifyInstance) {
 
@@ -18,18 +39,16 @@ export async function leaderboardV1Routes(app: FastifyInstance) {
         type: 'object',
         properties: {
           window: { type: 'string', enum: ['all', 'this_week', 'this_month'], default: 'all' },
-          type: { type: 'string', enum: ['climate', 'social'], nullable: true },
-          difficulty: { type: 'string', enum: ['low', 'medium', 'high'], nullable: true },
           limit: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
           offset: { type: 'integer', minimum: 0, default: 0 }
         }
       }
     }
   }, async (req: any, reply) => {
-    const { window = 'all', type, difficulty, limit = 50, offset = 0 } = req.query
+    const { window = 'all', limit = 50, offset = 0 } = req.query
 
     const cacheKey = generateLeaderboardCacheKey('user-global', {
-      window, type, difficulty, limit, offset
+      window, limit, offset
     })
 
     const cached = getCache(cacheKey)
@@ -38,7 +57,46 @@ export async function leaderboardV1Routes(app: FastifyInstance) {
       return reply.send(cached)
     }
 
-    const entries = await getUserLeaderboard({ window, type, difficulty, limit, offset })
+    const since = computeSince(window)
+    let rows: any[]
+
+    if (!since) {
+      // window = 'all' → leggi direttamente da challenge_scores (aggregato)
+      rows = await prisma.$queryRaw`
+        SELECT cs.user_id, u.username AS user,
+               SUM(cs.score) AS score,
+               SUM(cs.verified_tasks_count) AS verified_tasks,
+               MAX(cs.last_event_at) AS last_event_at
+        FROM challenge_scores cs
+        JOIN users u ON u.id = cs.user_id
+        GROUP BY cs.user_id, u.username
+        ORDER BY score DESC, verified_tasks DESC, last_event_at ASC
+        LIMIT ${Number(limit)} OFFSET ${Number(offset)};
+      `
+    } else {
+      // window filtrato → leggi da points_transactions
+      rows = await prisma.$queryRaw`
+        SELECT pt.user_id, u.username AS user,
+               SUM(pt.delta) AS score,
+               SUM(pt.event = 'task_completed_verified') AS verified_tasks,
+               MAX(pt.created_at) AS last_event_at
+        FROM points_transactions pt
+        JOIN users u ON u.id = pt.user_id
+        WHERE pt.created_at >= ${since}
+        GROUP BY pt.user_id, u.username
+        ORDER BY score DESC, verified_tasks DESC, last_event_at ASC
+        LIMIT ${Number(limit)} OFFSET ${Number(offset)};
+      `
+    }
+
+    const entries = rows.map((r: any, i: number) => ({
+      rank: i + 1 + Number(offset),
+      userId: Number(r.user_id),
+      user: r.user,
+      score: Number(r.score ?? 0),
+      verified_tasks: Number(r.verified_tasks ?? 0),
+      last_event_at: r.last_event_at ? new Date(r.last_event_at).toISOString() : null
+    }))
 
     const result = {
       version: '1.0',
@@ -48,7 +106,7 @@ export async function leaderboardV1Routes(app: FastifyInstance) {
       total_entries: entries.length
     }
 
-    setCache(cacheKey, result, 60_000) // TTL 60 sec
+    setCache(cacheKey, result, 60_000)
     req.log.info({ cacheKey }, 'Global leaderboard cached')
 
     return reply.send(result)
@@ -84,17 +142,10 @@ export async function leaderboardV1Routes(app: FastifyInstance) {
       return reply.send(cached)
     }
 
-    let since: Date | null = null
-    if (window === 'this_week') {
-      since = new Date(Date.now() - 7 * 86400000)
-    } else if (window === 'this_month') {
-      const t = new Date()
-      since = new Date(t.getFullYear(), t.getMonth(), 1)
-    }
+    const since = computeSince(window)
+    let rows: any[]
 
-    let rows: any[] = []
-
-    if (window === 'all') {
+    if (!since) {
       rows = await prisma.$queryRaw`
         SELECT cs.user_id, u.username AS user,
                cs.score, cs.verified_tasks_count AS verified_tasks,
@@ -114,14 +165,14 @@ export async function leaderboardV1Routes(app: FastifyInstance) {
         FROM points_transactions pt
         JOIN users u ON u.id = pt.user_id
         WHERE pt.challenge_id = ${challengeId}
-          AND pt.created_at >= ${since!}
+          AND pt.created_at >= ${since}
         GROUP BY pt.user_id, u.username
         ORDER BY score DESC, verified_tasks DESC, last_event_at ASC
         LIMIT ${Number(limit)} OFFSET ${Number(offset)};
       `
     }
 
-    const entries = rows.map((r, i) => ({
+    const entries = rows.map((r: any, i: number) => ({
       rank: i + 1 + Number(offset),
       userId: Number(r.user_id),
       user: r.user,
@@ -144,57 +195,4 @@ export async function leaderboardV1Routes(app: FastifyInstance) {
 
     return reply.send(result)
   })
-} // ←✅ CHIUSURA FINALE della funzione leaderboardV1Routes
-
-// ============================================================
-// Funzione: getUserLeaderboard (riutilizzata sopra)
-// ============================================================
-export async function getUserLeaderboard({
-  window = 'all',
-  type,
-  difficulty,
-  limit = 50,
-  offset = 0
-}: {
-  window?: string
-  type?: string | null
-  difficulty?: string | null
-  limit?: number
-  offset?: number
-}) {
-  const results = await prisma.challenge_scores.groupBy({
-    by: ['user_id'],
-    _sum: {
-      score: true,
-      verified_tasks_count: true
-    },
-    _max: {
-      last_event_at: true
-    }
-  })
-
-  const entries = await Promise.all(
-    results
-      .filter(r => r._sum.score !== null)
-      .map(async (r) => {
-        const user = await prisma.users.findUnique({
-          where: { id: r.user_id },
-          select: { username: true }
-        })
-
-        return {
-          userId: Number(r.user_id),
-          user: user?.username || `user_${r.user_id}`,
-          score: r._sum.score || 0,
-          verified_tasks: r._sum.verified_tasks_count || 0,
-          last_event_at: r._max.last_event_at?.toISOString() ?? ''
-        }
-      })
-  )
-
-  entries.sort((a, b) => b.score - a.score)
-
-  return entries
-    .map((entry, i) => ({ ...entry, rank: i + 1 }))
-    .slice(offset, offset + limit)
 }

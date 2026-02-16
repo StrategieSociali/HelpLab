@@ -1,17 +1,22 @@
-// utils/copyProposalTasks.ts
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
-
+// src/utils/copyProposalTasks.ts
 /**
- * Copia i task dalla challenge_proposals.tasks (JSON)
- * alla tabella challenge_tasks quando una proposal viene approvata
+ * Scopo: copiare i task dal campo JSON di una proposal alla tabella challenge_tasks
+ *
+ * Viene chiamato durante l'approvazione di una proposal.
+ * Accetta un client Prisma opzionale per funzionare dentro una transazione:
+ * se fornito, tutte le operazioni partecipano alla stessa transazione
+ * dell'approvazione, garantendo atomicità (tutto o niente).
  */
+import { prisma } from '../db/client.js'
+
 export async function copyProposalTasks(
   proposalId: string,
-  challengeId: bigint
+  challengeId: bigint,
+  txClient?: typeof prisma
 ) {
-  const proposal = await prisma.challenge_proposals.findUnique({
+  const db = txClient || prisma
+
+  const proposal = await db.challenge_proposals.findUnique({
     where: { id: proposalId },
     select: { tasks: true }
   })
@@ -20,15 +25,18 @@ export async function copyProposalTasks(
     return
   }
 
-  let order = 0
+  const tasks = proposal.tasks as any[]
 
-  for (const t of proposal.tasks as any[]) {
-    await prisma.challenge_tasks.create({
+  for (let i = 0; i < tasks.length; i++) {
+    const t = tasks[i]
+    await db.challenge_tasks.create({
       data: {
-        challenge_id: challengeId,
-        title: t.label ?? `Task ${order + 1}`,
+        challenge_id: challengeId as any,
+        title: t.label ?? `Task ${i + 1}`,
         description: t.description ?? null,
-        order_index: order++
+        order_index: i,
+        max_points: t.max_points ?? null,
+        co2_quota: t.co2_quota ?? null
       }
     })
   }

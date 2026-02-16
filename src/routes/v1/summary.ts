@@ -1,18 +1,22 @@
 // src/routes/v1/summary.ts
+/**
+ * Scopo: riepilogo statistico di una challenge
+ *
+ * Funzionalità:
+ * - GET /challenges/:id/summary → stats submission + top 5 leaderboard
+ *
+ * Endpoint pubblico, non richiede autenticazione.
+ */
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
-import { requireAuth } from '../../utils/requireAuth.js'
-import { users_role } from '@prisma/client'
-
 
 export async function summaryV1Routes(app: FastifyInstance) {
   // ============================================================
   // GET /api/v1/challenges/:id/summary
-  // → Riepilogo challenge con stats submissions e top leaderboard
   // ============================================================
   app.get('/challenges/:id/summary', {
     schema: {
-      tags: ['Challenges v1'],
+      tags: ['Summary v1'],
       summary: 'Riepilogo challenge con statistiche e top leaderboard',
       params: {
         type: 'object',
@@ -58,7 +62,6 @@ export async function summaryV1Routes(app: FastifyInstance) {
         title: true,
         created_at: true,
         updated_at: true,
-        judge_user_id: true,
         challenge_proposals: {
           select: {
             description: true,
@@ -78,8 +81,7 @@ export async function summaryV1Routes(app: FastifyInstance) {
       description: challenge.challenge_proposals?.description ?? null,
       difficulty: challenge.challenge_proposals?.difficulty ?? 'n/a',
       created_at: challenge.created_at,
-      updated_at: challenge.updated_at,
-      judge_user_id: challenge.judge_user_id
+      updated_at: challenge.updated_at
     }
 
     // Statistiche submissions
@@ -115,70 +117,5 @@ export async function summaryV1Routes(app: FastifyInstance) {
       submissions_stats: { total, pending, approved, rejected },
       leaderboard_top
     })
-  })
-
-  // ============================================================
-  // GET /api/v1/user/submissions
-  // → Lista submissions create dall’utente autenticato
-  // ============================================================
-  app.get('/user/submissions', {
-    preHandler: requireAuth(),
-    schema: {
-      tags: ['Submissions v1'],
-      summary: 'Elenca tutte le submission create dall’utente corrente',
-      querystring: {
-        type: 'object',
-        properties: {
-          status: { enum: ['pending', 'approved', 'rejected', 'all'], default: 'all' },
-          limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
-          cursor: { type: 'string' }
-        }
-      },
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            items: { type: 'array', items: { type: 'object' } },
-            nextCursor: { anyOf: [{ type: 'string' }, { type: 'null' }] }
-          }
-        }
-      }
-    }
-  }, async (req: any, reply) => {
-    const userId = BigInt(req.user.id)
-    const { status = 'all', limit = 20, cursor } = req.query
-    let where: any = { user_id: userId as any }
-
-    if (status !== 'all') where.status = status
-    if (cursor) where.created_at = { lt: new Date(cursor) }
-
-    const rows = await prisma.challenge_submissions.findMany({
-      where,
-      orderBy: { created_at: 'desc' },
-      take: limit + 1,
-      select: {
-        id: true,
-        challenge_id: true,
-        status: true,
-        points_awarded: true,
-        created_at: true,
-        reviewed_at: true,
-        challenges: { select: { title: true } }
-      }
-    })
-
-    const more = rows.length > limit
-    const items = rows.slice(0, limit).map(r => ({
-      id: Number(r.id),
-      challenge_id: Number(r.challenge_id),
-      challenge_title: r.challenges?.title ?? '',
-      status: r.status,
-      points: r.points_awarded ?? null,
-      createdAt: r.created_at.toISOString(),
-      reviewedAt: r.reviewed_at ? r.reviewed_at.toISOString() : null
-    }))
-    const nextCursor = more ? rows[limit].created_at.toISOString() : null
-
-    return reply.send({ items, nextCursor })
   })
 }

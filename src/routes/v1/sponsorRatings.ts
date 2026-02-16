@@ -9,28 +9,13 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { requireAuth } from '../../utils/requireAuth.js'
+import { serializeBigInt } from '../../utils/serialize.js'
 import { users_role } from '@prisma/client'
 
 function clampInt(value: any, def: number, min: number, max: number) {
   const n = Number.parseInt(String(value ?? ''), 10)
   if (Number.isNaN(n)) return def
   return Math.max(min, Math.min(max, n))
-}
-
-function serializeBigInt(obj: any): any {
-  if (obj instanceof Date) {
-    return obj.toISOString()
-  }
-  if (Array.isArray(obj)) return obj.map(serializeBigInt)
-  if (obj && typeof obj === 'object') {
-    return Object.fromEntries(
-      Object.entries(obj).map(([key, value]) => [
-        key,
-        typeof value === 'bigint' ? Number(value) : serializeBigInt(value)
-      ])
-    )
-  }
-  return obj
 }
 
 
@@ -173,7 +158,6 @@ export async function sponsorRatingsRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: 'invalid_sponsor_id' })
       }
 
-      // opzionale: 404 se sponsor inesistente
       const sponsorExists = await prisma.sponsors.findUnique({
         where: { id: sponsorId },
         select: { id: true }
@@ -202,7 +186,6 @@ export async function sponsorRatingsRoutes(app: FastifyInstance) {
         skip: offset
       })
 
-      // Non esporre campi inutili: privacy + banda
       return reply.send({
         limit,
         offset,
@@ -236,7 +219,6 @@ export async function sponsorRatingsRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: 'invalid_sponsor_id' })
       }
 
-      // opzionale: 404 se sponsor inesistente
       const sponsorExists = await prisma.sponsors.findUnique({
         where: { id: sponsorId },
         select: { id: true }

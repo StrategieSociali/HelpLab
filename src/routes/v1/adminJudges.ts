@@ -1,30 +1,16 @@
 // src/routes/v1/adminJudges.ts
-import { FastifyInstance, FastifyReply } from 'fastify'
+/**
+ * Scopo: endpoint amministrativi per la gestione dei giudici
+ *
+ * Funzionalità:
+ * - Lista paginata degli utenti con ruolo "judge" (e opzionalmente "admin")
+ * - Filtro testuale su username/email
+ * - Accesso riservato esclusivamente agli admin
+ */
+import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
-import { verifyAccessToken } from '../../utils/jwt.js'
+import { requireAuth } from '../../utils/requireAuth.js'
 import { users_role } from '@prisma/client'
-
-
-function requireAuth(role: 'admin') {
-  return async (req: any, reply: FastifyReply) => {
-    const auth = req.headers?.authorization || ''
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
-    if (!token) return reply.code(401).send({ error: 'unauthorized' })
-    try {
-      const p = verifyAccessToken(token) as any
-      req.user = { id: BigInt(p.sub), email: p.email }
-      const u = await prisma.users.findFirst({
-        where: { id: req.user.id as any },
-        select: { role: true }
-      })
-      if (!u) return reply.code(401).send({ error: 'unauthorized' })
-      if (u.role !== 'admin') return reply.code(403).send({ error: 'forbidden' })
-      req.user.role = u.role
-    } catch {
-      return reply.code(401).send({ error: 'unauthorized' })
-    }
-  }
-}
 
 export async function adminJudgesV1Routes(app: FastifyInstance) {
   app.get('/admin/judges', {
@@ -54,7 +40,7 @@ export async function adminJudgesV1Routes(app: FastifyInstance) {
                   username: { type: 'string' },
                   email: { anyOf: [{ type: 'string' }, { type: 'null' }] },
                   role: { type: 'string' },
-                  updatedAt: { type: 'string' } // usiamo created_at ma esponiamo updatedAt per coerenza FE
+                  updatedAt: { type: 'string' }
                 },
                 required: ['id', 'username', 'role', 'updatedAt']
               }
@@ -110,7 +96,6 @@ export async function adminJudgesV1Routes(app: FastifyInstance) {
       username: r.username,
       email: r.email ?? null,
       role: r.role ?? 'user',
-      // esponiamo come updatedAt (per coerenza FE), ma deriva da created_at
       updatedAt: r.created_at.toISOString()
     }))
 

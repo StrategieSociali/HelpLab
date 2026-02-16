@@ -1,47 +1,49 @@
 // src/routes/v1/sponsor.ts
 /**
- * Scopo: gestisce il profilo degli sponsor
+ * Scopo: gestione del profilo sponsor
  *
- * Attualmente supporta:
- * - dati di registrazione dello sponsor
- * - esposizione dei dati
- * - creazione e modifica profilo
+ * Funzionalità:
+ * - GET /sponsors → elenco pubblico paginato con ricerca
+ * - GET /sponsors/:id → dettaglio pubblico di uno sponsor
+ * - GET /sponsors/me → profilo dello sponsor autenticato
+ * - POST /sponsors/me → creazione profilo sponsor (prima volta)
+ * - PUT /sponsors/me → aggiornamento completo profilo sponsor
+ * - PATCH /sponsors/me → aggiornamento parziale profilo sponsor
  */
-
 import { FastifyInstance } from 'fastify'
+import { z } from 'zod'
 import { prisma } from '../../db/client.js'
 import { requireAuth } from '../../utils/requireAuth.js'
+import { serializeBigInt } from '../../utils/serialize.js'
 import { users_role } from '@prisma/client'
 
-function serializeBigInt(obj: any): any {
-  if (obj instanceof Date) {
-    return obj.toISOString()
-  }
+// --- Schemas di validazione ---
 
-  if (Array.isArray(obj)) {
-    return obj.map(serializeBigInt)
-  }
+// PUT e POST: tutti i campi, name obbligatorio
+const sponsorBodyFull = z.object({
+  name: z.string().min(2).max(180),
+  website: z.string().url().max(255).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  logo_url: z.string().url().max(255).optional().nullable()
+}).strict()
 
-  if (obj && typeof obj === 'object') {
-    return Object.fromEntries(
-      Object.entries(obj).map(([key, value]) => [
-        key,
-        typeof value === 'bigint'
-          ? Number(value)
-          : serializeBigInt(value)
-      ])
-    )
-  }
-
-  return obj
-}
+// PATCH: tutti opzionali, almeno uno presente
+const sponsorBodyPatch = z.object({
+  name: z.string().min(2).max(180).optional(),
+  website: z.string().url().max(255).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  logo_url: z.string().url().max(255).optional().nullable()
+}).strict().refine(
+  data => Object.values(data).some(v => v !== undefined),
+  { message: 'Almeno un campo deve essere presente' }
+)
 
 export async function sponsorRoutes(app: FastifyInstance) {
-  
-   /**
-   * GET /api/v1/sponsors
-   * Pubblico – elenco sponsor con paginazione a cursor e search
-   */
+
+  // ================================
+  // GET /api/v1/sponsors
+  // Pubblico — elenco sponsor con paginazione e ricerca
+  // ================================
   app.get('/sponsors', {
     schema: {
       tags: ['Sponsors'],
@@ -50,8 +52,8 @@ export async function sponsorRoutes(app: FastifyInstance) {
         type: 'object',
         properties: {
           limit: { type: 'number' },
-          cursor: { type: 'string' }, // ISO date
-          search: { type: 'string' }  // ricerca per nome sponsor
+          cursor: { type: 'string' },
+          search: { type: 'string' }
         }
       },
       response: {
@@ -81,35 +83,22 @@ export async function sponsorRoutes(app: FastifyInstance) {
     }
   }, async (req: any, reply) => {
     const q = req.query || {}
-
-    // limit sicuro
     const limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)))
 
-    // cursor: ISO date (fallback silenzioso se invalido)
     let cursorDate: Date | null = null
     if (q.cursor) {
       const d = new Date(String(q.cursor))
-      if (!isNaN(d.getTime())) {
-        cursorDate = d
-      }
+      if (!isNaN(d.getTime())) cursorDate = d
     }
 
-    // search: trim + ignore se vuota
     const search =
       typeof q.search === 'string' && q.search.trim().length > 0
         ? q.search.trim()
         : null
 
-    // where dinamico (cursor + search)
     const where: any = {
       ...(cursorDate ? { created_at: { lt: cursorDate } } : {}),
-      ...(search
-        ? {
-            name: {
-              contains: search,
-              }
-          }
-        : {})
+      ...(search ? { name: { contains: search } } : {})
     }
 
     const rows = await prisma.sponsors.findMany({
@@ -122,10 +111,7 @@ export async function sponsorRoutes(app: FastifyInstance) {
         public_score: true,
         created_at: true
       },
-      orderBy: [
-        { created_at: 'desc' },
-        { id: 'desc' }
-      ],
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
       take: limit + 1
     })
 
@@ -150,15 +136,44 @@ export async function sponsorRoutes(app: FastifyInstance) {
 
     return reply.send({ items, nextCursor })
   })
-  
-  
 
-  /**
-   * GET /api/v1/sponsors/:id
-   * Pubblico
-   */
-  app.get('/sponsors/:id', async (req: any, reply) => {
-    const sponsorId = BigInt(req.params.id)
+  // ================================
+  // GET /api/v1/sponsors/:id
+  // Pubblico — dettaglio sponsor
+  // ================================
+  app.get('/sponsors/:id', {
+    schema: {
+      tags: ['Sponsors'],
+      summary: 'Dettaglio pubblico di uno sponsor',
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id']
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' },
+            name: { type: 'string' },
+            website: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+            description: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+            logo_url: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+            public_score: { anyOf: [{ type: 'number' }, { type: 'null' }] },
+            created_at: { type: 'string' }
+          },
+          required: ['id', 'name']
+        },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req: any, reply) => {
+    let sponsorId: bigint
+    try {
+      sponsorId = BigInt(req.params.id)
+    } catch {
+      return reply.code(404).send({ error: 'not found' })
+    }
 
     const sponsor = await prisma.sponsors.findUnique({
       where: { id: sponsorId },
@@ -180,11 +195,22 @@ export async function sponsorRoutes(app: FastifyInstance) {
     return reply.send(serializeBigInt(sponsor))
   })
 
-  /**
-   * GET /api/v1/sponsors/me
-   */
+  // ================================
+  // GET /api/v1/sponsors/me
+  // Protetto (sponsor) — profilo personale
+  // ================================
   app.get('/sponsors/me', {
     preHandler: requireAuth(users_role.sponsor),
+    schema: {
+      tags: ['Sponsors'],
+      summary: 'Profilo dello sponsor autenticato',
+      response: {
+        200: { type: 'object', additionalProperties: true },
+        401: { type: 'object', properties: { error: { type: 'string' } } },
+        403: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
   }, async (req: any, reply) => {
     const userId = BigInt(req.user.id)
 
@@ -199,69 +225,41 @@ export async function sponsorRoutes(app: FastifyInstance) {
     return reply.send(serializeBigInt(sponsor))
   })
 
-  /**
-   * PUT /api/v1/sponsors/me
-   */
-  app.put('/sponsors/me', {
-    preHandler: requireAuth(users_role.sponsor),
-  }, async (req: any, reply) => {
-    const userId = BigInt(req.user.id)
-    const body = req.body || {}
-
-    if (!body.name) {
-      return reply.code(400).send({ error: 'name is required' })
-    }
-
-    const sponsor = await prisma.sponsors.update({
-      where: { user_id: userId },
-      data: {
-        name: body.name,
-        website: body.website ?? null,
-        description: body.description ?? null,
-        logo_url: body.logo_url ?? null
-      }
-    })
-
-    return reply.send(serializeBigInt(sponsor))
-  })
-  
-    /**
-   * PATCH /api/v1/sponsors/me
-   */
-  
-  app.patch('/sponsors/me', {
-  preHandler: requireAuth(users_role.sponsor),
-}, async (req: any, reply) => {
-  const userId = BigInt(req.user.id)
-  const body = req.body || {}
-
-  const allowedFields = {
-    name: body.name,
-    website: body.website,
-    description: body.description,
-    logo_url: body.logo_url
-  }
-
-  const sponsor = await prisma.sponsors.update({
-    where: { user_id: userId },
-    data: allowedFields
-  })
-
-  return reply.send(serializeBigInt(sponsor))
-})
-
-  /**
-   * POST /api/v1/sponsors/me
-   */
+  // ================================
+  // POST /api/v1/sponsors/me
+  // Protetto (sponsor) — creazione profilo (prima volta)
+  // ================================
   app.post('/sponsors/me', {
     preHandler: requireAuth(users_role.sponsor),
-  }, async (req: any, reply) => {
-    const userId = BigInt(req.user.id)
-    const body = req.body || {}
-
-    if (!body.name) {
-      return reply.code(400).send({ error: 'name is required' })
+    config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+    schema: {
+      tags: ['Sponsors'],
+      summary: 'Crea profilo sponsor (prima volta)',
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          website: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+          description: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+          logo_url: { anyOf: [{ type: 'string' }, { type: 'null' }] }
+        },
+        required: ['name']
+      },
+      response: {
+        200: { type: 'object', additionalProperties: true },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        401: { type: 'object', properties: { error: { type: 'string' } } },
+        403: { type: 'object', properties: { error: { type: 'string' } } }
+      }
     }
+  }, async (req: any, reply) => {
+    const parsed = sponsorBodyFull.safeParse(req.body)
+    if (!parsed.success) {
+      const issues = parsed.error.issues.map(i => (i.path.join('.') || '(root)') + ': ' + i.message)
+      return reply.code(400).send({ error: issues.join('; ') })
+    }
+
+    const userId = BigInt(req.user.id)
 
     const exists = await prisma.sponsors.findUnique({
       where: { user_id: userId }
@@ -274,11 +272,108 @@ export async function sponsorRoutes(app: FastifyInstance) {
     const sponsor = await prisma.sponsors.create({
       data: {
         user_id: userId,
-        name: body.name,
-        website: body.website ?? null,
-        description: body.description ?? null,
-        logo_url: body.logo_url ?? null
+        name: parsed.data.name,
+        website: parsed.data.website ?? null,
+        description: parsed.data.description ?? null,
+        logo_url: parsed.data.logo_url ?? null
       }
+    })
+
+    return reply.send(serializeBigInt(sponsor))
+  })
+
+  // ================================
+  // PUT /api/v1/sponsors/me
+  // Protetto (sponsor) — aggiornamento completo
+  // ================================
+  app.put('/sponsors/me', {
+    preHandler: requireAuth(users_role.sponsor),
+    schema: {
+      tags: ['Sponsors'],
+      summary: 'Aggiorna profilo sponsor (completo)',
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          website: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+          description: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+          logo_url: { anyOf: [{ type: 'string' }, { type: 'null' }] }
+        },
+        required: ['name']
+      },
+      response: {
+        200: { type: 'object', additionalProperties: true },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        401: { type: 'object', properties: { error: { type: 'string' } } },
+        403: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req: any, reply) => {
+    const parsed = sponsorBodyFull.safeParse(req.body)
+    if (!parsed.success) {
+      const issues = parsed.error.issues.map(i => (i.path.join('.') || '(root)') + ': ' + i.message)
+      return reply.code(400).send({ error: issues.join('; ') })
+    }
+
+    const userId = BigInt(req.user.id)
+
+    const sponsor = await prisma.sponsors.update({
+      where: { user_id: userId },
+      data: {
+        name: parsed.data.name,
+        website: parsed.data.website ?? null,
+        description: parsed.data.description ?? null,
+        logo_url: parsed.data.logo_url ?? null
+      }
+    })
+
+    return reply.send(serializeBigInt(sponsor))
+  })
+
+  // ================================
+  // PATCH /api/v1/sponsors/me
+  // Protetto (sponsor) — aggiornamento parziale
+  // ================================
+  app.patch('/sponsors/me', {
+    preHandler: requireAuth(users_role.sponsor),
+    schema: {
+      tags: ['Sponsors'],
+      summary: 'Aggiorna profilo sponsor (parziale)',
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          website: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+          description: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+          logo_url: { anyOf: [{ type: 'string' }, { type: 'null' }] }
+        }
+      },
+      response: {
+        200: { type: 'object', additionalProperties: true },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        401: { type: 'object', properties: { error: { type: 'string' } } },
+        403: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req: any, reply) => {
+    const parsed = sponsorBodyPatch.safeParse(req.body)
+    if (!parsed.success) {
+      const issues = parsed.error.issues.map(i => (i.path.join('.') || '(root)') + ': ' + i.message)
+      return reply.code(400).send({ error: issues.join('; ') })
+    }
+
+    const userId = BigInt(req.user.id)
+
+    // Costruisce oggetto data solo con i campi effettivamente presenti
+    const data: any = {}
+    if (parsed.data.name !== undefined) data.name = parsed.data.name
+    if (parsed.data.website !== undefined) data.website = parsed.data.website
+    if (parsed.data.description !== undefined) data.description = parsed.data.description
+    if (parsed.data.logo_url !== undefined) data.logo_url = parsed.data.logo_url
+
+    const sponsor = await prisma.sponsors.update({
+      where: { user_id: userId },
+      data
     })
 
     return reply.send(serializeBigInt(sponsor))

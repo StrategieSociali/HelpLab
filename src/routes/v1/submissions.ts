@@ -1,8 +1,14 @@
 // src/routes/v1/submissions.ts
 /**
- * Scopo: permette l'invio delle submission,
- *permette di convertire una submission e registrate i dati relativi
- * 
+ * Scopo: gestione delle submission dei volontari nelle challenge
+ *
+ * Funzionalità:
+ * - GET /challenges/:id/submissions → lista submission visibili (rispetta privacy)
+ * - POST /challenges/:id/submissions → creazione submission (autenticato, task_id obbligatorio)
+ * - POST /submissions/:id/review → approvazione/rifiuto da parte del giudice
+ *
+ * Flusso: il volontario crea una submission collegata a un task specifico,
+ * il giudice la approva o rifiuta. All'approvazione vengono assegnati i punti.
  */
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import { prisma } from '../../db/client.js'
@@ -14,7 +20,7 @@ import { users_role } from '@prisma/client'
 
 
 // Invalida leaderboard globale
-        async function invalidateGlobalLeaderboards() {
+async function invalidateGlobalLeaderboards() {
   await Promise.all([
     invalidateLeaderboardCache(generateLeaderboardCacheKey('user-global', { window: 'all' })),
     invalidateLeaderboardCache(generateLeaderboardCacheKey('user-global', { window: 'this_month' })),
@@ -107,6 +113,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         id: true,
         challenge_id: true,
         user_id: true,
+        task_id: true,
         reviewer_user_id: true,
         status: true,
         visibility: true,
@@ -115,7 +122,8 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         points_awarded: true,
         created_at: true,
         reviewed_at: true,
-        users: { select: { username: true } }
+        users: { select: { username: true } },
+        task: { select: { id: true, title: true } }
       },
       orderBy: { created_at: 'desc' },
       take: limit + 1
@@ -130,6 +138,8 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       activity: r.activity_description ?? null,
       payload: r.payload_json ?? {},
       points: r.points_awarded ?? null,
+      taskId: r.task_id ? Number(r.task_id) : null,
+      taskTitle: r.task?.title ?? null,
       createdAt: r.created_at?.toISOString() ?? null,
       reviewedAt: r.reviewed_at?.toISOString() ?? null
     }))
@@ -142,12 +152,13 @@ export async function submissionsV1Routes(app: FastifyInstance) {
 
   // ================================
   // POST /api/v1/challenges/:id/submissions (crea)
+  // task_id è obbligatorio: il volontario sceglie a quale task si riferisce
   // ================================
   app.post('/challenges/:id/submissions', {
     preHandler: requireAuth(),
     schema: {
       tags: ['Submissions v1'],
-      summary: 'Crea una submission',
+      summary: 'Crea una submission collegata a un task',
       params: {
         type: 'object',
         properties: { id: { type: 'number' } },
@@ -156,22 +167,50 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       body: {
         type: 'object',
         properties: {
+          task_id: { type: 'number' },
           visibility: { enum: ['private', 'participants', 'public'] },
           activity_description: { type: 'string' },
           payload: { type: 'object' }
         },
-        required: ['payload']
+        required: ['payload', 'task_id']
       },
       response: {
         201: {
           type: 'object',
-          properties: { id: { type: 'number' }, status: { type: 'string' } }
-        }
+          properties: {
+            id: { type: 'number' },
+            status: { type: 'string' },
+            taskId: { type: 'number' }
+          }
+        },
+        400: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
   }, async (req: any, reply) => {
     const cid = BigInt(String((req.params as any).id))
     const body = req.body || {}
+
+    // Validazione task_id
+    if (!body.task_id) {
+      return reply.code(400).send({ error: 'task_id è obbligatorio' })
+    }
+
+    let taskId: bigint
+    try {
+      taskId = BigInt(body.task_id)
+    } catch {
+      return reply.code(400).send({ error: 'task_id non valido' })
+    }
+
+    // Verifica che il task esista e appartenga a questa challenge
+    const task = await prisma.challenge_tasks.findUnique({
+      where: { id: taskId as any },
+      select: { id: true, challenge_id: true }
+    })
+
+    if (!task || task.challenge_id !== cid) {
+      return reply.code(400).send({ error: 'task non valido per questa challenge' })
+    }
 
     const visibility = (body.visibility ?? 'participants') as 'private' | 'participants' | 'public'
     const activity = (body.activity_description ?? '').toString().slice(0, 500)
@@ -181,137 +220,207 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       data: {
         challenge_id: cid as any,
         user_id: req.user.id as any,
+        task_id: taskId as any,
         status: 'pending',
         visibility,
         activity_description: activity || null,
         payload_json: payload as any
       },
-      select: { id: true, status: true }
+      select: { id: true, status: true, task_id: true }
     })
 
-    return reply.code(201).send({ id: Number(created.id), status: created.status })
+    return reply.code(201).send({
+      id: Number(created.id),
+      status: created.status,
+      taskId: Number(created.task_id)
+    })
   })
 
-// ================================
-// POST /api/v1/submissions/:id/review (approve/reject)
-// ================================
-app.post('/submissions/:id/review', {
-  preHandler: requireAuth(users_role.judge),
-  schema: {
-    tags: ['Submissions v1'],
-    summary: 'Valuta una submission (judge/admin)',
-    params: {
-      type: 'object',
-      properties: { id: { type: 'number' } },
-      required: ['id']
-    },
-    body: {
-      type: 'object',
-      properties: {
-        decision: { enum: ['approved', 'rejected'] },
-        points: { type: 'number' },
-        task_id: { type: 'number' },
-        note: { type: 'string' }
+  // ================================
+  // POST /api/v1/submissions/:id/review (approve/reject)
+  // ================================
+  app.post('/submissions/:id/review', {
+    preHandler: requireAuth(users_role.judge),
+    schema: {
+      tags: ['Submissions v1'],
+      summary: 'Valuta una submission (judge/admin)',
+      params: {
+        type: 'object',
+        properties: { id: { type: 'number' } },
+        required: ['id']
       },
-      required: ['decision', 'task_id']
+      body: {
+        type: 'object',
+        properties: {
+          decision: { enum: ['approved', 'rejected'] },
+          points: { type: 'number' },
+          note: { type: 'string' }
+        },
+        required: ['decision']
+      }
     }
-  }
-}, async (req: any, reply) => {
-  const sid = BigInt(req.params.id)
-  const { decision, points, task_id, note } = req.body
+  }, async (req: any, reply) => {
+    const sid = BigInt(req.params.id)
+    const { decision, points, note } = req.body
 
-  const sub = await prisma.challenge_submissions.findUnique({
-    where: { id: sid },
-    select: {
-      id: true,
-      status: true,
-      challenge_id: true,
-      user_id: true
-    }
-  })
-
-  if (!sub || sub.status !== 'pending') {
-    return reply.code(404).send({ error: 'submission non trovata o già revisionata' })
-  }
-
-  // Verifica permessi se non admin
-  if (req.user.role !== 'admin') {
-    const ch = await prisma.challenges.findUnique({
-      where: { id: sub.challenge_id },
-      select: { judge_user_id: true }
-    })
-    if (!ch?.judge_user_id || BigInt(ch.judge_user_id) !== BigInt(req.user.id)) {
-      return reply.code(403).send({ error: 'forbidden' })
-    }
-  }
-
-  // Verifica task_id valido
-  const task = await prisma.challenge_tasks.findUnique({
-    where: { id: BigInt(task_id) }
-  })
-
-  if (!task || task.challenge_id !== sub.challenge_id) {
-    return reply.code(400).send({ error: 'task non valido per questa challenge' })
-  }
-
-  const now = new Date()
-
-  // Transazione: update submission + audit
-  await prisma.$transaction([
-    prisma.challenge_submissions.update({
+    const sub = await prisma.challenge_submissions.findUnique({
       where: { id: sid },
-      data: {
-        status: decision,
-        reviewer_user_id: req.user.id,
-        reviewed_at: now,
-        points_awarded: decision === 'approved' ? points ?? 0 : 0,
-        task_id: BigInt(task_id)
-      }
-    }),
-    prisma.review_audit.create({
-      data: {
-        submission_id: sid,
-        reviewer_user_id: BigInt(req.user.id),
-        action: decision === 'approved' ? 'approve' : 'reject',
-        points_awarded: decision === 'approved' ? points ?? 0 : 0,
-        note: note ?? null
+      select: {
+        id: true,
+        status: true,
+        challenge_id: true,
+        user_id: true,
+        task_id: true
       }
     })
-  ])
 
-  // Se approved, esegui hook e cache invalidate
-  if (decision === 'approved') {
-    try {
-      await onApprove({
-        submission_id: sub.id,
-        challenge_id: sub.challenge_id,
-        user_id: sub.user_id,
-        reviewer_user_id: req.user.id,
-        delta: points ?? 0,
-        event: 'task_completed_verified',
-        version: '1.0',
-        meta: {
-          review_context: 'manual_approval',
-          judge_role: req.user.role
+    if (!sub || sub.status !== 'pending') {
+      return reply.code(404).send({ error: 'submission non trovata o già revisionata' })
+    }
+
+    // Il task_id è già presente dalla creazione della submission
+    if (!sub.task_id) {
+      return reply.code(400).send({ error: 'submission senza task associato' })
+    }
+
+    // Verifica permessi se non admin
+    if (req.user.role !== 'admin') {
+      const ch = await prisma.challenges.findUnique({
+        where: { id: sub.challenge_id },
+        select: { judge_user_id: true }
+      })
+      if (!ch?.judge_user_id || BigInt(ch.judge_user_id) !== BigInt(req.user.id)) {
+        return reply.code(403).send({ error: 'forbidden' })
+      }
+    }
+
+    const now = new Date()
+
+    // Transazione: update submission + audit
+    await prisma.$transaction([
+      prisma.challenge_submissions.update({
+        where: { id: sid },
+        data: {
+          status: decision,
+          reviewer_user_id: req.user.id,
+          reviewed_at: now,
+          points_awarded: decision === 'approved' ? points ?? 0 : 0
+        }
+      }),
+      prisma.review_audit.create({
+        data: {
+          submission_id: sid,
+          reviewer_user_id: BigInt(req.user.id),
+          action: decision === 'approved' ? 'approve' : 'reject',
+          points_awarded: decision === 'approved' ? points ?? 0 : 0,
+          note: note ?? null
         }
       })
+    ])
 
-      // Invalida cache leaderboard
-      await invalidateLeaderboardCache(
-        generateLeaderboardCacheKey('challenge', { challenge_id: sub.challenge_id })
-      )
-      await invalidateGlobalLeaderboards()
+    // Se approved, esegui hook e cache invalidate
+    if (decision === 'approved') {
+      try {
+        await onApprove({
+          submission_id: sub.id,
+          challenge_id: sub.challenge_id,
+          user_id: sub.user_id,
+          reviewer_user_id: req.user.id,
+          delta: points ?? 0,
+          event: 'task_completed_verified',
+          version: '1.0',
+          meta: {
+            review_context: 'manual_approval',
+            judge_role: req.user.role
+          }
+        })
 
-    } catch (err) {
-      req.log.error({ err }, 'Errore in onApprove hook')
+        // Invalida cache leaderboard
+        await invalidateLeaderboardCache(
+          generateLeaderboardCacheKey('challenge', { challenge_id: sub.challenge_id })
+        )
+        await invalidateGlobalLeaderboards()
+
+      } catch (err) {
+        req.log.error({ err }, 'Errore in onApprove hook')
+      }
     }
-  }
 
-  return reply.send({
-    id: Number(sid),
-    status: decision,
-    points: points ?? 0,
-    reviewedAt: now.toISOString()
+    return reply.send({
+      id: Number(sid),
+      status: decision,
+      points: points ?? 0,
+      reviewedAt: now.toISOString()
+    })
   })
-})
+
+  // ================================
+  // GET /api/v1/user/submissions
+  // Protetto — lista submission dell'utente autenticato
+  // (spostato da summary.ts per coerenza)
+  // ================================
+  app.get('/user/submissions', {
+    preHandler: requireAuth(),
+    schema: {
+      tags: ['Submissions v1'],
+      summary: 'Lista submission dell\'utente corrente',
+      querystring: {
+        type: 'object',
+        properties: {
+          status: { enum: ['pending', 'approved', 'rejected', 'all'], default: 'all' },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+          cursor: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            items: { type: 'array', items: { type: 'object' } },
+            nextCursor: { anyOf: [{ type: 'string' }, { type: 'null' }] }
+          }
+        }
+      }
+    }
+  }, async (req: any, reply) => {
+    const userId = BigInt(req.user.id)
+    const { status = 'all', limit = 20, cursor } = req.query
+    const where: any = { user_id: userId as any }
+
+    if (status !== 'all') where.status = status
+    if (cursor) where.created_at = { lt: new Date(cursor) }
+
+    const rows = await prisma.challenge_submissions.findMany({
+      where,
+      orderBy: { created_at: 'desc' },
+      take: limit + 1,
+      select: {
+        id: true,
+        challenge_id: true,
+        task_id: true,
+        status: true,
+        points_awarded: true,
+        created_at: true,
+        reviewed_at: true,
+        challenges: { select: { title: true } },
+        task: { select: { title: true } }
+      }
+    })
+
+    const more = rows.length > limit
+    const items = rows.slice(0, limit).map((r: any) => ({
+      id: Number(r.id),
+      challenge_id: Number(r.challenge_id),
+      challenge_title: r.challenges?.title ?? '',
+      taskId: r.task_id ? Number(r.task_id) : null,
+      taskTitle: r.task?.title ?? null,
+      status: r.status,
+      points: r.points_awarded ?? null,
+      createdAt: r.created_at.toISOString(),
+      reviewedAt: r.reviewed_at ? r.reviewed_at.toISOString() : null
+    }))
+    const nextCursor = more ? rows[limit].created_at.toISOString() : null
+
+    return reply.send({ items, nextCursor })
+  })
 }
