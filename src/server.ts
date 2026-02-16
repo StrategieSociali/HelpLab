@@ -33,9 +33,10 @@ async function start() {
     .map(o => o.trim())
     .filter(Boolean)
 
-  await server.register(cors, {
+    await server.register(cors, {
     origin: origins.length ? origins : false,
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE']
   })
 
   // === Rate limit
