@@ -12,7 +12,7 @@
  */
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import { prisma } from '../../db/client.js'
-import { requireAuth } from '../../utils/requireAuth.js'
+import { requireAuth, optionalAuth  } from '../../utils/requireAuth.js'
 import { onApprove } from '../../services/scoring/onApprove.js'
 import { invalidateLeaderboardCache } from '../../services/leaderboardService.js'
 import { generateLeaderboardCacheKey } from '../../services/leaderboardService.js'
@@ -59,6 +59,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
   // GET /api/v1/challenges/:id/submissions
   // ================================
   app.get('/challenges/:id/submissions', {
+    preHandler: optionalAuth(),
     schema: {
       tags: ['Submissions v1'],
       summary: 'Lista submission con rispetto visibilità',
@@ -78,7 +79,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         200: {
           type: 'object',
           properties: {
-            items: { type: 'array', items: { type: 'object' } },
+            items: { type: 'array', items: { type: 'object', additionalProperties: true } },
             nextCursor: { anyOf: [{ type: 'string' }, { type: 'null' }] }
           }
         }
@@ -100,7 +101,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       role: req.user?.role ?? null
     }
     const allowed = await computeVisibilityFilter({ challengeId: cid, user })
-
+   
     const where: any = {
       challenge_id: cid as any,
       visibility: { in: allowed as any }
@@ -376,7 +377,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         200: {
           type: 'object',
           properties: {
-            items: { type: 'array', items: { type: 'object' } },
+           items: { type: 'array', items: { type: 'object', additionalProperties: true } },
             nextCursor: { anyOf: [{ type: 'string' }, { type: 'null' }] }
           }
         }
@@ -399,6 +400,9 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         challenge_id: true,
         task_id: true,
         status: true,
+        visibility: true,
+        activity_description: true,
+        payload_json: true,
         points_awarded: true,
         created_at: true,
         reviewed_at: true,
@@ -415,6 +419,9 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       taskId: r.task_id ? Number(r.task_id) : null,
       taskTitle: r.task?.title ?? null,
       status: r.status,
+      visibility: r.visibility,
+      activity: r.activity_description ?? null,
+      payload: r.payload_json ?? {},
       points: r.points_awarded ?? null,
       createdAt: r.created_at.toISOString(),
       reviewedAt: r.reviewed_at ? r.reviewed_at.toISOString() : null

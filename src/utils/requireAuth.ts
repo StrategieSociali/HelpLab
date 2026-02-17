@@ -86,3 +86,34 @@ export function requireAuth(role?: users_role) {
     }
   }
 }
+/**
+ * Middleware opzionale: se il token è presente e valido, popola req.user.
+ * Se assente o invalido, prosegue senza errore (req.user resta undefined).
+ */
+export function optionalAuth() {
+  return async (req: FastifyRequest, _reply: FastifyReply) => {
+    try {
+      const auth = String(req.headers?.authorization || '')
+      const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
+      if (!token) return
+
+      const payload = verifyAccessToken(token) as any
+      if (!payload?.sub) return
+
+      const userId = BigInt(payload.sub)
+      const user = await prisma.users.findUnique({
+        where: { id: userId as any },
+        select: { id: true, email: true, role: true }
+      })
+      if (!user) return
+
+      ;(req as any).user = {
+        id: user.id,
+        email: user.email,
+        role: user.role ?? users_role.user
+      }
+    } catch {
+      // Token invalido/scaduto → prosegui come anonimo
+    }
+  }
+}
