@@ -6,13 +6,14 @@
  * - Logo + language switch
  * - Menu utente non registrato
  * - Menu utente registrato
- * - Menu admin
+ * - Menu admin controllato (React state, non <details>)
  * - Tasto login/registrati/logout
  *
- * FIX RC 1.0.6:
- * - Burger button ora visibile su mobile (stili aggiunti in styles.css)
- * - Sottomenu sfide/community apribili via click su mobile
- * - nav-auth-actions desktop-only correttamente nascosta su mobile
+ * FIX RC 1.0.7:
+ * - Admin menu ora controllato da stato (si chiude al click)
+ * - Rimossa classe btn-pill (uniformità globale → border-radius: 10px)
+ * - Admin menu desktop si chiude al click su link
+ * - Admin menu mobile si chiude quando si chiude il burger
  */
 
 import React, { useState, useEffect } from "react";
@@ -38,6 +39,8 @@ export default function Header() {
   // Sottomenu
   const [sfideOpen, setSfideOpen] = useState(false);
   const [communityOpen, setCommunityOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);           // menu admin mobile
+  const [adminDesktopOpen, setAdminDesktopOpen] = useState(false); // menu admin desktop
 
   const isAdminUser = isAdmin(user?.role);
   const navigate = useNavigate();
@@ -48,6 +51,7 @@ export default function Header() {
       if (prev) {
         setSfideOpen(false);
         setCommunityOpen(false);
+        setAdminOpen(false);
       }
       return !prev;
     });
@@ -62,6 +66,8 @@ export default function Header() {
         setMenuOpen(false);
         setSfideOpen(false);
         setCommunityOpen(false);
+        setAdminOpen(false);
+        setAdminDesktopOpen(false);
       }
       setReady(true);
     };
@@ -231,38 +237,43 @@ export default function Header() {
             {isAuthenticated ? (
               <>
                 {isAdminUser && (
-                  <details className="admin-menu">
-                    <summary className="btn btn-ghost btn-pill">
-                      {t("nav.title.admin")}
-                    </summary>
-                    <div className="admin-menu__list">
-                      <NavLink
-                        to={routes.admin.proposals}
-                        className="btn btn-ghost btn-pill"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        {t("nav.title.proposals")}
-                      </NavLink>
-                      <NavLink
-                        to={routes.admin.assignJudge}
-                        className="btn btn-ghost btn-pill"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        {t("nav.title.assignJudges")}
-                      </NavLink>
-                    </div>
-                  </details>
+                  <div className="admin-menu">
+                    <button
+                      className="btn btn-ghost"
+                      onClick={() => setAdminOpen((prev) => !prev)}
+                    >
+                      {t("nav.title.admin")} {adminOpen ? "▴" : "▾"}
+                    </button>
+                    {adminOpen && (
+                      <div className="admin-menu__list">
+                        <NavLink
+                          to={routes.admin.proposals}
+                          className="btn btn-ghost"
+                          onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
+                        >
+                          {t("nav.title.proposals")}
+                        </NavLink>
+                        <NavLink
+                          to={routes.admin.assignJudge}
+                          className="btn btn-ghost"
+                          onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
+                        >
+                          {t("nav.title.assignJudges")}
+                        </NavLink>
+                      </div>
+                    )}
+                  </div>
                 )}
                 <NavLink
                   to={routes.dashboard.challengeCreate}
-                  className="btn btn-ghost btn-pill"
+                  className="btn btn-ghost"
                   onClick={() => setMenuOpen(false)}
                 >
                   {t("nav.createChallenge")}
                 </NavLink>
                 <NavLink
                   to={routes.dashboard.userProfile}
-                  className="btn btn-ghost btn-pill"
+                  className="btn btn-ghost"
                   onClick={() => setMenuOpen(false)}
                 >
                   {t("nav.profile")}
@@ -273,21 +284,21 @@ export default function Header() {
               <>
                 <NavLink
                   to={routes.auth.login}
-                  className="btn btn-ghost btn-pill"
+                  className="btn btn-ghost"
                   onClick={(e) => {
                     e.preventDefault();
                     setMenuOpen(false);
                     startTransition(() => { navigate(routes.auth.login); });
                   }}
                 >
-                  {t("auth.actions.login")}
+                  {t("nav.login")}
                 </NavLink>
                 <NavLink
                   to={routes.auth.register}
-                  className="btn btn-outline btn-pill"
+                  className="btn btn-outline"
                   onClick={() => setMenuOpen(false)}
                 >
-                  {t("auth.actions.register")}
+                  {t("nav.register")}
                 </NavLink>
               </>
             )}
@@ -299,24 +310,37 @@ export default function Header() {
           {isAuthenticated ? (
             <>
               {isAdminUser && (
-                <details className="admin-menu">
-                  <summary className="btn btn-ghost btn-pill">
-                    {t("auth.admin.label")}
-                  </summary>
-                  <div className="admin-menu__list">
-                    <NavLink to={routes.admin.proposals} className="btn btn-ghost btn-pill">
-                      {t("auth.admin.proposals")}
-                    </NavLink>
-                    <NavLink to={routes.admin.assignJudge} className="btn btn-ghost btn-pill">
-                      {t("auth.admin.assignJudges")}
-                    </NavLink>
-                  </div>
-                </details>
+                <div className="admin-menu">
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => setAdminDesktopOpen((prev) => !prev)}
+                  >
+                    {t("auth.admin.label")} {adminDesktopOpen ? "▴" : "▾"}
+                  </button>
+                  {adminDesktopOpen && (
+                    <div className="admin-menu__list">
+                      <NavLink
+                        to={routes.admin.proposals}
+                        className="btn btn-ghost"
+                        onClick={() => setAdminDesktopOpen(false)}
+                      >
+                        {t("auth.admin.proposals")}
+                      </NavLink>
+                      <NavLink
+                        to={routes.admin.assignJudge}
+                        className="btn btn-ghost"
+                        onClick={() => setAdminDesktopOpen(false)}
+                      >
+                        {t("auth.admin.assignJudges")}
+                      </NavLink>
+                    </div>
+                  )}
+                </div>
               )}
-              <NavLink to={routes.dashboard.challengeCreate} className="btn btn-ghost btn-pill">
+              <NavLink to={routes.dashboard.challengeCreate} className="btn btn-ghost">
                 {t("auth.actions.createChallenge")}
               </NavLink>
-              <NavLink to={routes.dashboard.userProfile} className="btn btn-ghost btn-pill">
+              <NavLink to={routes.dashboard.userProfile} className="btn btn-ghost">
                 {t("auth.actions.profile")}
               </NavLink>
               <LogoutButton />
@@ -325,7 +349,7 @@ export default function Header() {
             <>
               <NavLink
                 to={routes.auth.login}
-                className="btn btn-ghost btn-pill"
+                className="btn btn-ghost"
                 onClick={(e) => {
                   e.preventDefault();
                   startTransition(() => { navigate(routes.auth.login); });
@@ -333,7 +357,7 @@ export default function Header() {
               >
                 {t("auth.actions.login")}
               </NavLink>
-              <NavLink to={routes.auth.register} className="btn btn-outline btn-pill">
+              <NavLink to={routes.auth.register} className="btn btn-outline">
                 {t("auth.actions.register")}
               </NavLink>
             </>

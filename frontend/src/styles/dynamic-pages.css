@@ -1,0 +1,367 @@
+/* =========================================================================
+   DYNAMIC-PAGES.CSS
+   CSS per tutte le pagine dinamiche / operative (judge, admin, user, sponsor)
+   
+   STRATEGIA:
+   - Fix contrasto testo su card/callout in pagine scure
+   - Override form su sfondo scuro
+   - Table/list styling per submission, proposal, etc.
+   - Stili comuni a tutte le pagine operative
+   
+   PAGINE CHE USANO QUESTO FILE:
+   - JudgeChallengeOverview.jsx
+   - JudgeDashboard.jsx
+   - AdminProposals.jsx
+   - StepAssignJudge.jsx
+   - ChallengeSubmitPage.jsx
+   - CreateChallenge.jsx (già ha stili specifici, può usare questo come base)
+   - UserProfile.jsx
+   - MyContributions.jsx
+   - SponsorsList.jsx (future)
+   - SponsorPublicProfile.jsx (future)
+   ========================================================================= */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FIX CONTRASTO: TITOLI SU CARD
+   STRATEGIA: Classi dedicate per le pagine dinamiche (.dynamic-title, .dynamic-subtitle)
+   che hanno il colore ottimale per card su sfondo scuro.
+   NON tocchiamo .page-title globale per evitare side effect.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Titolo principale card (es. "Task", "Submissions") */
+.dynamic-title {
+  margin: 0 0 10px 0;
+  font-weight: 800;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: #ffffff;  /* bianco puro per massima leggibilità */
+  letter-spacing: -0.02em;
+}
+
+/* Sottotitolo card (es. "In attesa (3)", "Già revisionate (12)") */
+.dynamic-subtitle {
+  margin: 0 0 10px 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #e5e7eb;  /* grigio molto chiaro (quasi bianco) */
+  letter-spacing: -0.01em;
+}
+
+/* NOTA: Non tocchiamo .page-title e .page-subtitle globali.
+   Usiamo solo classi dedicate per evitare side effect su altre pagine. */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FIX CALLOUT SU PAGINE SCURE
+   .callout ha background chiaro (#f1f5f9) e testo scuro.
+   Su .page-section scuro funziona bene, MA il testo dentro callout
+   deve rimanere scuro per contrasto con lo sfondo chiaro del callout.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Callout mantiene testo scuro (è su sfondo chiaro) */
+.page-section .callout {
+  color: #111827;  /* forza testo scuro anche su page-section dark */
+}
+
+.page-section .callout.neutral {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #111827;
+}
+
+.page-section .callout.error {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #991b1b;  /* rosso scuro */
+}
+
+/* Elementi figli del callout */
+.page-section .callout strong,
+.page-section .callout .muted {
+  color: inherit;  /* eredita dal callout */
+}
+
+.page-section .callout .muted {
+  opacity: 0.7;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FORM SU PAGINE SCURE
+   Gli input/textarea/select globali sono già configurati per pagine scure,
+   ma aggiungiamo override specifici per sicurezza.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.page-section input[type="text"],
+.page-section input[type="number"],
+.page-section input[type="email"],
+.page-section input[type="url"],
+.page-section input[type="date"],
+.page-section textarea,
+.page-section select {
+  background: rgba(255,255,255,.08);
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,.2);
+}
+
+.page-section input::placeholder,
+.page-section textarea::placeholder {
+  color: rgba(255,255,255,.5);
+}
+
+.page-section input:focus,
+.page-section textarea:focus,
+.page-section select:focus {
+  border-color: rgba(255,255,255,.4);
+  background: rgba(255,255,255,.12);
+  outline: none;
+}
+
+/* Label su pagine scure */
+.page-section .form-group label {
+  color: rgba(255,255,255,.9);
+  font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SUBMISSION / PROPOSAL LISTS
+   Pattern comune: card con lista di item (submission, proposal, etc.)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Container lista submission/proposal */
+.dynamic-list {
+  display: grid;
+  gap: 12px;
+}
+
+/* Singolo item (submission, proposal, etc.) */
+.dynamic-item {
+  padding: 16px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--radius-md);
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.dynamic-item:hover {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.2);
+}
+
+/* Header item (ID, autore, data) */
+.dynamic-item__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.dynamic-item__meta {
+  color: rgba(255,255,255,.7);
+  font-size: 0.9rem;
+}
+
+/* Badge status */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.status-badge--pending {
+  background: rgba(59,130,246,.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59,130,246,.3);
+}
+
+.status-badge--approved {
+  background: rgba(16,185,129,.15);
+  color: #10b981;
+  border: 1px solid rgba(16,185,129,.3);
+}
+
+.status-badge--rejected {
+  background: rgba(239,68,68,.15);
+  color: #ef4444;
+  border: 1px solid rgba(239,68,68,.3);
+}
+
+/* Task badge (read-only, mostra a quale task si riferisce) */
+.task-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.task-badge__label {
+  color: rgba(255,255,255,.6);
+  margin-right: 4px;
+}
+
+.task-badge__value {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ACTIONS AREA (bottoni approve/reject, etc.)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.dynamic-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* Mobile: bottoni full-width */
+@media (max-width: 640px) {
+  .dynamic-actions {
+    flex-direction: column;
+  }
+
+  .dynamic-actions .btn {
+    width: 100%;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TABLE RESPONSIVE (per overview task, etc.)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.dynamic-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.dynamic-table thead {
+  background: rgba(255,255,255,.08);
+  border-bottom: 2px solid rgba(255,255,255,.2);
+}
+
+.dynamic-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 700;
+  color: rgba(255,255,255,.95);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dynamic-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.9);
+}
+
+.dynamic-table tbody tr:hover {
+  background: rgba(255,255,255,.05);
+}
+
+/* Mobile: table diventa stack di card */
+@media (max-width: 768px) {
+  .dynamic-table,
+  .dynamic-table thead,
+  .dynamic-table tbody,
+  .dynamic-table tr,
+  .dynamic-table th,
+  .dynamic-table td {
+    display: block;
+  }
+
+  .dynamic-table thead {
+    display: none;
+  }
+
+  .dynamic-table tr {
+    margin-bottom: 16px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: var(--radius-md);
+    padding: 12px;
+  }
+
+  .dynamic-table td {
+    border: none;
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .dynamic-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: rgba(255,255,255,.7);
+    margin-right: 12px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   UTILITY CLASSES PER PAGINE DINAMICHE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Sezione header (titolo + azioni) */
+.dynamic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+/* Stats panel (es. "3 pending, 12 approved") */
+.dynamic-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+  padding: 16px;
+  background: rgba(255,255,255,.05);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+.dynamic-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dynamic-stat__label {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dynamic-stat__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Empty state */
+.dynamic-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255,255,255,.6);
+}
+
+.dynamic-empty__icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.dynamic-empty__text {
+  font-size: 1.1rem;
+}

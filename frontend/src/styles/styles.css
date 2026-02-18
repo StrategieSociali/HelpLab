@@ -1087,36 +1087,6 @@ select.control {
   margin-right: auto; 
 }
 
-/* CTA Button */
-.cta-button {
-  background: linear-gradient(135deg, var(--accent-green-1), var(--accent-green-2)); 
-  color: white; 
-  padding: 1rem 2rem; 
-  border: none; 
-  border-radius: var(--radius-md);
-  font-size: 1.125rem; 
-  font-weight: 600; 
-  cursor: pointer; 
-  transition: all .3s ease; 
-  display: inline-flex; 
-  align-items: center; 
-  gap: 0.5rem;
-  box-shadow: 0 10px 30px -10px rgba(16,185,129,.4);
-}
-
-.cta-button:hover { 
-  transform: translateY(-2px); 
-  box-shadow: 0 15px 40px -10px rgba(16,185,129,.6); 
-}
-
-.arrow { 
-  transition: transform .3s ease; 
-}
-
-.cta-button:hover .arrow { 
-  transform: translateX(4px); 
-}
-
 /* ─────────────────────────────────────────────────────────────────────────────
    FEATURES SECTION
    ───────────────────────────────────────────────────────────────────────────── */
@@ -1223,12 +1193,6 @@ select.control {
   color: white; 
 }
 
-.benefits-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-  gap: var(--space-xl); 
-}
-
 .benefit-card {
   background: rgba(255,255,255, var(--glass-opacity-light)); 
   padding: var(--space-xl); 
@@ -1275,12 +1239,6 @@ select.control {
   font-weight: 700; 
   margin-bottom: var(--space-2xl); 
   color: var(--text-primary); 
-}
-
-.support-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-  gap: var(--space-xl); 
 }
 
 .support-card {
@@ -2004,19 +1962,6 @@ select.control {
     margin-top: 12px;
   }
 
-  /* Hero stats */
-  .hero-stats {
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .stat {
-    width: 100%;
-    max-width: 300px;
-    justify-content: center;
-  }
-
   /* Features table */
   .table-header, 
   .table-row {
@@ -2063,17 +2008,15 @@ select.control {
     border-color: rgba(255, 255, 255, 0.6);
   }
 
-  /* Grids: benefits, support, audience */
+/* Grids: benefits, support */
   .benefits-grid,
-  .support-grid,
-  .audience-grid {
+  .support-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
 
   .benefit-card,
-  .support-card,
-  .audience-card {
+  .support-card {
     text-align: center;
     padding: 20px 12px;
   }
@@ -2104,21 +2047,6 @@ select.control {
   }
 
   .checkbox-item span {
-    font-size: 1rem;
-  }
-
-  /* CTA section */
-  .cta-section {
-    text-align: center;
-    padding: 60px 20px;
-  }
-
-  .cta-section h2 {
-    font-size: clamp(1.4rem, 5vw, 2rem);
-    margin-bottom: 12px;
-  }
-
-  .cta-section p {
     font-size: 1rem;
   }
 

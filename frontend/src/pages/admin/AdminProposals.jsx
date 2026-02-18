@@ -52,7 +52,8 @@ export function AdminProposals() {
     setBusy(b => ({ ...b, [id]: true }));
     try {
       const url = kind === "approve" ? API_PATHS.approveProposal(id) : API_PATHS.rejectProposal(id);
-      await api.patch(url, body);
+      // FIX v0.8: Fastify richiede body: object — inviare sempre almeno {}
+      await api.patch(url, body ?? {});
       // ottimistic: rimuovi la riga dalla lista corrente
       setItems(list => list.filter(x => x.id !== id));
       alert(`Proposta ${kind === "approve" ? "approvata" : "respinta"} ✅`);

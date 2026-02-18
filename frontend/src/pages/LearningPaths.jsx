@@ -19,7 +19,7 @@ export default function LearningPaths() {
     try {
       setError("");
       if (USE_API) {
-        const { data } = await api.get("learning-paths");
+        const { data } = await api.get("v1/learning-paths");
         setPaths(Array.isArray(data) ? data : []);
       } else {
         // fallback demo
@@ -40,7 +40,7 @@ export default function LearningPaths() {
     }
     try {
       if (USE_API) {
-        const { data } = await api.get("learning-paths/progress", { params: { userId } });
+        const { data } = await api.get("v1/learning-paths/progress");
         const obj =
           data && typeof data.progress === "object" && !Array.isArray(data.progress)
             ? data.progress
@@ -109,7 +109,7 @@ export default function LearningPaths() {
     try {
       setSaving(true);
       if (USE_API) {
-        await api.post(`learning-paths/${pathId}/progress`, { userId, moduleId });
+        await api.post(`v1/learning-paths/${pathId}/progress`, { moduleId });
       } else {
         const raw = localStorage.getItem("demo_lp_progress");
         const obj = raw ? JSON.parse(raw) : {};
@@ -174,7 +174,7 @@ export default function LearningPaths() {
                   <span className="chip" title={`${doneCount}/${modules.length} moduli`}>{pct}%</span>
                 </header>
 
-                {/* 🔵 Progress bar per-card (solo inline styles, nessun CSS globale) */}
+                {/* Progress bar per-card */}
                 <div
                   style={{
                     margin: "6px 0 10px",
@@ -234,4 +234,3 @@ export default function LearningPaths() {
     </section>
   );
 }
-
