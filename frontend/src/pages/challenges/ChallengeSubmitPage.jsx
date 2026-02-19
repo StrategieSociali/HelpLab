@@ -21,6 +21,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/api/client";
 import { routes } from "@/routes";
+import "../../styles/dynamic-pages.css";
 
 export default function ChallengeSubmitPage() {
   const { id: challengeId } = useParams();
@@ -180,7 +181,7 @@ export default function ChallengeSubmitPage() {
 
                   <select
                     id="taskSelect"
-                    className="control control-pill"
+                    className="control"
                     value={selectedTaskId}
                     onChange={(e) => setSelectedTaskId(e.target.value)}
                     required
@@ -252,7 +253,7 @@ export default function ChallengeSubmitPage() {
 
                   <button
                     type="button"
-                    className="btn btn-outline btn-pill"
+                    className="btn btn-outline"
                     style={{ marginTop: 8 }}
                     onClick={handleAddEvidence}
                   >
@@ -278,7 +279,7 @@ export default function ChallengeSubmitPage() {
               >
                 <button
                   type="submit"
-                  className="btn btn-primary btn-pill"
+                  className="btn btn-primary"
                   disabled={loading}
                   aria-busy={loading}
                 >

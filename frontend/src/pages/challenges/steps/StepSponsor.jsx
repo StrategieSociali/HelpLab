@@ -43,7 +43,7 @@ export default function StepSponsor({ value = {}, onChange, pointsPreview }) {
             <input
               type="number"
               min={0}
-              className="control control-pill"
+              className="control"
               value={v.sponsor_budget_requested ?? ""}
               onChange={(e) =>
                 set({

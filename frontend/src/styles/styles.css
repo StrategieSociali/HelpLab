@@ -682,6 +682,30 @@ main {
   font-size: 0.8rem; 
   font-weight: 600;
 }
+/* Chip attivo (selezionato) */
+.chip--active {
+  background: linear-gradient(135deg, var(--brand-start), var(--brand-end));
+  border-color: rgba(255,255,255,.5);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(16,185,129,.3);
+}
+
+/* Chip come bottone (interattivo) */
+button.chip {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button.chip:hover:not(.chip--active) {
+  background: rgba(255,255,255,.15);
+  border-color: rgba(255,255,255,.4);
+  transform: translateY(-1px);
+}
+
+button.chip:active {
+  transform: translateY(0);
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    CALLOUTS (Info/Error boxes)
@@ -722,6 +746,21 @@ main {
   color: white; 
 }
 
+═══════════════════════════════════════════════════════════════════════════
+   LABEL STANDALONE
+   Per label fuori da .form-group (come in StepImpact)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.95);
+  font-size: 0.95rem;
+}
+
+/* 
+
 /* Input & Select base */
 .form-group input, 
 .form-group select {
@@ -733,6 +772,37 @@ main {
   color: white; 
   font-size: 1rem;
   font-family: inherit;
+}
+
+/* Fix altezza select */
+.form-group select,
+select.control {
+  min-height: 48px;  /* garantisce spazio sufficiente per il testo */
+  line-height: 1.5;
+}
+
+/* Fix dropdown options (sfondo bianco, testo scuro) */
+.form-group select option,
+select.control option,
+select option {
+  background: #ffffff;
+  color: var(--text-primary);  /* #0f172a - testo scuro */
+  padding: 8px 12px;
+}
+
+/* Option selezionata (checked) */
+.form-group select option:checked,
+select.control option:checked,
+select option:checked {
+  background: #e5f9f1;  /* verde chiaro */
+  color: #065f46;        /* verde scuro */
+}
+
+/* Option in hover (alcuni browser lo supportano) */
+.form-group select option:hover,
+select.control option:hover {
+  background: #f3f4f6;
+  color: #111827;
 }
 
 /* Textarea */
@@ -763,6 +833,40 @@ main {
   outline: none; 
   border-color: var(--accent-green-1); 
   box-shadow: 0 0 0 3px rgba(16,185,129,.3); 
+}
+
+/* Form row: contenitore orizzontale per campi inline (es. checkbox side-by-side) */
+.form-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+/* Label con checkbox inline: checkbox a sinistra, testo a destra */
+.form-row label,
+label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Checkbox dentro label inline */
+.form-row label input[type="checkbox"],
+label input[type="checkbox"] {
+  flex-shrink: 0;  /* impedisce shrinking della checkbox */
+  margin: 0;       /* rimuove margini default */
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Testo accanto alla checkbox */
+.form-row label span,
+label:has(input[type="checkbox"]) > span {
+  color: rgba(255,255,255,.95);
 }
 
 /* Checkbox */

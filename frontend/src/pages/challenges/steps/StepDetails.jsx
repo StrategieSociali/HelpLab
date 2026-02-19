@@ -23,7 +23,7 @@ export default function StepDetails({ value = {}, onChange }) {
         <label>
           Titolo
           <input
-            className={`control control-pill ${titleLen >= TITLE_MIN ? 'input-valid' : (titleLen ? 'input-invalid' : '')}`}
+            className={`control  ${titleLen >= TITLE_MIN ? 'input-valid' : (titleLen ? 'input-invalid' : '')}`}
             placeholder={`Titolo (${TITLE_MIN}–80)`}
             value={v.title || ""}
             onChange={(e) => set({ title: e.target.value })}
@@ -50,7 +50,7 @@ export default function StepDetails({ value = {}, onChange }) {
         <label>
           Tipo impatto
           <select
-            className="control control-pill"
+            className="control "
             value={v.impact_type || ""}
             onChange={(e) => set({ impact_type: e.target.value })}
           >
@@ -67,7 +67,7 @@ export default function StepDetails({ value = {}, onChange }) {
         <label>
           Indirizzo
           <input
-            className={`control control-pill ${addrOk ? 'input-valid' : (loc.address ? 'input-invalid' : '')}`}
+            className={`control  ${addrOk ? 'input-valid' : (loc.address ? 'input-invalid' : '')}`}
             placeholder="Via/Piazza…"
             value={loc.address || ""}
             onChange={(e) => setLoc({ address: e.target.value })}
@@ -82,7 +82,7 @@ export default function StepDetails({ value = {}, onChange }) {
             Inizio
             <input
               type="date"
-              className="control control-pill"
+              className="control "
               value={v.start_date || ""}
               onChange={(e) => set({ start_date: e.target.value })}
             />
@@ -92,7 +92,7 @@ export default function StepDetails({ value = {}, onChange }) {
             Scadenza
             <input
               type="date"
-              className={`control control-pill ${datesOk ? 'input-valid' : (v.deadline ? 'input-invalid' : '')}`}
+              className={`control  ${datesOk ? 'input-valid' : (v.deadline ? 'input-invalid' : '')}`}
               value={v.deadline || ""}
               onChange={(e) => set({ deadline: e.target.value })}
             />
@@ -105,7 +105,7 @@ export default function StepDetails({ value = {}, onChange }) {
         <label>
           Visibilità organizzatore
           <select
-            className="control control-pill"
+            className="control "
             value={(v.visibility_options?.organizer_visibility) || "public"}
             onChange={(e) =>
               set({

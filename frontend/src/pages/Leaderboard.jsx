@@ -62,7 +62,7 @@ export default function Leaderboard() {
   return (
     <section className="page-section page-text">
       <div className="container">
-        <h2 className="page-title">Leaderboard utenti legacy</h2>
+        <h2 className="page-title">Leaderboard utenti</h2>
 
         {/* FILTRI */}
         <div className="card" style={{ marginBottom: 24 }}>

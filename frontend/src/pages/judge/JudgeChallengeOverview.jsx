@@ -262,7 +262,7 @@ export default function JudgeChallengeOverview() {
                 const remaining = max == null ? null : Math.max(0, max - assigned);
 
                 return (
-                  <div key={t.id} className="callout neutral" style={{ padding: 12 }}>
+                  <div key={t.id} className="card-info neutral">
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                       <div>
                         <strong>{t.label}</strong>
@@ -301,7 +301,7 @@ export default function JudgeChallengeOverview() {
             </h3>
 
             {pendingSubs.length === 0 ? (
-              <div className="callout neutral">Nessuna submission pending</div>
+              <div className="card-info neutral">Nessuna submission pending</div>
             ) : (
               <div style={{ display: "grid", gap: 12 }}>
                 {pendingSubs.map((s) => {
@@ -309,7 +309,7 @@ export default function JudgeChallengeOverview() {
                   const taskLabel = s.taskTitle || getTaskLabel(s.taskId) || "—";
 
                   return (
-                    <div key={s.id} className="callout neutral" style={{ padding: 12 }}>
+                    <div key={s.id} className="card-info neutral">
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                         <div>
                           <strong>#{s.id}</strong> {s.author ? `· ${s.author}` : ""}
@@ -398,7 +398,7 @@ export default function JudgeChallengeOverview() {
                   const taskLabel = s.taskTitle || getTaskLabel(s.taskId) || "—";
 
                   return (
-                    <div key={s.id} className="callout neutral" style={{ padding: 12, opacity: 0.9 }}>
+                    <div key={s.id} className="card-info neutral" style={{ opacity: 0.9 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                         <div>
                           <strong>#{s.id}</strong> {s.author ? `· ${s.author}` : ""}

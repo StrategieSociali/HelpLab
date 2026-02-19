@@ -41,7 +41,7 @@ export default function StepTargets({ value = {}, onChange }) {
           <label>
             Tipo target
             <input
-              className="control control-pill"
+              className="control"
               placeholder="quantità | area | numero | misto"
               value={target.kind || ""}
               onChange={(e) => setTarget({ kind: e.target.value })}
@@ -51,7 +51,7 @@ export default function StepTargets({ value = {}, onChange }) {
           <label>
             Unità
             <input
-              className="control control-pill"
+              className="control"
               placeholder="kg | m2 | sacchi | azioni"
               value={target.unit || ""}
               onChange={(e) => setTarget({ unit: e.target.value })}
@@ -62,7 +62,7 @@ export default function StepTargets({ value = {}, onChange }) {
             Quantità
             <input
               type="number"
-              className={`control control-pill ${amountOk ? 'input-valid' : (target.amount != null ? 'input-invalid' : '')}`}
+              className={`control ${amountOk ? 'input-valid' : (target.amount != null ? 'input-invalid' : '')}`}
               min={0}
               value={target.amount ?? ""}
               onChange={(e) =>
@@ -81,7 +81,7 @@ export default function StepTargets({ value = {}, onChange }) {
           {tasks.map((t, i) => (
             <div key={t.id} className="card" style={{ padding: 8, marginBottom: 6 }}>
               <input
-  className={`control control-pill ${ (t.label || '').trim().length >= 3 ? 'input-valid' : (t.label ? 'input-invalid' : '') }`}
+  className={`control ${ (t.label || '').trim().length >= 3 ? 'input-valid' : (t.label ? 'input-invalid' : '') }`}
   placeholder="Descrizione task (min 3)"
   value={t.label || ""}
   onChange={(e) => updTask(i, { label: e.target.value })}
@@ -101,7 +101,7 @@ export default function StepTargets({ value = {}, onChange }) {
                 </label>
 
                 <select
-                  className="control control-pill"
+                  className="control"
                   value={t.verification || "judge"}
                   onChange={(e) => updTask(i, { verification: e.target.value })}
                 >
@@ -113,7 +113,7 @@ export default function StepTargets({ value = {}, onChange }) {
             </div>
           ))}
 
-          <button className="btn btn-outline btn-small" onClick={addTask}>+ Aggiungi task</button>
+          <button className="btn btn-outline " onClick={addTask}>+ Aggiungi task</button>
 
           <div className={`hint ${tasksOk ? 'ok' : 'warn'}`} style={{ marginTop: 6 }}>
             {tasksOk ? 'OK' : `Aggiungi ${Math.max(0, 2 - tasks.length)} task e assicurati che almeno uno richieda evidenze`}

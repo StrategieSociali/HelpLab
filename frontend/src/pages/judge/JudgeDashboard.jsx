@@ -30,6 +30,7 @@ import TextBlock from "@/components/UI/TextBlock";
 import { useAuth } from "@/context/AuthContext";
 import { getJudgeChallenges } from "@/api/judge.api";
 import JudgeChallengeCard from "@/components/judge/JudgeChallengeCard";
+import "../../styles/dynamic-pages.css";
 
 export default function JudgeDashboard() {
   const { token } = useAuth();
