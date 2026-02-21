@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "version": "1.0-MVP",
+    "region": "Italy",
+    "last_sync": "2026-02-20",
+    "sources": {
+      "mobility": "Mimit Ed. 2025 - Guida Risparmio Carburante & ISPRA 2024",
+      "waste": "ADEME Base Empreinte 2024 / EPA Standard",
+      "social": "ISTAT 2025 - Mercato del Lavoro & SROI Proxy"
+    }
+  },
+  "mobility": [
+    {
+      "id": "car_petrol_old",
+      "label": "Auto Benzina (Pre-Euro 5)",
+      "co2_g_per_km": 178.0,
+      "reference": "ISPRA - Media parco circolante anziano"
+    },
+    {
+      "id": "car_petrol_new",
+      "label": "Auto Benzina (Euro 6d/7)",
+      "co2_g_per_km": 132.0,
+      "reference": "Mimit 2025 - Target WLTP medi"
+    },
+    {
+      "id": "car_diesel",
+      "label": "Auto Diesel (Media)",
+      "co2_g_per_km": 145.0,
+      "reference": "ISPRA 2024"
+    },
+    {
+      "id": "car_electric",
+      "label": "Auto Elettrica (BEV)",
+      "co2_g_per_km": 36.5,
+      "reference": "Mix Energetico IT 2026 (stima 220g CO2/kWh)"
+    }
+  ],
+  "waste": [
+    {
+      "id": "plastic_mix",
+      "label": "Plastica (Raccolta Differenziata)",
+      "avoided_co2_kg_per_kg": 1.25,
+      "unit_visual": "Sacco 80L (~4kg)"
+    },
+    {
+      "id": "glass",
+      "label": "Vetro",
+      "avoided_co2_kg_per_kg": 0.38,
+      "unit_visual": "Sacco piccolo (~10kg)"
+    },
+    {
+      "id": "paper",
+      "label": "Carta/Cartone",
+      "avoided_co2_kg_per_kg": 0.72,
+      "unit_visual": "Scatola media (~5kg)"
+    },
+    {
+      "id": "mixed_litter",
+      "label": "Rifiuto Indifferenziato (Pulizia parchi)",
+      "avoided_co2_kg_per_kg": 0.42,
+      "unit_visual": "Sacco condominiale (~8kg)"
+    }
+  ],
+  "social_impact": {
+    "volunteer_hour_value_eur": 21.50,
+    "reference": "ISTAT 2025 - Costo medio orario servizi sociali"
+  }
+}

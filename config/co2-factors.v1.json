@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "region": "IT",
+    "last_sync": "2026-02-21",
+    "sources": {
+      "mobility": "ISPRA 2024 - Fattori emissione medi parco circolante / Mimit Ed. 2025"
+    },
+    "notes": "I valori numerici sono riservati e non vengono mai esposti al frontend. Il frontend riceve solo id e label tramite GET /api/v1/co2-factors/mobility."
+  },
+  "mobility": [
+    {
+      "id": "car_petrol_old",
+      "label": "Auto Benzina (Pre-Euro 5)",
+      "co2_g_per_km": 178.0,
+      "reference": "ISPRA 2024 - Media parco circolante anziano"
+    },
+    {
+      "id": "car_petrol_new",
+      "label": "Auto Benzina (Euro 6d/7)",
+      "co2_g_per_km": 132.0,
+      "reference": "Mimit 2025 - Target WLTP medi"
+    },
+    {
+      "id": "car_diesel",
+      "label": "Auto Diesel (Media)",
+      "co2_g_per_km": 145.0,
+      "reference": "ISPRA 2024"
+    },
+    {
+      "id": "car_electric",
+      "label": "Auto Elettrica (BEV)",
+      "co2_g_per_km": 36.5,
+      "reference": "Mix energetico IT 2026 - stima 220g CO2/kWh"
+    },
+    {
+      "id": "motorbike",
+      "label": "Moto / Scooter",
+      "co2_g_per_km": 85.0,
+      "reference": "ISPRA 2024 - Media cilindrata 125-300cc"
+    },
+    {
+      "id": "none",
+      "label": "Non avrei usato nessun mezzo",
+      "co2_g_per_km": 0.0,
+      "reference": "N/A"
+    }
+  ]
+}
