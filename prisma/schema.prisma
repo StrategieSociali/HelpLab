@@ -315,8 +315,9 @@ model challenge_tasks {
 
   challenges            challenges              @relation(fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_task_challenge")
   challenge_submissions challenge_submissions[]
-  max_points            Int? // quota punti del task
-  co2_quota             Float?                  @db.Double // quota CO₂ (se climate)
+  max_points            Int?
+  co2_quota             Float?                  @db.Double
+  payload_schema        Json?                   // schema di validazione campi obbligatori nel payload della submission
 
   @@unique([challenge_id, order_index], map: "uq_task_challenge_order")
   @@index([challenge_id], map: "idx_task_challenge")
