@@ -38,6 +38,7 @@ import JudgeChallengeOverview from './pages/judge/JudgeChallengeOverview';
 import SponsorPublicProfile from './pages/sponsors/SponsorPublicProfile';
 import SponsorsList from "./pages/sponsors/SponsorsList";
 import SponsorProfileEditor from "./pages/sponsors/SponsorProfileEditor";
+import ChallengeLiveDashboard from './pages/challenges/ChallengeLiveDashboard';
 
 import '@/styles/styles.css';
 
@@ -76,6 +77,8 @@ export default function App() {
 
               {/* ===== CHALLENGES (pubbliche + user) ===== */}
               <Route path={routes.dashboard.challenges} element={<Challenges />} />
+             
+             
 
               <Route
                 path={routes.dashboard.challengeSubmit}
@@ -85,6 +88,8 @@ export default function App() {
                  </ProtectedRoute>
                 }
               />
+              
+              <Route path={routes.dashboard.challengeLive()} element={<ChallengeLiveDashboard />} />
 
                {/* ===== ME / USER AREA ===== */}
 <Route

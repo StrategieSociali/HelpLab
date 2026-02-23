@@ -30,7 +30,7 @@ export default function LogoutButton({ onAfterLogout }) {
   return (
     <button
       type="button"
-      className="btn btn-outline btn-pill"
+      className="btn btn-outline"
       onClick={handleLogout}
     >
       {t("label")}

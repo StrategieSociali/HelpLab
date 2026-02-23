@@ -109,6 +109,12 @@
   color: #fecaca;
 }
 
+.card-info.success {
+  background: rgba(16,185,129,.15);
+  border: 1px solid rgba(16,185,129,.3);
+  color: #6ee7b7;
+}
+
 .card-info .muted,
 .card-info small {
   color: rgba(255,255,255,.7);

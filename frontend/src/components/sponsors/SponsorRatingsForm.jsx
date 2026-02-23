@@ -11,6 +11,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import "../../styles/dynamic-pages.css";
 
 const API_BASE = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, "");
 
@@ -73,13 +74,13 @@ export default function SponsorRatingsForm({ sponsorId, onSuccess }) {
 
   return (
     <div className="card" style={{ marginTop: 32 }}>
-      <h3 className="page-title" style={{ marginBottom: 16 }}>
+      <h3 className="dynamic-title" style={{ marginBottom: 16 }}>
         Lascia una recensione
       </h3>
 
-      {error && <div className="callout error">{error}</div>}
+      {error && <div className="card-info" style={{ background: "rgba(239,68,68,.15)", borderColor: "rgba(239,68,68,.3)", color: "#fecaca" }}>{error}</div>}
       {success && (
-        <div className="callout success">
+        <div className="card-info" style={{ background: "rgba(16,185,129,.15)", borderColor: "rgba(16,185,129,.3)", color: "#6ee7b7" }}>
           Recensione inviata con successo.
         </div>
       )}
@@ -113,7 +114,7 @@ export default function SponsorRatingsForm({ sponsorId, onSuccess }) {
 
         <button
           type="submit"
-          className="submit-button"
+          className="btn btn-primary"
           disabled={loading}
           aria-busy={loading}
         >

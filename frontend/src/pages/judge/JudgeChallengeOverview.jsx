@@ -336,6 +336,11 @@ export default function JudgeChallengeOverview() {
 
                       {s.activity && <p style={{ marginTop: 10, marginBottom: 10 }}>{s.activity}</p>}
 
+                      {/* ── Dati dichiarati dal volontario (payload) ──────────
+                          Sola lettura per il giudice. vehicleLabels è solo
+                          display — nessun calcolo avviene qui (backend). */}
+                      {s.payload && <PayloadDisplay payload={s.payload} />}
+
                       <div style={{ display: "grid", gap: 10 }}>
                         <div className="form-group" style={{ marginBottom: 0 }}>
                           <label>Punti (solo se approvi)</label>
@@ -429,5 +434,121 @@ export default function JudgeChallengeOverview() {
         </div>
       </div>
     </section>
+  );
+}
+
+// ─── Componente: visualizzazione payload submission ───────────────────────────
+/**
+ * Mostra in sola lettura i dati dichiarati dal volontario.
+ * Usato nella card pending del giudice per permettere la valutazione
+ * senza dover aprire file o cercare altrove.
+ *
+ * vehicleLabels è solo per display: non usare per logica o calcoli.
+ * La mappa è qui perché è informazione di presentazione, non di business.
+ */
+const vehicleLabels = {
+  car_petrol_old: "Auto Benzina (Pre-Euro 5)",
+  car_petrol_new: "Auto Benzina (Euro 6d/7)",
+  car_diesel:     "Auto Diesel (Media)",
+  car_electric:   "Auto Elettrica (BEV)",
+  motorbike:      "Moto / Scooter",
+  none:           "Nessun mezzo alternativo",
+};
+
+function PayloadDisplay({ payload }) {
+  if (!payload || typeof payload !== "object") return null;
+
+  const { km_percorsi, vehicle_id, evidences, kg_rifiuti, num_alberi } = payload;
+  const hasData = km_percorsi != null || vehicle_id || kg_rifiuti != null || num_alberi != null;
+  const photos  = Array.isArray(evidences) ? evidences.filter(Boolean) : [];
+
+  return (
+    <div
+      style={{
+        margin: "10px 0",
+        padding: "10px 14px",
+        background: "rgba(255,255,255,0.06)",
+        borderRadius: 8,
+        borderLeft: "3px solid rgba(255,255,255,0.2)",
+      }}
+    >
+      <div className="muted small" style={{ marginBottom: 8, fontWeight: 600, letterSpacing: "0.03em" }}>
+        DATI DICHIARATI DAL VOLONTARIO
+      </div>
+
+      {/* Dati numerici e testuali */}
+      {hasData && (
+        <dl style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "4px 16px", margin: 0 }}>
+          {km_percorsi != null && (
+            <>
+              <dt className="muted small">Km percorsi in bici</dt>
+              <dd style={{ margin: 0, fontWeight: 600 }}>{km_percorsi} km</dd>
+            </>
+          )}
+          {vehicle_id && (
+            <>
+              <dt className="muted small">Mezzo alternativo</dt>
+              <dd style={{ margin: 0, fontWeight: 600 }}>
+                {vehicleLabels[vehicle_id] || vehicle_id}
+              </dd>
+            </>
+          )}
+          {kg_rifiuti != null && (
+            <>
+              <dt className="muted small">Kg rifiuti raccolti</dt>
+              <dd style={{ margin: 0, fontWeight: 600 }}>{kg_rifiuti} kg</dd>
+            </>
+          )}
+          {num_alberi != null && (
+            <>
+              <dt className="muted small">Alberi piantati</dt>
+              <dd style={{ margin: 0, fontWeight: 600 }}>{num_alberi}</dd>
+            </>
+          )}
+        </dl>
+      )}
+
+      {/* Foto caricate — miniature cliccabili */}
+      {photos.length > 0 && (
+        <div style={{ marginTop: hasData ? 10 : 0 }}>
+          <div className="muted small" style={{ marginBottom: 6 }}>
+            Foto caricate ({photos.length})
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {photos.map((url, i) => (
+              <a
+                key={i}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`Apri foto ${i + 1} in una nuova scheda`}
+                aria-label={`Foto evidenza ${i + 1}`}
+                style={{ display: "block", flexShrink: 0 }}
+              >
+                <img
+                  src={url}
+                  alt={`Evidenza ${i + 1}`}
+                  style={{
+                    width: 72,
+                    height: 72,
+                    objectFit: "cover",
+                    borderRadius: 6,
+                    border: "2px solid rgba(255,255,255,0.15)",
+                    cursor: "pointer",
+                    transition: "border-color 0.2s",
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"}
+                  onMouseOut={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"}
+                />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!hasData && photos.length === 0 && (
+        <span className="muted small">Nessun dato aggiuntivo dichiarato.</span>
+      )}
+    </div>
   );
 }

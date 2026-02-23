@@ -28,6 +28,7 @@ export const routes = {
   dashboard: {
     challenges: '/challenges',
     challengeSubmit: '/challenges/:id/submit',
+    challengeLive: (id = ':id') => `/challenges/${id}/live`,
     learningPaths: '/learning-paths',
     // protette
     userProfile: '/dashboard/profile',

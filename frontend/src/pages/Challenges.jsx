@@ -326,6 +326,17 @@ export default function Challenges() {
                     Accedi per partecipare
                   </button>
                 )}
+
+                {/* Link dashboard live — visibile a tutti, loggati e non.
+                    Gerarchia visiva bassa per non competere con le CTA
+                    principali. Porta a /challenges/:id/live (pubblica). */}
+                <button
+                  className="btn btn-ghost btn-small"
+                  onClick={() => navigate(routes.dashboard.challengeLive(ch.id))}
+                  style={{ width: "100%", marginTop: 4 }}
+                >
+                  📊 Segui l&apos;impatto live
+                </button>
               </div>
 
               <div className="card-footer">

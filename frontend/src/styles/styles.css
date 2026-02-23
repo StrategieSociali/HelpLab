@@ -730,6 +730,72 @@ button.chip:active {
   background: #fee2e2; 
 }
 
+/* Notice box (info/warning box generico) */
+.notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.95);
+  margin-bottom: 16px;
+}
+
+/* Notice info (blu/teal) */
+.notice--info {
+  background: rgba(20,184,166,.12);
+  border-color: rgba(20,184,166,.3);
+  color: #99f6e4;
+}
+
+/* Notice warning (giallo) */
+.notice--warning {
+  background: rgba(251,191,36,.12);
+  border-color: rgba(251,191,36,.3);
+  color: #fde68a;
+}
+
+/* Notice error (rosso) */
+.notice--error {
+  background: rgba(239,68,68,.12);
+  border-color: rgba(239,68,68,.3);
+  color: #fecaca;
+}
+
+/* Notice success (verde) */
+.notice--success {
+  background: rgba(16,185,129,.12);
+  border-color: rgba(16,185,129,.3);
+  color: #6ee7b7;
+}
+
+/* Icon placeholder (optional, se serve un'icona) */
+.notice__icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  /* L'icona può essere aggiunta via background-image o content */
+}
+
+/* Notice content */
+.notice__content {
+  flex: 1;
+  line-height: 1.5;
+}
+
+.notice__content a {
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.notice__content a:hover {
+  text-decoration: none;
+  opacity: 0.8;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    FORMS (Input, Select, Textarea, Checkbox)
    ───────────────────────────────────────────────────────────────────────────── */

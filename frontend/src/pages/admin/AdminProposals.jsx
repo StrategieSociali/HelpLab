@@ -48,7 +48,7 @@ export function AdminProposals() {
   }, [status]);
 
   const act = async (id, kind /* 'approve'|'reject' */, body = null) => {
-    if (!isAdmin) return alert("Permessi insufficienti (admin).");
+    if (!isAdminUser) return alert("Permessi insufficienti (admin).");
     setBusy(b => ({ ...b, [id]: true }));
     try {
       const url = kind === "approve" ? API_PATHS.approveProposal(id) : API_PATHS.rejectProposal(id);
@@ -72,7 +72,7 @@ export function AdminProposals() {
     }
   };
 
-  if (!isAdmin) {
+  if (!isAdminUser) {
     return (
       <section className="page-section page-text">
         <div className="container">
