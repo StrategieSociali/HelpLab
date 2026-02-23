@@ -3,23 +3,115 @@
  * Scopo: gestione delle submission dei volontari nelle challenge
  *
  * Funzionalità:
- * - GET /challenges/:id/submissions → lista submission visibili (rispetta privacy)
- * - POST /challenges/:id/submissions → creazione submission (autenticato, task_id obbligatorio)
- * - POST /submissions/:id/review → approvazione/rifiuto da parte del giudice
+ * - GET  /challenges/:id/submissions  → lista submission visibili (rispetta privacy)
+ * - POST /challenges/:id/submissions  → creazione submission (autenticato, task_id obbligatorio)
+ * - POST /submissions/:id/review      → approvazione/rifiuto da parte del giudice
+ * - GET  /user/submissions            → lista submission dell'utente corrente
  *
- * Flusso: il volontario crea una submission collegata a un task specifico,
- * il giudice la approva o rifiuta. All'approvazione vengono assegnati i punti.
+ * Cache:
+ * All'approvazione di una submission viene invalidata la cache del summary
+ * della challenge (TTL 30s) per aggiornare immediatamente i counter CO2
+ * nella dashboard evento.
  */
-import type { FastifyInstance, FastifyReply } from 'fastify'
+import type { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
-import { requireAuth, optionalAuth  } from '../../utils/requireAuth.js'
+import { requireAuth, optionalAuth } from '../../utils/requireAuth.js'
 import { onApprove } from '../../services/scoring/onApprove.js'
-import { invalidateLeaderboardCache } from '../../services/leaderboardService.js'
-import { generateLeaderboardCacheKey } from '../../services/leaderboardService.js'
+import {
+  invalidateLeaderboardCache,
+  generateLeaderboardCacheKey
+} from '../../services/leaderboardService.js'
+import { invalidateSummaryCache } from './summary.js'
 import { users_role } from '@prisma/client'
 
 
-// Invalida leaderboard globale
+// ================================
+// Tipi interni per payload_schema
+// ================================
+interface PayloadFieldSchema {
+  name:      string
+  type:      'number' | 'string' | 'boolean' | 'url_array'
+  required?: boolean
+  min?:      number
+  max?:      number
+  minItems?: number
+}
+
+interface TaskPayloadSchema {
+  fields: PayloadFieldSchema[]
+}
+
+// ================================
+// Motore di validazione payload
+// Restituisce array di messaggi di errore (vuoto = valido)
+// ================================
+function validatePayload(payload: Record<string, unknown>, schema: TaskPayloadSchema): string[] {
+  const errors: string[] = []
+
+  for (const field of schema.fields) {
+    const value = payload[field.name]
+    const missing = value === undefined || value === null
+
+    if (missing) {
+      if (field.required) {
+        errors.push(`Campo obbligatorio mancante: "${field.name}"`)
+      }
+      continue
+    }
+
+    switch (field.type) {
+      case 'number': {
+        const n = Number(value)
+        if (isNaN(n)) {
+          errors.push(`"${field.name}" deve essere un numero`)
+          break
+        }
+        if (field.min !== undefined && n < field.min) {
+          errors.push(`"${field.name}" deve essere almeno ${field.min}`)
+        }
+        if (field.max !== undefined && n > field.max) {
+          errors.push(`"${field.name}" non può superare ${field.max}`)
+        }
+        break
+      }
+      case 'string': {
+        if (typeof value !== 'string' || value.trim() === '') {
+          errors.push(`"${field.name}" deve essere una stringa non vuota`)
+        }
+        break
+      }
+      case 'boolean': {
+        if (typeof value !== 'boolean') {
+          errors.push(`"${field.name}" deve essere true o false`)
+        }
+        break
+      }
+      case 'url_array': {
+        if (!Array.isArray(value)) {
+          errors.push(`"${field.name}" deve essere un array di URL`)
+          break
+        }
+        const minItems = field.minItems ?? 1
+        if (value.length < minItems) {
+          errors.push(
+            `"${field.name}" richiede almeno ${minItems} element${minItems === 1 ? 'o' : 'i'}`
+          )
+        }
+        const invalidUrls = value.filter(v => typeof v !== 'string' || v.trim() === '')
+        if (invalidUrls.length > 0) {
+          errors.push(`"${field.name}" contiene elementi non validi`)
+        }
+        break
+      }
+    }
+  }
+
+  return errors
+}
+
+// ================================
+// Invalida leaderboard globale (tutte le finestre temporali)
+// ================================
 async function invalidateGlobalLeaderboards() {
   await Promise.all([
     invalidateLeaderboardCache(generateLeaderboardCacheKey('user-global', { window: 'all' })),
@@ -28,7 +120,9 @@ async function invalidateGlobalLeaderboards() {
   ])
 }
 
-// visibilità consentita in base al ruolo/contesto
+// ================================
+// Calcola i livelli di visibilità consentiti in base al ruolo
+// ================================
 async function computeVisibilityFilter(opts: {
   challengeId: bigint
   user: { id: bigint | null; role: string | null }
@@ -54,7 +148,9 @@ async function computeVisibilityFilter(opts: {
   return allowed
 }
 
+
 export async function submissionsV1Routes(app: FastifyInstance) {
+
   // ================================
   // GET /api/v1/challenges/:id/submissions
   // ================================
@@ -71,7 +167,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          limit: { type: 'number' },
+          limit:  { type: 'number' },
           cursor: { type: 'string' }
         }
       },
@@ -79,7 +175,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         200: {
           type: 'object',
           properties: {
-            items: { type: 'array', items: { type: 'object', additionalProperties: true } },
+            items:      { type: 'array', items: { type: 'object', additionalProperties: true } },
             nextCursor: { anyOf: [{ type: 'string' }, { type: 'null' }] }
           }
         }
@@ -87,7 +183,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
     }
   }, async (req: any, reply) => {
     const cid = BigInt(String((req.params as any).id))
-    const q = req.query || {}
+    const q   = req.query || {}
     const limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)))
 
     let cursorDate: Date | null = null
@@ -97,53 +193,54 @@ export async function submissionsV1Routes(app: FastifyInstance) {
     }
 
     const user = {
-      id: (req.user?.id ? BigInt(req.user.id) : null) as any,
+      id:   (req.user?.id ? BigInt(req.user.id) : null) as any,
       role: req.user?.role ?? null
     }
     const allowed = await computeVisibilityFilter({ challengeId: cid, user })
-   
+
     const where: any = {
       challenge_id: cid as any,
-      visibility: { in: allowed as any }
+      visibility:   { in: allowed as any }
     }
     if (cursorDate) where.created_at = { lt: cursorDate }
 
     const rows = await prisma.challenge_submissions.findMany({
       where,
       select: {
-        id: true,
-        challenge_id: true,
-        user_id: true,
-        task_id: true,
-        reviewer_user_id: true,
-        status: true,
-        visibility: true,
+        id:                  true,
+        challenge_id:        true,
+        user_id:             true,
+        task_id:             true,
+        reviewer_user_id:    true,
+        status:              true,
+        visibility:          true,
         activity_description: true,
-        payload_json: true,
-        points_awarded: true,
-        created_at: true,
-        reviewed_at: true,
+        payload_json:        true,
+        points_awarded:      true,
+        created_at:          true,
+        reviewed_at:         true,
         users: { select: { username: true } },
-        task: { select: { id: true, title: true } }
+        task:  { select: { id: true, title: true } }
       },
       orderBy: { created_at: 'desc' },
       take: limit + 1
     })
 
-    const more = rows.length > limit
+    const more  = rows.length > limit
     const items = rows.slice(0, limit).map((r: any) => ({
-      id: Number(r.id),
-      author: r.users?.username ?? null,
-      status: r.status,
+      id:         Number(r.id),
+      author:     r.users?.username ?? null,
+      status:     r.status,
       visibility: r.visibility,
-      activity: r.activity_description ?? null,
-      payload: r.payload_json ?? {},
-      points: r.points_awarded ?? null,
-      taskId: r.task_id ? Number(r.task_id) : null,
-      taskTitle: r.task?.title ?? null,
-      createdAt: r.created_at?.toISOString() ?? null,
+      activity:   r.activity_description ?? null,
+      payload:    r.payload_json ?? {},
+      points:     r.points_awarded ?? null,
+      taskId:     r.task_id ? Number(r.task_id) : null,
+      taskTitle:  r.task?.title ?? null,
+      createdAt:  r.created_at?.toISOString() ?? null,
       reviewedAt: r.reviewed_at?.toISOString() ?? null
     }))
+
     const nextCursor = more && rows[limit]?.created_at
       ? rows[limit].created_at.toISOString()
       : null
@@ -151,9 +248,9 @@ export async function submissionsV1Routes(app: FastifyInstance) {
     return reply.send({ items, nextCursor })
   })
 
+
   // ================================
-  // POST /api/v1/challenges/:id/submissions (crea)
-  // task_id è obbligatorio: il volontario sceglie a quale task si riferisce
+  // POST /api/v1/challenges/:id/submissions
   // ================================
   app.post('/challenges/:id/submissions', {
     preHandler: requireAuth(),
@@ -168,10 +265,10 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       body: {
         type: 'object',
         properties: {
-          task_id: { type: 'number' },
-          visibility: { enum: ['private', 'participants', 'public'] },
+          task_id:              { type: 'number' },
+          visibility:           { enum: ['private', 'participants', 'public'] },
           activity_description: { type: 'string' },
-          payload: { type: 'object' }
+          payload:              { type: 'object' }
         },
         required: ['payload', 'task_id']
       },
@@ -179,19 +276,24 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         201: {
           type: 'object',
           properties: {
-            id: { type: 'number' },
+            id:     { type: 'number' },
             status: { type: 'string' },
             taskId: { type: 'number' }
           }
         },
-        400: { type: 'object', properties: { error: { type: 'string' } } }
+        400: {
+          type: 'object',
+          properties: {
+            error:  { type: 'string' },
+            errors: { type: 'array', items: { type: 'string' } }
+          }
+        }
       }
     }
   }, async (req: any, reply) => {
-    const cid = BigInt(String((req.params as any).id))
+    const cid  = BigInt(String((req.params as any).id))
     const body = req.body || {}
 
-    // Validazione task_id
     if (!body.task_id) {
       return reply.code(400).send({ error: 'task_id è obbligatorio' })
     }
@@ -203,42 +305,51 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       return reply.code(400).send({ error: 'task_id non valido' })
     }
 
-    // Verifica che il task esista e appartenga a questa challenge
     const task = await prisma.challenge_tasks.findUnique({
-      where: { id: taskId as any },
-      select: { id: true, challenge_id: true }
+      where:  { id: taskId as any },
+      select: { id: true, challenge_id: true, payload_schema: true }
     })
 
-    if (!task || task.challenge_id !== cid) {
+    if (!task || BigInt(task.challenge_id as any) !== cid) {
       return reply.code(400).send({ error: 'task non valido per questa challenge' })
     }
 
-    const visibility = (body.visibility ?? 'participants') as 'private' | 'participants' | 'public'
-    const activity = (body.activity_description ?? '').toString().slice(0, 500)
     const payload = body.payload && typeof body.payload === 'object' ? body.payload : {}
+    const schema  = (task as any).payload_schema as TaskPayloadSchema | null
+
+    if (schema?.fields?.length) {
+      const errors = validatePayload(payload, schema)
+      if (errors.length > 0) {
+        return reply.code(400).send({ error: 'Payload non valido', errors })
+      }
+    }
+
+    const visibility = (body.visibility ?? 'participants') as 'private' | 'participants' | 'public'
+    const activity   = (body.activity_description ?? '').toString().slice(0, 500)
 
     const created = await prisma.challenge_submissions.create({
       data: {
-        challenge_id: cid as any,
-        user_id: req.user.id as any,
-        task_id: taskId as any,
-        status: 'pending',
+        challenge_id:         cid as any,
+        user_id:              req.user.id as any,
+        task_id:              taskId as any,
+        status:               'pending',
         visibility,
         activity_description: activity || null,
-        payload_json: payload as any
+        payload_json:         payload as any
       },
       select: { id: true, status: true, task_id: true }
     })
 
     return reply.code(201).send({
-      id: Number(created.id),
+      id:     Number(created.id),
       status: created.status,
       taskId: Number(created.task_id)
     })
   })
 
+
   // ================================
-  // POST /api/v1/submissions/:id/review (approve/reject)
+  // POST /api/v1/submissions/:id/review
   // ================================
   app.post('/submissions/:id/review', {
     preHandler: requireAuth(users_role.judge),
@@ -254,8 +365,8 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         type: 'object',
         properties: {
           decision: { enum: ['approved', 'rejected'] },
-          points: { type: 'number' },
-          note: { type: 'string' }
+          points:   { type: 'number' },
+          note:     { type: 'string' }
         },
         required: ['decision']
       }
@@ -265,13 +376,13 @@ export async function submissionsV1Routes(app: FastifyInstance) {
     const { decision, points, note } = req.body
 
     const sub = await prisma.challenge_submissions.findUnique({
-      where: { id: sid },
+      where:  { id: sid },
       select: {
-        id: true,
-        status: true,
+        id:           true,
+        status:       true,
         challenge_id: true,
-        user_id: true,
-        task_id: true
+        user_id:      true,
+        task_id:      true
       }
     })
 
@@ -279,15 +390,13 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       return reply.code(404).send({ error: 'submission non trovata o già revisionata' })
     }
 
-    // Il task_id è già presente dalla creazione della submission
     if (!sub.task_id) {
       return reply.code(400).send({ error: 'submission senza task associato' })
     }
 
-    // Verifica permessi se non admin
     if (req.user.role !== 'admin') {
       const ch = await prisma.challenges.findUnique({
-        where: { id: sub.challenge_id },
+        where:  { id: sub.challenge_id },
         select: { judge_user_id: true }
       })
       if (!ch?.judge_user_id || BigInt(ch.judge_user_id) !== BigInt(req.user.id)) {
@@ -297,50 +406,51 @@ export async function submissionsV1Routes(app: FastifyInstance) {
 
     const now = new Date()
 
-    // Transazione: update submission + audit
     await prisma.$transaction([
       prisma.challenge_submissions.update({
         where: { id: sid },
         data: {
-          status: decision,
+          status:           decision,
           reviewer_user_id: req.user.id,
-          reviewed_at: now,
-          points_awarded: decision === 'approved' ? points ?? 0 : 0
+          reviewed_at:      now,
+          points_awarded:   decision === 'approved' ? points ?? 0 : 0
         }
       }),
       prisma.review_audit.create({
         data: {
-          submission_id: sid,
+          submission_id:    sid,
           reviewer_user_id: BigInt(req.user.id),
-          action: decision === 'approved' ? 'approve' : 'reject',
-          points_awarded: decision === 'approved' ? points ?? 0 : 0,
-          note: note ?? null
+          action:           decision === 'approved' ? 'approve' : 'reject',
+          points_awarded:   decision === 'approved' ? points ?? 0 : 0,
+          note:             note ?? null
         }
       })
     ])
 
-    // Se approved, esegui hook e cache invalidate
     if (decision === 'approved') {
       try {
         await onApprove({
-          submission_id: sub.id,
-          challenge_id: sub.challenge_id,
-          user_id: sub.user_id,
+          submission_id:    sub.id,
+          challenge_id:     sub.challenge_id,
+          user_id:          sub.user_id,
           reviewer_user_id: req.user.id,
-          delta: points ?? 0,
-          event: 'task_completed_verified',
-          version: '1.0',
+          delta:            points ?? 0,
+          event:            'task_completed_verified',
+          version:          '1.0',
           meta: {
             review_context: 'manual_approval',
-            judge_role: req.user.role
+            judge_role:     req.user.role
           }
         })
 
-        // Invalida cache leaderboard
         await invalidateLeaderboardCache(
           generateLeaderboardCacheKey('challenge', { challenge_id: sub.challenge_id })
         )
         await invalidateGlobalLeaderboards()
+
+        // Invalida la cache del summary per aggiornare immediatamente
+        // i counter CO2 e km nella dashboard evento
+        invalidateSummaryCache(Number(sub.challenge_id))
 
       } catch (err) {
         req.log.error({ err }, 'Errore in onApprove hook')
@@ -348,28 +458,27 @@ export async function submissionsV1Routes(app: FastifyInstance) {
     }
 
     return reply.send({
-      id: Number(sid),
-      status: decision,
-      points: points ?? 0,
+      id:         Number(sid),
+      status:     decision,
+      points:     points ?? 0,
       reviewedAt: now.toISOString()
     })
   })
 
+
   // ================================
   // GET /api/v1/user/submissions
-  // Protetto — lista submission dell'utente autenticato
-  // (spostato da summary.ts per coerenza)
   // ================================
   app.get('/user/submissions', {
     preHandler: requireAuth(),
     schema: {
       tags: ['Submissions v1'],
-      summary: 'Lista submission dell\'utente corrente',
+      summary: "Lista submission dell'utente corrente",
       querystring: {
         type: 'object',
         properties: {
           status: { enum: ['pending', 'approved', 'rejected', 'all'], default: 'all' },
-          limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+          limit:  { type: 'integer', minimum: 1, maximum: 100, default: 20 },
           cursor: { type: 'string' }
         }
       },
@@ -377,7 +486,7 @@ export async function submissionsV1Routes(app: FastifyInstance) {
         200: {
           type: 'object',
           properties: {
-           items: { type: 'array', items: { type: 'object', additionalProperties: true } },
+            items:      { type: 'array', items: { type: 'object', additionalProperties: true } },
             nextCursor: { anyOf: [{ type: 'string' }, { type: 'null' }] }
           }
         }
@@ -396,36 +505,37 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       orderBy: { created_at: 'desc' },
       take: limit + 1,
       select: {
-        id: true,
-        challenge_id: true,
-        task_id: true,
-        status: true,
-        visibility: true,
+        id:                   true,
+        challenge_id:         true,
+        task_id:              true,
+        status:               true,
+        visibility:           true,
         activity_description: true,
-        payload_json: true,
-        points_awarded: true,
-        created_at: true,
-        reviewed_at: true,
+        payload_json:         true,
+        points_awarded:       true,
+        created_at:           true,
+        reviewed_at:          true,
         challenges: { select: { title: true } },
-        task: { select: { title: true } }
+        task:       { select: { title: true } }
       }
     })
 
-    const more = rows.length > limit
+    const more  = rows.length > limit
     const items = rows.slice(0, limit).map((r: any) => ({
-      id: Number(r.id),
-      challenge_id: Number(r.challenge_id),
+      id:              Number(r.id),
+      challenge_id:    Number(r.challenge_id),
       challenge_title: r.challenges?.title ?? '',
-      taskId: r.task_id ? Number(r.task_id) : null,
-      taskTitle: r.task?.title ?? null,
-      status: r.status,
-      visibility: r.visibility,
-      activity: r.activity_description ?? null,
-      payload: r.payload_json ?? {},
-      points: r.points_awarded ?? null,
-      createdAt: r.created_at.toISOString(),
-      reviewedAt: r.reviewed_at ? r.reviewed_at.toISOString() : null
+      taskId:          r.task_id ? Number(r.task_id) : null,
+      taskTitle:       r.task?.title ?? null,
+      status:          r.status,
+      visibility:      r.visibility,
+      activity:        r.activity_description ?? null,
+      payload:         r.payload_json ?? {},
+      points:          r.points_awarded ?? null,
+      createdAt:       r.created_at.toISOString(),
+      reviewedAt:      r.reviewed_at ? r.reviewed_at.toISOString() : null
     }))
+
     const nextCursor = more ? rows[limit].created_at.toISOString() : null
 
     return reply.send({ items, nextCursor })
