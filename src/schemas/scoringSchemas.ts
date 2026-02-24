@@ -2,70 +2,64 @@
 import { z } from 'zod'
 
 export const previewBodySchema = z.object({
-  proposalId: z.string().optional(),
-  status: z.string().optional(),
-  version: z.string().optional(),
-  title: z.string().optional(),
+  proposalId:  z.string().optional(),
+  status:      z.string().optional(),
+  version:     z.string().optional(),
+  title:       z.string().optional(),
   description: z.string().optional(),
   impact_type: z.string().optional(),
   target: z.object({
-    kind: z.string().optional(),
-    unit: z.string().optional(),
+    kind:   z.string().optional(),
+    unit:   z.string().optional(),
     amount: z.number().positive().optional()
   }).optional(),
   tasks: z.array(z.object({
-    id: z.string().optional(),
-    label: z.string().optional(),
+    id:               z.string().optional(),
+    label:            z.string().optional(),
     evidence_required: z.boolean().optional(),
-    verification: z.enum(['judge','auto','user']).optional()
+    verification:     z.enum(['judge', 'auto', 'user']).optional(),
+    payload_schema:   z.any().optional()   // ← aggiunto
   })).optional(),
   co2e_estimate_kg: z.number().positive().optional(),
-  difficulty: z.enum(['low','medium','high']).optional()
+  difficulty:       z.enum(['low', 'medium', 'high']).optional()
 }).refine(d => !(d.co2e_estimate_kg && d.difficulty), {
   message: 'co2e_estimate_kg e difficulty sono mutuamente esclusivi'
 })
 
 export const proposalBodySchema = z.object({
-  title: z.string().min(5),
+  title:       z.string().min(5),
   description: z.string().min(50),
   impact_type: z.string().optional(),
-
   location: z.object({
     address: z.string().min(3),
-    geo: z.any().optional()
+    geo:     z.any().optional()
   }).optional(),
-
-  // YYYY-MM-DD (stringhe ISO corte)
   start_date: z.string().optional(),
-  deadline: z.string().optional(),
-
+  deadline:   z.string().optional(),
   target: z.object({
-    kind: z.string().optional(),
-    unit: z.string().optional(),
+    kind:   z.string().optional(),
+    unit:   z.string().optional(),
     amount: z.number().positive()
   }),
-
-  // 🔧 modifiche minime:
-  // - id: opzionale
-  // - label: OBBLIGATORIA (min 3) per evitare payload inconsistenti
   tasks: z.array(z.object({
-    id: z.string().min(1).optional(),
-    label: z.string().min(3),                 // ← reso required
+    id:               z.string().min(1).optional(),
+    label:            z.string().min(3),
     evidence_required: z.boolean().default(false),
-    verification: z.enum(['judge','auto','user']).default('user')
+    verification:     z.enum(['judge', 'auto', 'user']).default('user'),
+    max_points:       z.number().int().nonnegative().nullable().optional(),
+    co2_quota:        z.number().nonnegative().nullable().optional(),
+    payload_schema:   z.any().optional()   // ← aggiunto — preservato nel JSON della proposal
+                                           //   e copiato in challenge_tasks.payload_schema
+                                           //   da copyProposalTasks al momento dell'approvazione
   })).min(2),
-
-  visibility_options: z.any().optional(),
-
-  co2e_estimate_kg: z.number().positive().optional(),
-  difficulty: z.enum(['low','medium','high']).optional(),
-
-  complexity_notes: z.string().optional(),
-  sponsor_interest: z.boolean().optional(),
-  sponsor_pitch: z.string().optional(),
+  visibility_options:       z.any().optional(),
+  co2e_estimate_kg:         z.number().positive().optional(),
+  difficulty:               z.enum(['low', 'medium', 'high']).optional(),
+  complexity_notes:         z.string().optional(),
+  sponsor_interest:         z.boolean().optional(),
+  sponsor_pitch:            z.string().optional(),
   sponsor_budget_requested: z.number().int().nonnegative().optional(),
-
-  terms_consent: z.literal(true)
+  terms_consent:            z.literal(true)
 })
 .refine(d => !(d.co2e_estimate_kg && d.difficulty), {
   message: 'co2e_estimate_kg e difficulty sono mutuamente esclusivi'

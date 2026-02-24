@@ -75,6 +75,7 @@ export async function proposalsV1Routes(app: FastifyInstance) {
 
     const limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)))
 
+    // cursor su updated_at se valido
     let cursorDate: Date | null = null
     if (q.cursor) {
       const d = new Date(String(q.cursor))
@@ -151,24 +152,18 @@ export async function proposalsV1Routes(app: FastifyInstance) {
     if (body?.co2e_estimate_kg !== undefined) body.co2e_estimate_kg = Number(body.co2e_estimate_kg)
     if (body?.sponsor_budget_requested !== undefined) body.sponsor_budget_requested = Number(body.sponsor_budget_requested)
 
-    // 3) Normalizza i task preservando payload_schema
-    // IMPORTANTE: payload_schema viene mantenuto nel JSON della proposal
-    // in modo che copyProposalTasks possa trasferirlo ai challenge_tasks
-    // al momento dell'approvazione.
+    // 3) Autogenera id nei task se mancanti
     if (Array.isArray(body?.tasks)) {
       let i = 1
       body.tasks = body.tasks.map((t: any) => ({
-        id:               t?.id || `t${i++}`,
-        label:            t.label,
+        id: t?.id || `t${i++}`,
+        label: t.label,
         evidence_required: !!t.evidence_required,
-        verification:     t.verification || 'user',
-        max_points:       t.max_points   ?? null,
-        co2_quota:        t.co2_quota    ?? null,
-        payload_schema:   t.payload_schema ?? null  // ← preservato
+        verification: t.verification || 'user'
       }))
     }
 
-    // 4) Validazione Zod
+    // 4) Validazione Zod (XOR co2/difficulty e regole)
     const parsed = proposalBodySchema.safeParse(body)
     if (!parsed.success) {
       const issues = parsed.error.issues.map(i => (i.path.join('.') || '(root)') + ': ' + i.message)
@@ -181,12 +176,12 @@ export async function proposalsV1Routes(app: FastifyInstance) {
 
     const created = await prisma.challenge_proposals.create({
       data: {
-        user_id:          uid as any,
-        title:            b.title,
-        description:      b.description,
-        impact_type:      b.impact_type,
-        start_date:       b.start_date ? new Date(b.start_date) : null,
-        deadline:         b.deadline   ? new Date(b.deadline)   : null,
+        user_id: uid as any,
+        title: b.title,
+        description: b.description,
+        impact_type: b.impact_type,
+        start_date: b.start_date ? new Date(b.start_date) : null,
+        deadline:    b.deadline    ? new Date(b.deadline)    : null,
         location_address: b.location?.address,
         location_geo:     b.location?.geo as any,
         target:           b.target as any,
@@ -198,32 +193,36 @@ export async function proposalsV1Routes(app: FastifyInstance) {
         sponsor_interest: b.sponsor_interest ?? false,
         sponsor_pitch:    b.sponsor_pitch,
         sponsor_budget_requested: b.sponsor_budget_requested ?? null,
-        terms_consent:    true,
-        status:           'pending_review'
+        terms_consent: true,
+        status: 'pending_review'
       } as any,
       select: { id: true, status: true }
     })
 
     return reply.code(201).send({
       proposalId: created.id,
-      status:     created.status,
-      version:    '1.0'
+      status: created.status,
+      version: '1.0'
     })
   })
 
   // =========================
   // PATCH /api/v1/challenge-proposals/:id/approve   (SOLO ADMIN)
+  // - Segna la proposal "approved"
+  // - Crea/aggiorna la riga su "challenges" (idempotente via slug)
   // =========================
+
+  // Helper: slug base + suffisso breve (evita collisioni)
   function toSlugBase(s: string) {
     return (s || '')
       .toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
-      .slice(0, 60)
+      .slice(0, 60);
   }
   function shortId(n = 6) {
-    return Math.random().toString(36).slice(2, 2 + n)
+    return Math.random().toString(36).slice(2, 2 + n);
   }
 
   app.patch('/challenge-proposals/:id/approve', {
@@ -264,14 +263,14 @@ export async function proposalsV1Routes(app: FastifyInstance) {
     const p = await prisma.challenge_proposals.findUnique({
       where: { id },
       select: {
-        id:               true,
-        status:           true,
-        title:            true,
-        impact_type:      true,
+        id: true,
+        status: true,
+        title: true,
+        impact_type: true,
         location_address: true,
-        deadline:         true,
-        target:           true,
-        challenge_id:     true
+        deadline: true,
+        target: true,
+        challenge_id: true
       }
     })
 
@@ -280,26 +279,28 @@ export async function proposalsV1Routes(app: FastifyInstance) {
       return reply.code(409).send({ error: 'invalid status transition' })
     }
 
-    const now         = new Date()
-    const title       = p.title ?? '(senza titolo)'
-    const type        = p.impact_type ?? 'generic'
-    const slug        = `${toSlugBase(title) || 'challenge'}-${shortId(6)}`
-    const challengeId = (p as any).challenge_id ?? null
+    const now = new Date()
+    const title = p.title ?? '(senza titolo)'
+    const type = p.impact_type ?? 'generic'
+    const slug = `${toSlugBase(title) || 'challenge'}-${shortId(6)}`
+    const challengeId: bigint | null = (p as any).challenge_id ?? null
 
     const { outId, outUpdatedAt } = await prisma.$transaction(async (tx) => {
       const challengeData: any = {
         title,
         type,
         location: p.location_address ?? null,
-        rules:    '',
+        rules: '',
         deadline: p.deadline ? new Date(p.deadline) : null,
         target_json: p.target as any,
-        status:   'open'
+        status: 'open'
       }
 
+      // Solo se tipo "climate"
       if (type === 'climate' && approved_co2 !== undefined) {
         challengeData.approved_co2 = approved_co2
       }
+
       if (max_points !== undefined) {
         challengeData.max_points = max_points
       }
@@ -310,7 +311,7 @@ export async function proposalsV1Routes(app: FastifyInstance) {
       if (challengeId) {
         const upd = await tx.challenges.update({
           where: { id: challengeId as any },
-          data:  challengeData,
+          data: challengeData,
           select: { id: true, updated_at: true }
         })
         createdOrUpdatedId = upd.id
@@ -319,10 +320,10 @@ export async function proposalsV1Routes(app: FastifyInstance) {
         const crt = await tx.challenges.create({
           data: {
             ...challengeData,
-            proposal_uuid:   p.id,
+            proposal_uuid: p.id,
             slug,
             budget_currency: 'EUR',
-            judge_user_id:   null
+            judge_user_id: null
           },
           select: { id: true, updated_at: true }
         })
@@ -330,13 +331,15 @@ export async function proposalsV1Routes(app: FastifyInstance) {
         updatedAt = crt.updated_at
       }
 
+      // Copia i task dalla proposal alla tabella challenge_tasks
+      // Usa il client di transazione (tx) per garantire atomicità
       await copyProposalTasks(p.id, createdOrUpdatedId, tx as any)
 
       await tx.challenge_proposals.update({
         where: { id: p.id },
         data: {
-          status:       'approved',
-          approved_at:  now,
+          status: 'approved',
+          approved_at: now,
           challenge_id: createdOrUpdatedId
         }
       })
@@ -345,10 +348,10 @@ export async function proposalsV1Routes(app: FastifyInstance) {
     })
 
     return reply.send({
-      proposalId:  id,
-      status:      'approved',
+      proposalId: id,
+      status: 'approved',
       challengeId: Number(outId),
-      updatedAt:   (outUpdatedAt ?? now).toISOString()
+      updatedAt: (outUpdatedAt ?? now).toISOString()
     })
   })
 
@@ -376,8 +379,8 @@ export async function proposalsV1Routes(app: FastifyInstance) {
           type: 'object',
           properties: {
             proposalId: { type: 'string' },
-            status:     { type: 'string' },
-            updatedAt:  { type: 'string' }
+            status: { type: 'string' },
+            updatedAt: { type: 'string' }
           }
         },
         400: { type: 'object', properties: { error: { type: 'string' } } },
@@ -391,10 +394,7 @@ export async function proposalsV1Routes(app: FastifyInstance) {
   }, async (req: any, reply) => {
     try {
       const id = String((req.params || {}).id)
-      const p  = await prisma.challenge_proposals.findUnique({
-        where:  { id },
-        select: { id: true, status: true }
-      })
+      const p = await prisma.challenge_proposals.findUnique({ where: { id }, select: { id: true, status: true } })
       if (!p) return reply.code(404).send({ error: 'not found' })
 
       if (p.status === 'approved') {
@@ -403,7 +403,7 @@ export async function proposalsV1Routes(app: FastifyInstance) {
 
       await prisma.challenge_proposals.update({
         where: { id },
-        data:  { status: 'rejected', updated_at: new Date() as any }
+        data: { status: 'rejected', updated_at: new Date() as any }
       })
       return reply.send({ proposalId: id, status: 'rejected', updatedAt: new Date().toISOString() })
     } catch (err) {
