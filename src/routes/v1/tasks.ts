@@ -3,12 +3,17 @@
  * Scopo: CRUD dei task associati a una challenge
  *
  * Funzionalità:
- * - GET  /challenges/:id/tasks           → lista task ordinati (pubblico)
- * - POST /challenges/:id/tasks           → crea un task (admin)
- * - GET  /tasks/:id/submissions          → lista submission per task (judge/admin)
+ * - GET   /challenges/:id/tasks               → lista task ordinati (pubblico)
+ * - POST  /challenges/:id/tasks               → crea un task (admin)
+ * - PATCH /challenges/:id/tasks/:taskId       → modifica task (giudice assegnato o admin)
+ * - GET   /tasks/:id/submissions              → lista submission per task (judge/admin)
+ *
+ * Regola modifica task:
+ * Solo il giudice assegnato alla challenge o un admin possono modificare un task.
+ * Il giudice può aggiornare: title, description, order_index, max_points, co2_quota, payload_schema.
  *
  * Struttura payload_schema (Json opzionale):
- * Permette all'admin di definire quali campi sono obbligatori nel payload
+ * Permette all'admin o al giudice di definire quali campi sono obbligatori nel payload
  * di una submission collegata a questo task. Il backend legge lo schema
  * al momento della ricezione della submission e valida il payload prima
  * di salvarlo. Questo rende la validazione generica e configurabile senza
@@ -27,6 +32,20 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { requireAuth } from '../../utils/requireAuth.js'
 import { users_role } from '@prisma/client'
+import { z } from 'zod'
+
+
+// ================================
+// Schema validazione PATCH task
+// ================================
+const patchTaskSchema = z.object({
+  title:          z.string().min(3).max(200).optional(),
+  description:    z.string().optional(),
+  order_index:    z.number().int().min(0).optional(),
+  max_points:     z.number().int().min(0).optional(),
+  co2_quota:      z.number().min(0).optional(),
+  payload_schema: z.any().optional()
+}).strict()
 
 
 export async function tasksV1Routes(app: FastifyInstance) {
@@ -61,21 +80,22 @@ export async function tasksV1Routes(app: FastifyInstance) {
     const challengeId = BigInt(id)
 
     const tasks = await prisma.challenge_tasks.findMany({
-      where: { challenge_id: challengeId },
+      where:   { challenge_id: challengeId },
       orderBy: { order_index: 'asc' }
     })
 
     return reply.send(tasks.map(t => ({
-      id: Number(t.id),
-      title: t.title,
-      description: t.description ?? '',
-      order_index: t.order_index,
-      max_points: t.max_points ?? null,
-      co2_quota: t.co2_quota ?? null,
+      id:             Number(t.id),
+      title:          t.title,
+      description:    t.description ?? '',
+      order_index:    t.order_index,
+      max_points:     (t as any).max_points     ?? null,
+      co2_quota:      (t as any).co2_quota      ?? null,
       payload_schema: (t as any).payload_schema ?? null,
-      created_at: t.created_at.toISOString()
+      created_at:     t.created_at.toISOString()
     })))
   })
+
 
   // ================================
   // POST /api/v1/challenges/:id/tasks
@@ -121,7 +141,7 @@ export async function tasksV1Routes(app: FastifyInstance) {
 
     const task = await prisma.challenge_tasks.create({
       data: {
-        challenge_id: challengeId,
+        challenge_id:   challengeId,
         title,
         description:    description    ?? null,
         order_index:    order_index    ?? 0,
@@ -136,12 +156,119 @@ export async function tasksV1Routes(app: FastifyInstance) {
       title:          task.title,
       description:    task.description ?? '',
       order_index:    task.order_index,
-      max_points:     (task as any).max_points ?? null,
-      co2_quota:      (task as any).co2_quota ?? null,
+      max_points:     (task as any).max_points     ?? null,
+      co2_quota:      (task as any).co2_quota      ?? null,
       payload_schema: (task as any).payload_schema ?? null,
       created_at:     task.created_at.toISOString()
     })
   })
+
+
+  // ================================
+  // PATCH /api/v1/challenges/:id/tasks/:taskId
+  // Modifica task — giudice assegnato o admin
+  // ================================
+  app.patch('/challenges/:id/tasks/:taskId', {
+    preHandler: requireAuth(users_role.judge),
+    schema: {
+      tags: ['Tasks v1'],
+      summary: 'Modifica un task (giudice assegnato o admin)',
+      description: 'Il giudice assegnato alla challenge può modificare title, description, order_index, max_points, co2_quota e payload_schema del task.',
+      params: {
+        type: 'object',
+        properties: {
+          id:     { type: 'number' },
+          taskId: { type: 'number' }
+        },
+        required: ['id', 'taskId']
+      },
+      body: {
+        type: 'object',
+        properties: {
+          title:          { type: 'string', minLength: 3, maxLength: 200 },
+          description:    { type: 'string' },
+          order_index:    { type: 'integer', minimum: 0 },
+          max_points:     { type: 'integer', minimum: 0 },
+          co2_quota:      { type: 'number',  minimum: 0 },
+          payload_schema: { type: 'object', description: 'Schema validazione campi submission' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          additionalProperties: true
+        },
+        400: { type: 'object', properties: { error: { type: 'string' }, errors: { type: 'object' } } },
+        403: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req: any, reply) => {
+    const { id, taskId } = req.params as { id: string; taskId: string }
+    const challengeId    = BigInt(id)
+    const taskIdBig      = BigInt(taskId)
+
+    // Verifica che il task appartenga alla challenge indicata
+    const task = await prisma.challenge_tasks.findUnique({
+      where:  { id: taskIdBig },
+      select: { id: true, challenge_id: true }
+    })
+
+    if (!task || BigInt(task.challenge_id as any) !== challengeId) {
+      return reply.code(404).send({ error: 'Task non trovato per questa challenge' })
+    }
+
+    // Verifica autorizzazione: admin sempre, judge solo se assegnato alla challenge
+    const challenge = await prisma.challenges.findUnique({
+      where:  { id: challengeId },
+      select: { judge_user_id: true }
+    })
+
+    if (!challenge) return reply.code(404).send({ error: 'Challenge non trovata' })
+
+    const isAdmin         = req.user.role === users_role.admin
+    const isAssignedJudge = challenge.judge_user_id !== null &&
+                            BigInt(challenge.judge_user_id as any) === BigInt(req.user.id)
+
+    if (!isAdmin && !isAssignedJudge) {
+      return reply.code(403).send({ error: 'Non autorizzato: devi essere il giudice assegnato o un admin' })
+    }
+
+    const parsed = patchTaskSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return reply.code(400).send({ errors: parsed.error.flatten().fieldErrors })
+    }
+
+    const data = parsed.data
+    if (Object.keys(data).length === 0) {
+      return reply.code(400).send({ error: 'Nessun campo da aggiornare fornito' })
+    }
+
+    const updateData: Record<string, any> = {}
+    if (data.title          !== undefined) updateData.title          = data.title
+    if (data.description    !== undefined) updateData.description    = data.description
+    if (data.order_index    !== undefined) updateData.order_index    = data.order_index
+    if (data.max_points     !== undefined) updateData.max_points     = data.max_points
+    if (data.co2_quota      !== undefined) updateData.co2_quota      = data.co2_quota
+    if (data.payload_schema !== undefined) updateData.payload_schema = data.payload_schema
+
+    const updated = await prisma.challenge_tasks.update({
+      where: { id: taskIdBig },
+      data:  updateData as any
+    })
+
+    return reply.send({
+      id:             Number((updated as any).id),
+      title:          updated.title,
+      description:    updated.description ?? '',
+      order_index:    updated.order_index,
+      max_points:     (updated as any).max_points     ?? null,
+      co2_quota:      (updated as any).co2_quota      ?? null,
+      payload_schema: (updated as any).payload_schema ?? null,
+      created_at:     updated.created_at.toISOString()
+    })
+  })
+
 
   // ================================
   // GET /api/v1/tasks/:id/submissions
@@ -172,22 +299,22 @@ export async function tasksV1Routes(app: FastifyInstance) {
     const taskId = BigInt(id)
 
     const submissions = await prisma.challenge_submissions.findMany({
-      where: { task_id: taskId },
+      where:  { task_id: taskId },
       select: {
-        id:            true,
-        status:        true,
+        id:             true,
+        status:         true,
         points_awarded: true,
-        reviewed_at:   true,
-        users:         { select: { username: true } }
+        reviewed_at:    true,
+        users:          { select: { username: true } }
       }
     })
 
     return reply.send(submissions.map(s => ({
-      id:            Number(s.id),
-      status:        s.status,
+      id:             Number(s.id),
+      status:         s.status,
       points_awarded: s.points_awarded ?? 0,
-      author:        s.users?.username ?? 'anon',
-      reviewed_at:   s.reviewed_at ? s.reviewed_at.toISOString() : null
+      author:         s.users?.username ?? 'anon',
+      reviewed_at:    s.reviewed_at ? s.reviewed_at.toISOString() : null
     })))
   })
 }

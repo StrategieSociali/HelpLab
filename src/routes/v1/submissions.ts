@@ -3,10 +3,16 @@
  * Scopo: gestione delle submission dei volontari nelle challenge
  *
  * Funzionalità:
- * - GET  /challenges/:id/submissions  → lista submission visibili (rispetta privacy)
- * - POST /challenges/:id/submissions  → creazione submission (autenticato, task_id obbligatorio)
- * - POST /submissions/:id/review      → approvazione/rifiuto da parte del giudice
- * - GET  /user/submissions            → lista submission dell'utente corrente
+ * - GET   /challenges/:id/submissions  → lista submission visibili (rispetta privacy)
+ * - POST  /challenges/:id/submissions  → creazione submission (autenticato, task_id obbligatorio)
+ * - PATCH /submissions/:id             → modifica submission rifiutata (solo autore, solo se rejected)
+ * - POST  /submissions/:id/review      → approvazione/rifiuto da parte del giudice
+ * - GET   /user/submissions            → lista submission dell'utente corrente
+ *
+ * Regola modifica:
+ * Una submission può essere modificata dal suo autore solo quando è in stato "rejected".
+ * Dopo la modifica torna automaticamente in stato "pending" per una nuova revisione.
+ * Il payload viene rivalidato contro il payload_schema del task prima del salvataggio.
  *
  * Cache:
  * All'approvazione di una submission viene invalidata la cache del summary
@@ -344,6 +350,135 @@ export async function submissionsV1Routes(app: FastifyInstance) {
       id:     Number(created.id),
       status: created.status,
       taskId: Number(created.task_id)
+    })
+  })
+
+
+  // ================================
+  // PATCH /api/v1/submissions/:id
+  // Modifica submission rifiutata — solo autore, solo se status = rejected
+  // Dopo la modifica la submission torna in stato "pending"
+  // Il payload viene rivalidato contro il payload_schema del task
+  // ================================
+  app.patch('/submissions/:id', {
+    preHandler: requireAuth(),
+    schema: {
+      tags: ['Submissions v1'],
+      summary: 'Modifica submission rifiutata (solo autore)',
+      description: 'Permette al volontario di correggere una submission rifiutata. La submission torna in stato pending per una nuova revisione. Il payload viene rivalidato contro lo schema del task.',
+      params: {
+        type: 'object',
+        properties: { id: { type: 'number' } },
+        required: ['id']
+      },
+      body: {
+        type: 'object',
+        properties: {
+          activity_description: { type: 'string', maxLength: 500 },
+          visibility:           { enum: ['private', 'participants', 'public'] },
+          payload:              { type: 'object' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id:        { type: 'number' },
+            status:    { type: 'string' },
+            updatedAt: { type: 'string' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            error:  { type: 'string' },
+            errors: { type: 'array', items: { type: 'string' } }
+          }
+        },
+        403: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req: any, reply) => {
+    const sid    = BigInt(req.params.id)
+    const userId = BigInt(req.user.id)
+    const body   = req.body || {}
+
+    // Recupera la submission con il task per poter rivalidare il payload
+    const sub = await prisma.challenge_submissions.findUnique({
+      where: { id: sid },
+      select: {
+        id:           true,
+        user_id:      true,
+        status:       true,
+        task_id:      true,
+        task: {
+          select: { payload_schema: true }
+        }
+      }
+    })
+
+    if (!sub) {
+      return reply.code(404).send({ error: 'Submission non trovata' })
+    }
+
+    // Solo l'autore può modificare
+    if (BigInt(sub.user_id as any) !== userId) {
+      return reply.code(403).send({ error: 'Non autorizzato: puoi modificare solo le tue submission' })
+    }
+
+    // Solo se rejected
+    if (sub.status !== 'rejected') {
+      return reply.code(400).send({
+        error: `Modifica non consentita: la submission è in stato "${sub.status}". Solo le submission rifiutate possono essere modificate.`
+      })
+    }
+
+    // Almeno un campo deve essere presente nel body
+    const hasPayload     = body.payload     !== undefined
+    const hasActivity    = body.activity_description !== undefined
+    const hasVisibility  = body.visibility  !== undefined
+
+    if (!hasPayload && !hasActivity && !hasVisibility) {
+      return reply.code(400).send({ error: 'Nessun campo da aggiornare fornito' })
+    }
+
+    // Rivalidazione payload se fornito
+    if (hasPayload) {
+      const payload = typeof body.payload === 'object' ? body.payload : {}
+      const schema  = (sub.task as any)?.payload_schema as TaskPayloadSchema | null
+
+      if (schema?.fields?.length) {
+        const errors = validatePayload(payload, schema)
+        if (errors.length > 0) {
+          return reply.code(400).send({ error: 'Payload non valido', errors })
+        }
+      }
+    }
+
+    // Costruisce l'oggetto di aggiornamento con solo i campi forniti
+    const updateData: Record<string, any> = {
+      status:       'pending',   // torna sempre in pending dopo la modifica
+      reviewed_at:  null,        // azzera la data di revisione precedente
+      reviewer_user_id: null     // azzera il reviewer precedente
+    }
+
+    if (hasActivity)   updateData.activity_description = body.activity_description?.toString().slice(0, 500) ?? null
+    if (hasVisibility) updateData.visibility            = body.visibility
+    if (hasPayload)    updateData.payload_json          = body.payload
+
+    const updated = await prisma.challenge_submissions.update({
+      where: { id: sid },
+      data:  updateData,
+      select: { id: true, status: true, updated_at: true }
+    } as any)
+
+    return reply.send({
+      id:        Number(updated.id),
+      status:    updated.status,
+      updatedAt: (updated as any).updated_at
+        ? new Date((updated as any).updated_at).toISOString()
+        : new Date().toISOString()
     })
   })
 
