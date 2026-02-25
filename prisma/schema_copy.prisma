@@ -98,7 +98,6 @@ model challenges {
   challenge_proposals                challenge_proposals?     @relation(fields: [proposal_id], references: [id], onUpdate: NoAction, map: "fk_chal_proposal")
   points_transactions                points_transactions[]
   sponsorships                       challenge_sponsorships[] @relation("challenge_sponsorships")
-  event_links                        event_challenges[]
 
   @@index([judge_user_id], map: "fk_ch_judge")
   @@index([sponsor_id], map: "fk_ch_sponsor")
@@ -215,10 +214,6 @@ model users {
   sponsor_ratings   sponsor_ratings[]         @relation("sponsor_rater") // utente valuta sponsor
   sponsorships      challenge_sponsorships[]  @relation("user_sponsor_link")
   learning_progress learning_paths_progress[] // completamento learning path
-
-  // Relazione eventi creati dall'utente
-  events            events[]
-  event_consents    event_consents[]
 }
 
 model form_submissions {
@@ -358,65 +353,6 @@ model sponsor_ratings {
   @@id([sponsor_id, user_id])
 }
 
-// ============================================================
-// EVENTS — Aggregatori di evento (v0.9)
-// ============================================================
-
-model events {
-  id               BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
-  name             String        @db.VarChar(200)
-  slug             String        @unique @db.VarChar(160)
-  description      String?       @db.Text
-  logo_url         String?       @db.VarChar(255)
-  start_date       DateTime      @db.Date
-  end_date         DateTime      @db.Date
-  location_address String?       @db.VarChar(255)
-  location_geo     Json?         // { "lat": 44.49, "lon": 11.34 }
-  status           events_status @default(draft)
-  created_by       BigInt?       @db.UnsignedBigInt
-  created_at       DateTime      @default(now())
-  updated_at       DateTime      @default(now()) @updatedAt
-
-  // Relazioni
-  creator          users?             @relation(fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_ev_creator")
-  challenge_links  event_challenges[]
-  consents         event_consents[]
-
-  @@index([status], map: "idx_ev_status")
-  @@index([created_by], map: "idx_ev_created_by")
-  @@index([start_date], map: "idx_ev_start_date")
-}
-
-model event_challenges {
-  event_id     BigInt @db.UnsignedBigInt
-  challenge_id BigInt @db.UnsignedBigInt
-
-  event     events     @relation(fields: [event_id], references: [id], onDelete: Cascade, map: "fk_ec_event")
-  challenge challenges @relation(fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_ec_challenge")
-
-  @@id([event_id, challenge_id])
-  @@index([challenge_id], map: "idx_ec_challenge")
-}
-
-model event_consents {
-  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  event_id     BigInt   @db.UnsignedBigInt
-  user_id      BigInt   @db.UnsignedBigInt
-  // Testo cristallizzato al momento dell'accettazione — GDPR compliance
-  consent_text String   @db.Text
-  consented_at DateTime @default(now())
-
-  event events @relation(fields: [event_id], references: [id], onDelete: Cascade, map: "fk_econ_event")
-  user  users  @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_econ_user")
-
-  @@unique([event_id, user_id], map: "uq_event_consent")
-  @@index([user_id], map: "idx_econ_user")
-}
-
-// ============================================================
-// ENUMS
-// ============================================================
-
 enum users_role {
   user
   judge
@@ -463,11 +399,4 @@ enum challenge_submissions_visibility {
   private
   participants
   public
-}
-
-enum events_status {
-  draft
-  published
-  ended
-  rejected
 }

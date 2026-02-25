@@ -21,6 +21,7 @@ import { sponsorRoutes }          from './sponsor.js'
 import { sponsorRatingsRoutes }   from './sponsorRatings.js'
 import { learningPathsV1Routes }  from './learningPaths.js'
 import { co2FactorsV1Routes }     from './co2Factors.js'
+import eventsRoutes from './events.js'
 
 export async function v1Routes(app: FastifyInstance) {
   await app.register(scoringV1Routes)
@@ -38,4 +39,6 @@ export async function v1Routes(app: FastifyInstance) {
   await app.register(authV1Routes, { prefix: '/auth' })
   await app.register(learningPathsV1Routes)
   await app.register(co2FactorsV1Routes)
+  await app.register(eventsRoutes)
+  
 }
