@@ -23,31 +23,15 @@ export const routes = {
   },
 
   /* ======================
-   * EVENTI
-   *
-   * REGOLA: le route usano sempre lo slug dalla response BE.
-   * Mai costruire lo slug dal nome lato client.
-   * Il BE lo rigenera automaticamente ad ogni PATCH del nome.
-   * ====================== */
-  events: {
-    list:      '/eventi',
-    detail:    (slug = ':slug') => `/eventi/${slug}`,
-    live:      (slug = ':slug') => `/eventi/${slug}/live`,
-    mine:      '/me/eventi',
-    create:    '/dashboard/eventi/crea',
-    edit:      (id = ':id') => `/dashboard/eventi/${id}/modifica`,
-    adminList: '/dashboard/admin/eventi',
-  },
-
-  /* ======================
    * CHALLENGES & LEARNING
    * ====================== */
   dashboard: {
-    challenges:      '/challenges',
+    challenges: '/challenges',
     challengeSubmit: '/challenges/:id/submit',
-    challengeLive:   (id = ':id') => `/challenges/${id}/live`,
-    learningPaths:   '/learning-paths',
-    userProfile:     '/dashboard/profile',
+    challengeLive: (id = ':id') => `/challenges/${id}/live`,
+    learningPaths: '/learning-paths',
+    // protette
+    userProfile: '/dashboard/profile',
     challengeCreate: '/dashboard/challenges/create',
   },
 
@@ -69,7 +53,7 @@ export const routes = {
    * JUDGES
    * ====================== */
   judge: {
-    dashboard:        '/judge',
+    dashboard: '/judge',
     challengeOverview: (id = ':id') => `/judge/challenges/${id}`,
   },
 
@@ -77,15 +61,13 @@ export const routes = {
    * ADMIN
    * ====================== */
   admin: {
-    proposals:   '/dashboard/admin/proposals',
+    proposals: '/dashboard/admin/proposals',
     assignJudge: '/dashboard/admin/assign-judge',
-    events:      '/dashboard/admin/eventi',
   },
 
   /* ======================
    * MISC
    * ====================== */
-  roadmap:  '/roadmap',
-  privacy:  '/privacy',
+  roadmap: '/roadmap',
   notFound: '*',
-};
+}

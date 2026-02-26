@@ -172,26 +172,6 @@ export default function Header() {
                 {t("nav.leaderboard")}
               </NavLink>
 
-              {/* I miei eventi + Crea evento — solo se autenticato */}
-              {isAuthenticated && (
-                <>
-                  <NavLink
-                    to={routes.events.mine}
-                    className="btn"
-                    onClick={() => { setMenuOpen(false); setPartecipaOpen(false); }}
-                  >
-                    {t("nav.myEvents", "I miei eventi")}
-                  </NavLink>
-                  <NavLink
-                    to={routes.events.create}
-                    className="btn"
-                    onClick={() => { setMenuOpen(false); setPartecipaOpen(false); }}
-                  >
-                    {t("nav.createEvent", "Crea evento")}
-                  </NavLink>
-                </>
-              )}
-
             </div>
           </div>
 

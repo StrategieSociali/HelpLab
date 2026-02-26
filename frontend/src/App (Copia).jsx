@@ -1,4 +1,4 @@
-// src/App.jsx
+//App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
@@ -19,11 +19,11 @@ import WelcomeInfo from './pages/WelcomeInfo';
 
 import Challenges from './pages/Challenges';
 import ChallengeSubmitPage from './pages/challenges/ChallengeSubmitPage';
-import ChallengeLiveDashboard from './pages/challenges/ChallengeLiveDashboard';
-import CreateChallenge from './pages/challenges/CreateChallenge';
 
 import MyContributions from "@/pages/me/MyContributions";
+
 import UserProfile from './pages/UserProfile';
+import CreateChallenge from './pages/challenges/CreateChallenge';
 import LearningPaths from './pages/LearningPaths';
 import Leaderboard from './pages/Leaderboard';
 import BusinessPackages from './pages/BusinessPackages';
@@ -31,22 +31,14 @@ import Roadmap from './pages/Roadmap';
 
 import { AdminProposals } from './pages/admin/AdminProposals';
 import StepAssignJudge from './pages/admin/steps/StepAssignJudge';
-import AdminEvents from './pages/admin/AdminEvents';
 
+// ⚖️ NUOVO: giudici e sponsor v0.8
 import JudgeDashboard from './pages/judge/JudgeDashboard';
 import JudgeChallengeOverview from './pages/judge/JudgeChallengeOverview';
-
 import SponsorPublicProfile from './pages/sponsors/SponsorPublicProfile';
 import SponsorsList from "./pages/sponsors/SponsorsList";
 import SponsorProfileEditor from "./pages/sponsors/SponsorProfileEditor";
-
-// ── 🎉 EVENTI (sprint events v1.1) ──────────────────────────────────────────
-import EventsList from './pages/events/EventsList';
-import EventDetail from './pages/events/EventDetail';
-import EventLiveDashboard from './pages/events/EventLiveDashboard';
-import CreateEvent from './pages/events/CreateEvent';
-import EditEvent from './pages/events/EditEvent';
-import MyEvents from './pages/events/MyEvents';
+import ChallengeLiveDashboard from './pages/challenges/ChallengeLiveDashboard';
 
 import '@/styles/styles.css';
 
@@ -62,19 +54,20 @@ export default function App() {
             <Routes>
 
               {/* ===== PUBBLICHE ===== */}
-              <Route path={routes.home}          element={<HomepageStatic />} />
-              <Route path={routes.auth.login}    element={<Login />} />
+              <Route path={routes.home} element={<HomepageStatic />} />
+              <Route path={routes.auth.login} element={<Login />} />
               <Route path={routes.auth.register} element={<Register />} />
-              <Route path={routes.joinHelpLab}   element={<JoinHelpLab />} />
-              <Route path={routes.info}          element={<WelcomeInfo />} />
-              <Route path={routes.leaderboard}   element={<Leaderboard />} />
-              <Route path={routes.business.packages}      element={<BusinessPackages />} />
-              <Route path={routes.roadmap}                element={<Roadmap />} />
-              <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
+              <Route path={routes.joinHelpLab} element={<JoinHelpLab />} />
+              <Route path={routes.info} element={<WelcomeInfo />} />
 
+              <Route path={routes.leaderboard} element={<Leaderboard />} />
+              <Route path={routes.business.packages} element={<BusinessPackages />} />
+              <Route path={routes.roadmap} element={<Roadmap />} />
+              <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
+              
               {/* ===== COMMUNITY / SPONSORS ===== */}
-              <Route path={routes.community.sponsors}          element={<SponsorsList />} />
-              <Route path={routes.community.sponsorProfile()}  element={<SponsorPublicProfile />} />
+              <Route path={routes.community.sponsors} element={<SponsorsList />} />
+              <Route path={routes.community.sponsorProfile()} element={<SponsorPublicProfile />} />
 
               {/* redirect legacy */}
               <Route
@@ -82,62 +75,31 @@ export default function App() {
                 element={<Navigate to={routes.dashboard.learningPaths} replace />}
               />
 
-              {/* ===== EVENTI (pubblici — nessun token richiesto) ===== */}
-              <Route path={routes.events.list}     element={<EventsList />} />
-              <Route path={routes.events.detail()} element={<EventDetail />} />
-              <Route path={routes.events.live()}   element={<EventLiveDashboard />} />
-
-              {/* ===== EVENTI — AREA PERSONALE ===== */}
-              {/* I miei eventi — tutti i ruoli autenticati */}
-              <Route
-                path={routes.events.mine}
-                element={
-                  <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
-                    <MyEvents />
-                  </ProtectedRoute>
-                }
-              />
-              {/* Crea evento — tutti i ruoli autenticati (BE crea in draft, admin approva) */}
-              <Route
-                path={routes.events.create}
-                element={
-                  <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
-                    <CreateEvent />
-                  </ProtectedRoute>
-                }
-              />
-              {/* Modifica evento — creatore o admin (guard ruolo nel componente) */}
-              <Route
-                path={routes.events.edit()}
-                element={
-                  <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
-                    <EditEvent />
-                  </ProtectedRoute>
-                }
-              />
-
               {/* ===== CHALLENGES (pubbliche + user) ===== */}
               <Route path={routes.dashboard.challenges} element={<Challenges />} />
-              <Route path={routes.dashboard.challengeLive()} element={<ChallengeLiveDashboard />} />
+             
+             
 
               <Route
                 path={routes.dashboard.challengeSubmit}
                 element={
-                  <ProtectedRoute allowedRoles={['user']}>
-                    <ChallengeSubmitPage />
-                  </ProtectedRoute>
+                 <ProtectedRoute allowedRoles={['user']}>
+                  <ChallengeSubmitPage />
+                 </ProtectedRoute>
                 }
               />
+              
+              <Route path={routes.dashboard.challengeLive()} element={<ChallengeLiveDashboard />} />
 
-              {/* ===== ME / USER AREA ===== */}
-              <Route
-                path={routes.me.contributions}
-                element={
-                  <ProtectedRoute allowedRoles={['user', 'judge', 'admin']}>
-                    <MyContributions />
-                  </ProtectedRoute>
-                }
-              />
+               {/* ===== ME / USER AREA ===== */}
+<Route
+  path={routes.me.contributions}
+  element={
+    <ProtectedRoute allowedRoles={['user', 'judge', 'admin']}>
+      <MyContributions />
+    </ProtectedRoute>
+  }
+/>
 
               {/* ===== USER ===== */}
               <Route
@@ -148,33 +110,23 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-
-              {/* ===== SPONSOR ===== */}
+    
+                  {/* ===== SPONSOR PROFILE ===== */}
               <Route
                 path={routes.community.sponsorEdit}
                 element={
-                  <ProtectedRoute allowedRoles={['sponsor']}>
-                    <SponsorProfileEditor />
-                  </ProtectedRoute>
+                 <ProtectedRoute allowedRoles={['sponsor']}>
+                   <SponsorProfileEditor />
+                 </ProtectedRoute>
                 }
               />
 
-              {/* ===== CHALLENGES — CREAZIONE ===== */}
+              {/* ===== CREAZIONE CHALLENGE ===== */}
               <Route
                 path={routes.dashboard.challengeCreate}
                 element={
                   <ProtectedRoute allowedRoles={['admin', 'sponsor']}>
                     <CreateChallenge />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* ===== EVENTI — CREAZIONE (admin) ===== */}
-              <Route
-                path={routes.events.create}
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <CreateEvent />
                   </ProtectedRoute>
                 }
               />
@@ -188,8 +140,9 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route
-                path={routes.judge.challengeOverview()}
+               path={routes.judge.challengeOverview()}
                 element={
                   <ProtectedRoute allowedRoles={['judge', 'admin']}>
                     <JudgeChallengeOverview />
@@ -206,19 +159,12 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route
                 path={routes.admin.assignJudge}
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <StepAssignJudge />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path={routes.admin.events}
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminEvents />
                   </ProtectedRoute>
                 }
               />
@@ -235,3 +181,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+

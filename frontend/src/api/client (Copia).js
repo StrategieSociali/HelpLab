@@ -40,7 +40,7 @@ export const API_PATHS = {
   challengeLeaderboard: (id, q = '') => `/v1/challenges/${id}/leaderboard${q}`,
   
   // user-centric
-  userSubmissions: (q = "") => `/v1/user/submissions${q}`,
+   userSubmissions: (q = "") => `/v1/user/submissions${q}`,
 
   // admin – proposals (v1)
   adminProposals: (q = "") => `/v1/admin/proposals${q}`,
@@ -63,16 +63,4 @@ export const API_PATHS = {
   refresh:  `/v1/auth/refresh`,
   me:       `/v1/auth/me`,
   register: `/v1/auth/register`,
-
-  // ─── events (v1) ──────────────────────────────────────────────────────────
-  // Le funzioni con logica più complessa (admin, consent, link challenge)
-  // sono direttamente in events.api.js per mantenere questo file leggibile.
-  // Qui i path usati da più componenti o dal routing.
-  events:          (q = "") => `/v1/events${q}`,
-  eventDetail:     (idOrSlug) => `/v1/events/${idOrSlug}`,
-  eventSummary:    (id) => `/v1/events/${id}/summary`,
-  eventsMine:      () => `/v1/events/mine`,
-  adminEvents:     (q = "") => `/v1/admin/events${q}`,
-  eventConsent:    (id) => `/v1/events/${id}/consent`,
-  eventChallenges: (id) => `/v1/events/${id}/challenges`,
 };
