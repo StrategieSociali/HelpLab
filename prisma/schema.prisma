@@ -367,24 +367,20 @@ model events {
   name             String        @db.VarChar(200)
   slug             String        @unique @db.VarChar(160)
   description      String?       @db.Text
+  rejection_reason String?       @db.Text
   logo_url         String?       @db.VarChar(255)
   start_date       DateTime      @db.Date
   end_date         DateTime      @db.Date
   location_address String?       @db.VarChar(255)
-  location_geo     Json?         // { "lat": 44.49, "lon": 11.34 }
+  location_geo     Json?
   status           events_status @default(draft)
   created_by       BigInt?       @db.UnsignedBigInt
   created_at       DateTime      @default(now())
   updated_at       DateTime      @default(now()) @updatedAt
 
-  // Relazioni
-  creator          users?             @relation(fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_ev_creator")
+  creator          users?             @relation(fields: [created_by], references: [id], onDelete: SetNull)
   challenge_links  event_challenges[]
   consents         event_consents[]
-
-  @@index([status], map: "idx_ev_status")
-  @@index([created_by], map: "idx_ev_created_by")
-  @@index([start_date], map: "idx_ev_start_date")
 }
 
 model event_challenges {

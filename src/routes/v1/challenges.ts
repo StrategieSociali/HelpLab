@@ -44,7 +44,8 @@ export async function challengesV1Routes(app: FastifyInstance) {
         type: 'object',
         properties: {
           limit:  { type: 'number' },
-          cursor: { type: 'string' }
+          cursor: { type: 'string' },
+          status: { type: 'string', enum: ['open', 'in_review', 'closed'] }
         }
       },
       response: {
@@ -83,8 +84,12 @@ export async function challengesV1Routes(app: FastifyInstance) {
       if (!isNaN(d.getTime())) cursorDate = d
     }
 
+    const validStatuses = ['open', 'in_review', 'closed']
+    const statusFilter = q.status && validStatuses.includes(q.status) ? q.status : undefined
+
     const where: any = {
-      ...(cursorDate ? { updated_at: { lt: cursorDate } } : {})
+      ...(cursorDate   ? { updated_at: { lt: cursorDate } } : {}),
+      ...(statusFilter ? { status: statusFilter }           : {})
     }
 
     const rows = await prisma.challenges.findMany({

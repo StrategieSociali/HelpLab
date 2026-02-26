@@ -9,6 +9,14 @@
  * Flusso di stato:
  *   draft (creato da user) → published (approvato da admin) → ended (chiuso da admin)
  *   draft → rejected (rifiutato da admin)
+ *   rejected → draft (automatico quando il creatore modifica l'evento)
+ *   rejected → published (admin può riapprovare direttamente)
+ *
+ * Stati modificabili:
+ *   - draft:     creatore o admin
+ *   - published: creatore o admin (evento in corso, le cose cambiano)
+ *   - rejected:  creatore o admin (per correggere e riapprovare)
+ *   - ended:     IMMUTABILE — dati bloccati per auditabilità
  *
  * Sponsor: derivati dalle challenge collegate (challenge.sponsor_id + challenge_sponsorships).
  * Rating sponsor: esposto in lettura tramite sponsors.public_score (già calcolato).
@@ -111,6 +119,7 @@ function formatEvent(ev: any) {
     name:             ev.name,
     slug:             ev.slug,
     description:      ev.description,
+    rejection_reason: ev.rejection_reason ?? null,
     logo_url:         ev.logo_url,
     status:           ev.status,
     start_date:       ev.start_date,
@@ -206,9 +215,16 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
 
   // ----------------------------------------------------------
   // GET /events/:idOrSlug — Dettaglio evento con challenge e sponsor
+  //
+  // Visibilità:
+  //   - published / ended → pubblico, nessun token richiesto
+  //   - draft / rejected  → solo creatore o admin (401/404 per tutti gli altri)
+  //
+  // Usa optionalAuth: decodifica il token se presente, non blocca se assente.
   // ----------------------------------------------------------
-  fastify.get('/events/:idOrSlug', async (req: FastifyRequest, reply: FastifyReply) => {
+  fastify.get('/events/:idOrSlug', { preHandler: optionalAuth() }, async (req: FastifyRequest, reply: FastifyReply) => {
     const { idOrSlug } = req.params as { idOrSlug: string }
+    const user = (req as any).user ?? null
 
     const isId = /^\d+$/.test(idOrSlug)
     const where = isId
@@ -243,10 +259,15 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
 
     if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
 
-    // Solo eventi published visibili pubblicamente (draft/rejected/ended solo per admin/creator)
-    // Per semplicità pubblica: se ended lo mostriamo ancora (archivio)
+    // draft e rejected: accessibili solo al creatore o all'admin
     if (ev.status === events_status.draft || ev.status === events_status.rejected) {
-      return reply.status(404).send({ error: 'Evento non trovato' })
+      const isAdmin   = user?.role === users_role.admin
+      const isCreator = user !== null && ev.created_by !== null && ev.created_by === BigInt(user.id)
+
+      if (!isAdmin && !isCreator) {
+        // Restituisce 404 e non 403: non rivela l'esistenza dell'evento
+        return reply.status(404).send({ error: 'Evento non trovato' })
+      }
     }
 
     // Raccoglie sponsor unici dalle challenge (sponsor_id + challenge_sponsorships)
@@ -335,7 +356,6 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     const participantSet = new Set(approvedSubs.map((s: any) => String(s.user_id)))
 
     // Recupera le points_transactions approvate con meta_json CO2
-    // per calcolare CO2 totale e km totali
     const transactions = await prisma.points_transactions.findMany({
       where: {
         challenge_id: { in: challengeIds },
@@ -362,14 +382,12 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
       })
     }
 
-    // Conta approvate per challenge
     for (const sub of approvedSubs) {
       const key = String(sub.challenge_id)
       const agg = challengeAgg.get(key)
       if (agg) agg.approved_count++
     }
 
-    // Estrae CO2 e km dai meta_json delle transactions
     let totalCo2 = 0
     let totalKm  = 0
 
@@ -392,7 +410,6 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
       }
     }
 
-    // Recupera challenge con titolo e sponsor per la response
     const challenges = await prisma.challenges.findMany({
       where: { id: { in: challengeIds } },
       select: {
@@ -407,7 +424,6 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
       }
     })
 
-    // Raccoglie sponsor unici
     const sponsorMap = new Map<string, any>()
     for (const ch of challenges) {
       if (ch.sponsors) sponsorMap.set(String(ch.sponsors.id), ch.sponsors)
@@ -491,8 +507,18 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
 
   // ----------------------------------------------------------
   // PATCH /events/:id — Modifica evento
-  // User: solo se created_by === req.user.id E status === draft
-  // Admin: qualsiasi evento in qualsiasi stato
+  //
+  // Stati modificabili:
+  //   - draft:     creatore o admin
+  //   - published: creatore o admin (evento live, può cambiare)
+  //   - rejected:  creatore o admin (per correggere e riottentere approvazione)
+  //   - ended:     IMMUTABILE per tutti — dati bloccati per auditabilità
+  //
+  // Comportamento speciale su rejected:
+  //   - Se è il creatore a modificare un evento rejected → status torna automaticamente a draft
+  //     (segnala all'admin che c'è qualcosa di nuovo da valutare)
+  //   - Se è l'admin a modificare un evento rejected → status rimane rejected
+  //     (l'admin non si auto-notifica)
   // ----------------------------------------------------------
   fastify.patch('/events/:id', { preHandler: requireAuth() }, async (req: FastifyRequest, reply: FastifyReply) => {
     const { id } = req.params as { id: string }
@@ -507,9 +533,14 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     if (!isAdmin && !isCreator) {
       return reply.status(403).send({ error: 'Non autorizzato' })
     }
-    if (!isAdmin && ev.status !== events_status.draft) {
-      return reply.status(403).send({ error: 'Puoi modificare solo eventi in bozza' })
+
+    // ended è immutabile per tutti
+    if (ev.status === events_status.ended) {
+      return reply.status(403).send({ error: 'Gli eventi conclusi non possono essere modificati' })
     }
+
+    // Il creatore (non admin) può modificare solo draft, published e rejected
+    // (tutti tranne ended, già gestito sopra)
 
     const parsed = updateEventSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -517,6 +548,10 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     }
 
     const data = parsed.data
+    if (Object.keys(data).length === 0) {
+      return reply.status(400).send({ error: 'Nessun campo da aggiornare fornito' })
+    }
+
     const updateData: Record<string, any> = {}
 
     if (data.name !== undefined) {
@@ -529,6 +564,13 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     if (data.end_date          !== undefined) updateData.end_date          = new Date(data.end_date)
     if (data.location_address !== undefined) updateData.location_address = data.location_address
     if (data.location_geo     !== undefined) updateData.location_geo     = data.location_geo
+
+    // Reset automatico a draft se il creatore modifica un evento rejected
+    // L'admin non triggera questo comportamento
+    if (!isAdmin && ev.status === events_status.rejected) {
+      updateData.status           = events_status.draft
+      updateData.rejection_reason = null  // pulizia — il rifiuto non è più rilevante
+    }
 
     const updated = await prisma.events.update({
       where: { id: ev.id },
@@ -554,7 +596,6 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ errors: parsed.error.flatten().fieldErrors })
     }
 
-    // Upsert: se già esiste aggiorna il testo (l'utente potrebbe riacconsentire dopo revoca)
     const consent = await prisma.event_consents.upsert({
       where: {
         event_id_user_id: {
@@ -574,8 +615,8 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     })
 
     return reply.status(201).send({
-      event_id:    Number(consent.event_id),
-      user_id:     Number(consent.user_id),
+      event_id:     Number(consent.event_id),
+      user_id:      Number(consent.user_id),
       consented_at: consent.consented_at
     })
   })
@@ -650,14 +691,22 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
   })
 
   // ----------------------------------------------------------
-  // ADMIN — PATCH /events/:id/approve — draft → published
+  // ADMIN — PATCH /events/:id/approve — draft o rejected → published
+  // Accetta entrambi gli stati per consentire riapprovazione diretta
+  // di eventi precedentemente rifiutati senza passare per draft
   // ----------------------------------------------------------
   fastify.patch('/events/:id/approve', { preHandler: requireAuth(users_role.admin) }, async (req: FastifyRequest, reply: FastifyReply) => {
     const { id } = req.params as { id: string }
 
     const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
-    if (!ev)                                return reply.status(404).send({ error: 'Evento non trovato' })
-    if (ev.status !== events_status.draft)  return reply.status(400).send({ error: `L'evento deve essere in stato draft. Stato attuale: ${ev.status}` })
+    if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
+
+    const approvableStatuses: events_status[] = [events_status.draft, events_status.rejected]
+    if (!approvableStatuses.includes(ev.status)) {
+      return reply.status(400).send({
+        error: `L'evento deve essere in stato draft o rejected per essere approvato. Stato attuale: ${ev.status}`
+      })
+    }
 
     const updated = await prisma.events.update({
       where: { id: ev.id },
@@ -668,63 +717,79 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
   })
 
   // ----------------------------------------------------------
-  // ADMIN — PATCH /events/:id/reject — draft → rejected
+  // ADMIN — PATCH /events/:id/reject — draft o published → rejected
+  // Accetta published per consentire il ritiro di eventi già pubblicati
   // ----------------------------------------------------------
   fastify.patch('/events/:id/reject', { preHandler: requireAuth(users_role.admin) }, async (req: FastifyRequest, reply: FastifyReply) => {
     const { id } = req.params as { id: string }
 
     const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
-    if (!ev)                               return reply.status(404).send({ error: 'Evento non trovato' })
-    if (ev.status !== events_status.draft) return reply.status(400).send({ error: `L'evento deve essere in stato draft. Stato attuale: ${ev.status}` })
+    if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
+
+    const rejectableStatuses: events_status[] = [events_status.draft, events_status.published]
+    if (!rejectableStatuses.includes(ev.status)) {
+      return reply.status(400).send({
+        error: `L'evento deve essere in stato draft o published per essere rifiutato. Stato attuale: ${ev.status}`
+      })
+    }
 
     const parsed = rejectSchema.safeParse(req.body)
     if (!parsed.success) {
       return reply.status(400).send({ errors: parsed.error.flatten().fieldErrors })
     }
 
-    // Il motivo del rifiuto viene salvato nella description come nota admin
-    // (non c'è un campo dedicato nel modello — è intenzionale per semplicità)
-    const reasonNote = parsed.data.reason
-      ? `\n\n[RIFIUTATO - ${new Date().toISOString().slice(0, 10)}]: ${parsed.data.reason}`
-      : ''
+    const reasonNote = parsed.data.reason ?? null
 
     const updated = await prisma.events.update({
       where: { id: ev.id },
       data: {
-        status:      events_status.rejected,
-        description: (ev.description ?? '') + reasonNote
+        status:           events_status.rejected,
+        rejection_reason: reasonNote
       }
     })
+
+    // Invalida cache summary se era published
+    if (ev.status === events_status.published) {
+      invalidateEventSummaryCache(ev.id)
+    }
 
     return reply.send(formatEvent(updated))
   })
 
   // ----------------------------------------------------------
   // ADMIN — PATCH /events/:id/end — published → ended
+  // ended è lo stato finale immutabile
   // ----------------------------------------------------------
   fastify.patch('/events/:id/end', { preHandler: requireAuth(users_role.admin) }, async (req: FastifyRequest, reply: FastifyReply) => {
     const { id } = req.params as { id: string }
 
     const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
-    if (!ev)                                    return reply.status(404).send({ error: 'Evento non trovato' })
-    if (ev.status !== events_status.published)  return reply.status(400).send({ error: `L'evento deve essere in stato published. Stato attuale: ${ev.status}` })
+    if (!ev)                                   return reply.status(404).send({ error: 'Evento non trovato' })
+    if (ev.status !== events_status.published) return reply.status(400).send({ error: `L'evento deve essere in stato published. Stato attuale: ${ev.status}` })
 
     const updated = await prisma.events.update({
       where: { id: ev.id },
       data:  { status: events_status.ended }
     })
 
-    // Invalida cache summary
     invalidateEventSummaryCache(ev.id)
 
     return reply.send(formatEvent(updated))
   })
 
   // ----------------------------------------------------------
-  // ADMIN — POST /events/:id/challenges — Collega challenge
+  // POST /events/:id/challenges — Collega challenge
+  //
+  // Autorizzazione:
+  //   - Admin: sempre, qualsiasi stato tranne ended
+  //   - Creatore: solo se evento in draft
+  //
+  // Rationale: il creatore compone il proprio evento (evento + challenge)
+  // prima che l'admin lo approvi. L'admin approva il pacchetto completo.
   // ----------------------------------------------------------
-  fastify.post('/events/:id/challenges', { preHandler: requireAuth(users_role.admin) }, async (req: FastifyRequest, reply: FastifyReply) => {
+  fastify.post('/events/:id/challenges', { preHandler: requireAuth() }, async (req: FastifyRequest, reply: FastifyReply) => {
     const { id } = req.params as { id: string }
+    const user   = (req as any).user
 
     const parsed = linkChallengeSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -734,12 +799,28 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
     if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
 
+    const isAdmin   = user.role === users_role.admin
+    const isCreator = ev.created_by !== null && ev.created_by === BigInt(user.id)
+
+    if (!isAdmin && !isCreator) {
+      return reply.status(403).send({ error: 'Non autorizzato' })
+    }
+
+    // ended è immutabile per tutti
+    if (ev.status === events_status.ended) {
+      return reply.status(403).send({ error: 'Gli eventi conclusi non possono essere modificati' })
+    }
+
+    // Il creatore può collegare challenge solo su eventi in draft
+    if (!isAdmin && ev.status !== events_status.draft) {
+      return reply.status(403).send({ error: 'Puoi collegare challenge solo a eventi in bozza' })
+    }
+
     const challenge = await prisma.challenges.findUnique({
       where: { id: BigInt(parsed.data.challenge_id) }
     })
     if (!challenge) return reply.status(404).send({ error: 'Challenge non trovata' })
 
-    // Verifica che non sia già collegata
     const existing = await prisma.event_challenges.findUnique({
       where: {
         event_id_challenge_id: {
@@ -757,21 +838,43 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
       }
     })
 
-    // Invalida cache summary evento
     invalidateEventSummaryCache(BigInt(id))
 
     return reply.status(201).send({
-      event_id:     Number(id),
-      challenge_id: parsed.data.challenge_id,
+      event_id:        Number(id),
+      challenge_id:    parsed.data.challenge_id,
       challenge_title: challenge.title
     })
   })
 
   // ----------------------------------------------------------
-  // ADMIN — DELETE /events/:id/challenges/:challengeId — Scollega challenge
+  // DELETE /events/:id/challenges/:challengeId — Scollega challenge
+  //
+  // Autorizzazione:
+  //   - Admin: sempre, qualsiasi stato tranne ended
+  //   - Creatore: solo se evento in draft
   // ----------------------------------------------------------
-  fastify.delete('/events/:id/challenges/:challengeId', { preHandler: requireAuth(users_role.admin) }, async (req: FastifyRequest, reply: FastifyReply) => {
+  fastify.delete('/events/:id/challenges/:challengeId', { preHandler: requireAuth() }, async (req: FastifyRequest, reply: FastifyReply) => {
     const { id, challengeId } = req.params as { id: string; challengeId: string }
+    const user = (req as any).user
+
+    const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
+    if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
+
+    const isAdmin   = user.role === users_role.admin
+    const isCreator = ev.created_by !== null && ev.created_by === BigInt(user.id)
+
+    if (!isAdmin && !isCreator) {
+      return reply.status(403).send({ error: 'Non autorizzato' })
+    }
+
+    if (ev.status === events_status.ended) {
+      return reply.status(403).send({ error: 'Gli eventi conclusi non possono essere modificati' })
+    }
+
+    if (!isAdmin && ev.status !== events_status.draft) {
+      return reply.status(403).send({ error: 'Puoi scollegare challenge solo da eventi in bozza' })
+    }
 
     const link = await prisma.event_challenges.findUnique({
       where: {
@@ -815,7 +918,6 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
       orderBy: { consented_at: 'asc' }
     })
 
-    // Genera CSV
     const header = 'user_id,nickname,email,consented_at\n'
     const rows = consents.map((c: any) => {
       const nickname = (c.user.nickname ?? '').replace(/,/g, ';')
