@@ -30,6 +30,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getEventDetail, getEventSummary } from "@/api/events.api";
 import { routes } from "@/routes";
+import "../../styles/dynamic-pages.css";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -49,40 +50,12 @@ function formatDate(dateStr) {
 // ─── Counter grande — ottimizzato per leggibilità a distanza ─────────────────
 function BigCounter({ label, value, unit, accent = false }) {
   return (
-    <div
-      style={{
-        flex: "1 1 160px",
-        padding: "28px 20px",
-        borderRadius: 14,
-        background: accent
-          ? "linear-gradient(135deg, rgba(34,197,94,0.18) 0%, rgba(16,185,129,0.10) 100%)"
-          : "rgba(255,255,255,0.06)",
-        border: accent
-          ? "1px solid rgba(34,197,94,0.35)"
-          : "1px solid rgba(255,255,255,0.10)",
-        textAlign: "center",
-        minWidth: 140,
-      }}
-    >
-      <div
-        style={{
-          fontSize: "clamp(2.2rem, 6vw, 3.8rem)",
-          fontWeight: 800,
-          letterSpacing: "-0.02em",
-          lineHeight: 1,
-          color: accent ? "rgb(74,222,128)" : "#ffffff",
-        }}
-      >
+    <div className={`big-counter ${accent ? 'big-counter--accent' : ''}`}>
+      <div className="big-counter__value">
         {value}
-        {unit && (
-          <span style={{ fontSize: "0.4em", fontWeight: 500, marginLeft: 6, opacity: 0.75 }}>
-            {unit}
-          </span>
-        )}
+        {unit && <span className="big-counter__unit">{unit}</span>}
       </div>
-      <div style={{ marginTop: 10, fontSize: "0.85rem", opacity: 0.6, textTransform: "uppercase", letterSpacing: "0.07em" }}>
-        {label}
-      </div>
+      <div className="big-counter__label">{label}</div>
     </div>
   );
 }
@@ -116,15 +89,10 @@ function ChallengeProgressBar({ challenge }) {
         )}
       </div>
       {/* Barra progresso */}
-      <div style={{ height: 5, borderRadius: 3, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
+      <div className="progress-bar">
         <div
-          style={{
-            height: "100%",
-            width: `${pct}%`,
-            background: "rgb(74,222,128)",
-            borderRadius: 3,
-            transition: "width 0.8s ease",
-          }}
+          className="progress-bar__fill"
+          style={{ width: `${pct}%` }}
         />
       </div>
     </div>
@@ -257,7 +225,7 @@ export default function EventLiveDashboard() {
               )}
               <button
                 onClick={fetchSummary}
-                className="btn btn-outline btn-small"
+                className="btn btn-outline"
                 aria-label="Aggiorna dati ora"
               >
                 ↻ Aggiorna ora

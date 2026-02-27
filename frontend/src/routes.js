@@ -81,6 +81,11 @@ export const routes = {
     assignJudge: '/dashboard/admin/assign-judge',
     events:      '/dashboard/admin/eventi',
   },
+  admin: {
+  proposals:    '/dashboard/admin/proposals',
+  assignJudge:  '/dashboard/admin/assign-judge',
+  learningPaths: '/dashboard/admin/corsi',   // ← aggiungi questa
+},
 
   /* ======================
    * MISC

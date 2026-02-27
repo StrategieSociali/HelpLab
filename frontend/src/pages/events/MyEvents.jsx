@@ -29,6 +29,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getMyEvents } from "@/api/events.api";
 import { routes } from "@/routes";
+import "../../styles/dynamic-pages.css";
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
@@ -40,26 +41,15 @@ function formatDate(dateStr) {
 // Badge stato con colori semantici
 function StatusBadge({ status }) {
   const map = {
-    draft:     { label: "In attesa di approvazione", bg: "rgba(234,179,8,0.15)",   border: "rgba(234,179,8,0.4)",    color: "rgb(234,179,8)" },
-    published: { label: "Pubblicato",                bg: "rgba(34,197,94,0.12)",   border: "rgba(34,197,94,0.35)",   color: "rgb(74,222,128)" },
-    rejected:  { label: "Rifiutato",                 bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.35)",   color: "rgb(248,113,113)" },
-    ended:     { label: "Concluso",                  bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.25)", color: "rgb(148,163,184)" },
+    draft:     "In attesa di approvazione",
+    published: "Pubblicato",
+    rejected:  "Rifiutato",
+    ended:     "Concluso",
   };
-  const s = map[status] || { label: status, bg: "transparent", border: "transparent", color: "#fff" };
-  return (
-    <span style={{
-      display: "inline-block",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: "0.78rem",
-      fontWeight: 600,
-      background: s.bg,
-      border: `1px solid ${s.border}`,
-      color: s.color,
-    }}>
-      {s.label}
-    </span>
-  );
+  const label = map[status] || status;
+  const className = `status-badge status-badge--${status}`;
+  
+  return <span className={className}>{label}</span>;
 }
 
 export default function MyEvents() {
@@ -166,7 +156,7 @@ export default function MyEvents() {
                 {/* Draft e rejected → Modifica */}
                 {(ev.status === "draft" || ev.status === "rejected") && (
                   <button
-                    className="btn btn-primary btn-small"
+                    className="btn btn-primary"
                     onClick={() => navigate(routes.events.edit(ev.id))}
                   >
                     {ev.status === "rejected" ? "Modifica e reinvia" : "Modifica"}
@@ -177,19 +167,19 @@ export default function MyEvents() {
                 {ev.status === "published" && (
                   <>
                     <button
-                      className="btn btn-outline btn-small"
+                      className="btn btn-outline"
                       onClick={() => navigate(routes.events.edit(ev.id))}
                     >
                       Modifica
                     </button>
                     <button
-                      className="btn btn-ghost btn-small"
+                      className="btn btn-ghost"
                       onClick={() => navigate(routes.events.detail(ev.slug || ev.id))}
                     >
                       Visualizza
                     </button>
                     <button
-                      className="btn btn-ghost btn-small"
+                      className="btn btn-ghost"
                       onClick={() => navigate(routes.events.live(ev.slug || ev.id))}
                     >
                       Live
@@ -200,7 +190,7 @@ export default function MyEvents() {
                 {/* Ended → solo visualizza */}
                 {ev.status === "ended" && ev.slug && (
                   <button
-                    className="btn btn-ghost btn-small"
+                    className="btn btn-ghost"
                     onClick={() => navigate(routes.events.detail(ev.slug))}
                   >
                     Visualizza

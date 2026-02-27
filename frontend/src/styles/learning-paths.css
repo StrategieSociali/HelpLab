@@ -1,0 +1,550 @@
+/**
+ * learning-paths.css
+ * ------------------
+ * Stili per la pagina catalogo Learning Paths (v1.1).
+ *
+ * ⚠️ NOTA PER L'AGENTE CSS:
+ * Questo file contiene la struttura e i commenti UX. Le classi globali
+ * (.page-section, .page-bg, .page-text, .container, .page-header,
+ * .page-title, .page-subtitle, .chip, .btn, .callout, .control)
+ * sono già definite in styles.css e NON vanno ridefinite qui.
+ *
+ * Le classi nuove introdotte da questo componente sono:
+ *
+ * FILTRI:
+ *   .lp-filters            — wrapper orizzontale (flex, wrap) dei gruppi filtro
+ *   .lp-filters__group     — singolo gruppo (label + controllo)
+ *   .lp-filters__label     — etichetta del filtro (testo small, muted)
+ *   .lp-filters__chips     — gruppo di chip selezionabili (flex, gap)
+ *   .lp-filters__reset     — bottone reset filtri (allineato a destra)
+ *   .chip-filter           — chip cliccabile (variante di .chip con cursor pointer)
+ *   .chip-filter.is-active — chip attiva (colore primario, contrasto alto)
+ *
+ * GRIGLIA:
+ *   .lp-grid               — CSS Grid responsive:
+ *                            3 colonne su desktop (≥ 1024px)
+ *                            2 colonne su tablet (≥ 640px)
+ *                            1 colonna su mobile
+ *                            Nota: le card LMS sono più orizzontali delle
+ *                            challenge. Usare max-width 420px per colonna.
+ *
+ * CARD:
+ *   .lp-card               — carta corso: flex column, bordo, bg semi-trasparente
+ *                            Layout: [thumb | body | footer]
+ *                            Deve essere più "larga" che "alta" rispetto alle
+ *                            card sfide. Ratio consigliato: ~3:2 (thumb 40% largh.)
+ *   .lp-card--premium      — variante con bordo/accent dorato per corsi Premium
+ *   .lp-card--skeleton     — variante skeleton (no hover, no interazione)
+ *
+ * THUMBNAIL:
+ *   .lp-card__thumb        — contenitore immagine (aspect-ratio 16/9, overflow hidden)
+ *   .lp-card__thumb-img    — immagine reale (object-fit: cover, w: 100%)
+ *   .lp-card__thumb--placeholder — placeholder colorato (bg gradient, flex center)
+ *   .lp-card__thumb--skeleton    — placeholder skeleton (bg grigio animato)
+ *   .lp-card__thumb-icon   — emoji/icona al centro del placeholder (~2.5rem)
+ *
+ * BODY CARD:
+ *   .lp-card__body         — padding interno, flex-grow: 1
+ *   .lp-card__chips        — riga chip (flex, gap: 6px, flex-wrap)
+ *   .lp-card__title        — titolo corso (font-size ~1rem, font-weight bold, 
+ *                            max 2 righe con line-clamp)
+ *   .lp-card__desc         — descrizione (font-size small, muted, line-clamp: 3)
+ *   .lp-card__meta         — riga provider + durata (flex, gap, align-items center)
+ *
+ * CHIP SPECIFICHE:
+ *   .chip-category         — chip categoria (colore neutro, bordo sottile)
+ *   .chip-role             — chip ruolo target (colore accent secondario)
+ *   .chip-free             — badge "Gratuito" (bg verde, testo bianco/scuro)
+ *   .chip-premium          — badge "Premium" (bg dorato/ambra, testo scuro)
+ *                            Deve essere chiaramente distinto da chip-free.
+ *                            Suggerimento: usare un colore caldo (es. #F59E0B)
+ *                            con testo scuro per leggibilità e senso di "valore".
+ *
+ * PROVIDER:
+ *   .lp-provider-badge     — badge provider (flex, gap, font-size small, muted)
+ *
+ * DURATA:
+ *   .lp-card__duration     — testo durata (font-size small, muted)
+ *
+ * FOOTER CARD:
+ *   .lp-card__footer       — padding, border-top, bg leggermente diverso
+ *   .lp-card__cta          — bottone CTA (occupa tutta la larghezza)
+ *
+ * BOTTONE PREMIUM:
+ *   .btn-premium           — variante btn con bg dorato (coerente con chip-premium)
+ *                            Hover: leggermente più scuro
+ *
+ * SKELETON:
+ *   .skeleton-line         — riga placeholder (bg grigio, border-radius, altezza 14px)
+ *   .skeleton-line--short  — larghezza 40%
+ *   .skeleton-line--medium — larghezza 70%
+ *   .skeleton-line (default) — larghezza 100%
+ *   Usare animation: shimmer per effetto pulse/shimmer coerente col resto del progetto.
+ *
+ * CONTATORE RISULTATI:
+ *   .lp-results-count      — testo piccolo muted, margin-bottom prima della griglia
+ *
+ * ─── RESPONSIVE ──────────────────────────────────────────────────────────────
+ * Mobile-first. Breakpoint da usare (coerenti col resto del progetto):
+ *   640px  → 2 colonne
+ *   1024px → 3 colonne
+ *
+ * Su mobile:
+ *   - I filtri chip si dispongono in scroll orizzontale (overflow-x: auto)
+ *     per non mandare a capo su schermi piccoli.
+ *   - La thumbnail mantiene il ratio 16/9.
+ *
+ * ─── ACCESSIBILITÀ ───────────────────────────────────────────────────────────
+ * - .chip-filter[aria-pressed="true"] deve avere focus ring visibile.
+ * - Contrasto minimo WCAG AA su tutti i badge (chip-free, chip-premium).
+ * - Le skeleton card hanno aria-hidden="true" (già nel JSX).
+ */
+
+/* ─── FILTRI ─────────────────────────────────────────────────────────────── */
+
+.lp-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin: 20px 0 24px;
+}
+
+.lp-filters__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lp-filters__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+.lp-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lp-filters__reset {
+  margin-left: auto;
+  align-self: flex-end;
+}
+
+/* Chip cliccabile */
+.chip-filter {
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.chip-filter:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.chip-filter.is-active {
+  /* Sostituire con il colore primario del progetto */
+  background: var(--color-primary, #22c55e);
+  border-color: var(--color-primary, #22c55e);
+  color: #fff;
+  font-weight: 600;
+}
+
+.chip-filter:focus-visible {
+  outline: 2px solid var(--color-primary, #22c55e);
+  outline-offset: 2px;
+}
+
+/* ─── GRIGLIA ─────────────────────────────────────────────────────────────── */
+
+.lp-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 12px;
+}
+
+@media (min-width: 640px) {
+  .lp-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .lp-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ─── CARD BASE ───────────────────────────────────────────────────────────── */
+
+.lp-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  /* Coerente con .card.glass del progetto */
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lp-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Variante Premium: bordo dorato */
+.lp-card--premium {
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.15);
+}
+
+.lp-card--premium:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(245, 158, 11, 0.35);
+}
+
+/* ─── THUMBNAIL ──────────────────────────────────────────────────────────── */
+
+.lp-card__thumb {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.lp-card__thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Placeholder categoria */
+.lp-card__thumb--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+}
+
+.lp-card__thumb-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+/* Skeleton thumbnail */
+.lp-card__thumb--skeleton {
+  background: rgba(255, 255, 255, 0.08);
+  animation: lp-shimmer 1.4s ease-in-out infinite;
+}
+
+/* ─── BODY ───────────────────────────────────────────────────────────────── */
+
+.lp-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  flex: 1;
+}
+
+.lp-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lp-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+  /* Max 2 righe */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lp-card__desc {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  opacity: 0.75;
+  margin: 0;
+  /* Max 3 righe */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lp-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+/* ─── CHIP SPECIFICHE ─────────────────────────────────────────────────────── */
+
+.chip-category {
+  font-size: 0.7rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.chip-role {
+  font-size: 0.7rem;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+}
+
+/* Badge Gratuito: verde */
+.chip-free {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+
+/* Badge Premium: ambra/dorato — chiaramente distinto dal gratuito */
+.chip-premium {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+}
+
+/* ─── PROVIDER BADGE ──────────────────────────────────────────────────────── */
+
+.lp-provider-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+/* ─── DURATA ─────────────────────────────────────────────────────────────── */
+
+.lp-card__duration {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+/* ─── FOOTER CARD ─────────────────────────────────────────────────────────── */
+
+.lp-card__footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.lp-card__cta {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ─── BOTTONE PREMIUM ─────────────────────────────────────────────────────── */
+
+.btn-premium {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #1c1a10;
+  font-weight: 700;
+  border: none;
+}
+
+.btn-premium:hover {
+  background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+  color: #1c1a10;
+}
+
+/* ─── SKELETON ───────────────────────────────────────────────────────────── */
+
+.lp-card--skeleton {
+  pointer-events: none;
+  user-select: none;
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  animation: lp-shimmer 1.4s ease-in-out infinite;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.skeleton-line--short  { width: 40%; }
+.skeleton-line--medium { width: 70%; }
+
+@keyframes lp-shimmer {
+  0%   { opacity: 0.5; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+/* ─── CONTATORE RISULTATI ─────────────────────────────────────────────────── */
+
+.lp-results-count {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  margin: 0 0 8px;
+}
+
+/* ─── MOBILE: filtri chip in scroll orizzontale ───────────────────────────── */
+
+@media (max-width: 639px) {
+  .lp-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lp-filters__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .lp-filters__chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lp-filters__reset {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+}
+
+/**
+ * ─────────────────────────────
+ * Stili per il form modale di AdminLearningPaths.
+ * Incolla questo blocco in fondo al file learning-paths.css esistente.
+ *
+ * Le classi .form-grid, .form-row, .control, .hint, .input-valid,
+ * .input-invalid, .callout, .btn, .card, .dynamic-empty
+ * sono già definite in styles.css — non ridefinirle.
+ */
+
+/* ─── MODALE ─────────────────────────────────────────────────────────────── */
+
+.lp-admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* Backdrop semitrasparente — click chiude il form */
+.lp-admin-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+/* Pannello form */
+.lp-admin-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  background: rgba(20, 24, 36, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+/* Header modale */
+.lp-admin-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.lp-admin-modal__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Body modale — scrollabile se il contenuto supera l'altezza disponibile */
+.lp-admin-modal__body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Footer modale */
+.lp-admin-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* ─── FORM ───────────────────────────────────────────────────────────────── */
+
+.lp-admin-form__label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Variante inline per il checkbox is_published */
+.lp-admin-form__label--inline {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  cursor: pointer;
+}
+
+/* ─── MOBILE ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 639px) {
+  .lp-admin-modal__panel {
+    max-height: 95vh;
+    border-radius: 12px 12px 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 100%;
+  }
+
+  .lp-admin-modal {
+    align-items: flex-end;
+    padding: 0;
+  }
+}

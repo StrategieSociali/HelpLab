@@ -1,0 +1,45 @@
+{
+  "_comment": "/src/components/common/Header.jsx",
+  "brand": {
+    "title": "HelpLab",
+    "subtitle": "Empowering people, transforming communities"
+  },
+  "nav": {
+    "participate": "Partecipa",
+    "challenges": "Sfide",
+    "allChallenges": "Tutte le sfide",
+    "events": "Eventi",
+    "myEvents": "I miei eventi",
+    "createEvent": "Crea evento",
+    "leaderboard": "Classifica",
+    "learningPaths": "Percorsi formativi",
+    "community": "Community",
+    "join": "Unisciti a HelpLab",
+    "info": "Info",
+    "business": "Imprese",
+    "roadmap": "Roadmap",
+    "sponsors": "Sponsor",
+    "judge": "Area giudice",
+    "title": {
+      "admin": "Admin",
+      "proposals": "Gestione proposte",
+      "assignJudges": "Assegna giudici",
+      "adminEvents": "Gestione eventi"
+    }
+  },
+  "auth": {
+    "admin": {
+      "label": "Admin",
+      "proposals": "Gestione proposte",
+      "assignJudges": "Assegna giudici",
+      "events": "Gestione eventi"
+    },
+    "actions": {
+      "createChallenge": "Crea sfida",
+      "profile": "Profilo",
+      "logout": "Esci",
+      "login": "Accedi",
+      "register": "Registrati"
+    }
+  }
+}

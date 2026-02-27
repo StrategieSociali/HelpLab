@@ -1,235 +1,460 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { api } from "@/api/client";
-import { useAuth } from "@/context/AuthContext";
+/**
+ * LearningPaths.jsx
+ * -----------------
+ * Catalogo pubblico dei percorsi di apprendimento di HelpLab.
+ *
+ * Architettura:
+ * - HelpLab NON è un LMS: i corsi sono erogati su piattaforme esterne
+ *   (YouTube, LifterLMS). Questa pagina mostra il catalogo e rimanda
+ *   all'esterno per la fruizione.
+ * - Nessun sistema di completamento, progresso o player video integrato.
+ * - Nessun login richiesto: tutti i corsi sono visibili a chiunque.
+ * - I filtri (categoria, ruolo, tipo) sono lato frontend con enum fissi
+ *   documentati nel backend handoff v1.1. Non serve una chiamata API
+ *   per ottenerli.
+ *
+ * Ref backend handoff: Learning Path Catalog v1.1 – 27/02/2026
+ */
 
-const USE_API = (import.meta.env.VITE_USE_API || "true") === "true";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { fetchLearningPaths } from "@/api/learningPaths.api";
+import "@/styles/learning-paths.css";
+
+// ─── ENUM FISSI (dal backend handoff, sezione 1.2) ───────────────────────────
+// Non fare chiamate API per questi valori: sono definiti e stabili.
+
+const CATEGORIES = [
+  { value: "",               label: "Tutte le categorie" },
+  { value: "ONBOARDING",    label: "Onboarding" },
+  { value: "PLATFORM_USAGE",label: "Uso piattaforma" },
+  { value: "DATA_LITERACY", label: "Dati e metriche" },
+  { value: "SUSTAINABILITY", label: "Sostenibilità" },
+  { value: "GAME_THEORY",   label: "Teoria dei giochi" },
+  { value: "TECHNICAL",     label: "Tecnico" },
+];
+
+const TARGET_ROLES = [
+  { value: "",          label: "Tutti i ruoli" },
+  { value: "VOLUNTEER", label: "Volontario" },
+  { value: "JUDGE",     label: "Giudice" },
+  { value: "SPONSOR",   label: "Sponsor" },
+  { value: "PA",        label: "PA" },
+];
+
+const TYPES = [
+  { value: "",        label: "Tutti" },
+  { value: "FREE",    label: "Gratuito" },
+  { value: "PREMIUM", label: "Premium" },
+];
+
+// ─── LABEL LEGGIBILI PER ENUM ─────────────────────────────────────────────────
+
+const CATEGORY_LABELS = {
+  ONBOARDING:     "Onboarding",
+  PLATFORM_USAGE: "Uso piattaforma",
+  DATA_LITERACY:  "Dati e metriche",
+  SUSTAINABILITY: "Sostenibilità",
+  GAME_THEORY:    "Teoria dei giochi",
+  TECHNICAL:      "Tecnico",
+};
+
+const TARGET_ROLE_LABELS = {
+  ALL:       "Tutti",
+  VOLUNTEER: "Volontario",
+  JUDGE:     "Giudice",
+  SPONSOR:   "Sponsor",
+  PA:        "PA",
+};
+
+// ─── HELPER: testo del CTA in base al provider ───────────────────────────────
+// Distinguiamo tra "Guarda" (YouTube, gratuiti/video) e "Vai al corso" (LMS).
+
+function getCtaLabel(provider) {
+  if (provider === "YOUTUBE") return "Guarda il corso";
+  return "Vai al corso";
+}
+
+// ─── HELPER: icona testuale del provider ─────────────────────────────────────
+// Usiamo emoji/testo perché non abbiamo dipendenze da librerie di icone esterne.
+// In futuro si può sostituire con SVG dedicati.
+
+function ProviderBadge({ provider }) {
+  const map = {
+    YOUTUBE:   { icon: "▶", label: "YouTube" },
+    LIFTERLMS: { icon: "🎓", label: "LifterLMS" },
+    EXTERNAL:  { icon: "↗", label: "Esterno" },
+  };
+  const entry = map[provider] || map.EXTERNAL;
+  return (
+    <span className="lp-provider-badge" aria-label={`Provider: ${entry.label}`}>
+      <span aria-hidden="true">{entry.icon}</span> {entry.label}
+    </span>
+  );
+}
+
+// ─── HELPER: durata leggibile ─────────────────────────────────────────────────
+
+function formatDuration(minutes) {
+  if (!minutes) return null;
+  if (minutes < 60) return `~${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `~${h}h ${m}min` : `~${h}h`;
+}
+
+// ─── PLACEHOLDER: thumbnail assente ──────────────────────────────────────────
+// Mostra un'area colorata con l'icona della categoria invece di un'immagine rotta.
+
+const CATEGORY_ICONS = {
+  ONBOARDING:     "🚀",
+  PLATFORM_USAGE: "🖥️",
+  DATA_LITERACY:  "📊",
+  SUSTAINABILITY: "🌱",
+  GAME_THEORY:    "♟️",
+  TECHNICAL:      "⚙️",
+};
+
+function ThumbnailPlaceholder({ category }) {
+  const icon = CATEGORY_ICONS[category] || "📚";
+  return (
+    <div className="lp-card__thumb lp-card__thumb--placeholder" aria-hidden="true">
+      <span className="lp-card__thumb-icon">{icon}</span>
+    </div>
+  );
+}
+
+// ─── SKELETON: card di caricamento ────────────────────────────────────────────
+// Mantiene il layout stabile durante il fetch iniziale (no layout shift).
+
+function SkeletonCard() {
+  return (
+    <div className="lp-card lp-card--skeleton" aria-hidden="true">
+      <div className="lp-card__thumb lp-card__thumb--skeleton" />
+      <div className="lp-card__body">
+        <div className="skeleton-line skeleton-line--short" />
+        <div className="skeleton-line" />
+        <div className="skeleton-line" />
+        <div className="skeleton-line skeleton-line--medium" />
+      </div>
+    </div>
+  );
+}
+
+// ─── COMPONENTE CARD CORSO ────────────────────────────────────────────────────
+
+function CourseCard({ course }) {
+  const {
+    title,
+    description,
+    category,
+    targetRole,
+    type,
+    provider,
+    externalUrl,
+    thumbnailUrl,
+    durationMinutes,
+  } = course;
+
+  const duration = formatDuration(durationMinutes);
+  const ctaLabel = getCtaLabel(provider);
+  const isPremium = type === "PREMIUM";
+
+  return (
+    <article className={`lp-card ${isPremium ? "lp-card--premium" : ""}`}>
+      {/* Thumbnail o placeholder */}
+      {thumbnailUrl ? (
+        <div className="lp-card__thumb">
+          <img
+            src={thumbnailUrl}
+            alt=""
+            className="lp-card__thumb-img"
+            loading="lazy"
+          />
+        </div>
+      ) : (
+        <ThumbnailPlaceholder category={category} />
+      )}
+
+      <div className="lp-card__body">
+        {/* Intestazione chip: categoria, ruolo, tipo */}
+        <div className="lp-card__chips">
+          {category && (
+            <span className="chip chip-category">
+              {CATEGORY_LABELS[category] || category}
+            </span>
+          )}
+          {targetRole && targetRole !== "ALL" && (
+            <span className="chip chip-role">
+              {TARGET_ROLE_LABELS[targetRole] || targetRole}
+            </span>
+          )}
+          {/* Badge FREE/PREMIUM — visivamente distinti */}
+          <span className={`chip ${isPremium ? "chip-premium" : "chip-free"}`}>
+            {isPremium ? "Premium" : "Gratuito"}
+          </span>
+        </div>
+
+        {/* Titolo */}
+        <h2 className="lp-card__title">{title}</h2>
+
+        {/* Descrizione troncata via CSS (line-clamp) */}
+        {description && (
+          <p className="lp-card__desc">{description}</p>
+        )}
+
+        {/* Metadati: provider + durata */}
+        <div className="lp-card__meta">
+          <ProviderBadge provider={provider} />
+          {duration && (
+            <span className="lp-card__duration" aria-label={`Durata: ${duration}`}>
+              ⏱ {duration}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* CTA — sempre visibile, apre in nuova tab */}
+      <div className="lp-card__footer">
+        <a
+          href={externalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`btn ${isPremium ? "btn-premium" : "btn-primary"} lp-card__cta`}
+          aria-label={`${ctaLabel}: ${title}`}
+        >
+          {ctaLabel}
+        </a>
+      </div>
+    </article>
+  );
+}
+
+// ─── COMPONENTE PRINCIPALE ────────────────────────────────────────────────────
 
 export default function LearningPaths() {
-  const { user } = useAuth();
-  const userId = user?.id ?? null;
-
-  const [paths, setPaths] = useState([]);
-  const [userProgress, setUserProgress] = useState({});
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // === Fetch: lista corsi / learning paths ===
-  const loadPaths = useCallback(async () => {
+  // Filtri — gestiti lato frontend con i valori degli enum fissi
+  const [filterCategory,   setFilterCategory]   = useState("");
+  const [filterTargetRole, setFilterTargetRole] = useState("");
+  const [filterType,       setFilterType]       = useState("");
+
+  // ─── Fetch ──────────────────────────────────────────────────────────────────
+  // Nota: l'API accetta i filtri anche via query string, ma per semplicità
+  // e per evitare un fetch ad ogni cambio di chip, filtriamo lato frontend.
+  // Il dataset dei corsi è piccolo e stabile.
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
-      setError("");
-      if (USE_API) {
-        const { data } = await api.get("v1/learning-paths");
-        setPaths(Array.isArray(data) ? data : []);
-      } else {
-        // fallback demo
-        setPaths([]);
-      }
+      const data = await fetchLearningPaths();
+      setCourses(data);
     } catch (err) {
-      console.error("LP list error:", err?.response || err);
-      setError("Impossibile caricare i percorsi.");
-      setPaths([]);
+      console.error("LearningPaths fetch error:", err?.response || err);
+      setError("Impossibile caricare i corsi. Verifica la connessione e riprova.");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // === Fetch: progressi utente (solo se loggato) ===
-  const loadProgress = useCallback(async () => {
-    if (!userId) {
-      setUserProgress({});
-      return;
-    }
-    try {
-      if (USE_API) {
-        const { data } = await api.get("v1/learning-paths/progress");
-        const obj =
-          data && typeof data.progress === "object" && !Array.isArray(data.progress)
-            ? data.progress
-            : {};
-        setUserProgress(obj);
-      } else {
-        const raw = localStorage.getItem("demo_lp_progress");
-        setUserProgress(raw ? JSON.parse(raw) : {});
-      }
-    } catch (err) {
-      console.warn("LP progress error:", err?.response?.status || err?.message);
-      setUserProgress({});
-    }
-  }, [userId]);
-
-  // inizializzazione
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      await loadPaths();
-      await loadProgress();
-      setLoading(false);
-    })();
-  }, [loadPaths, loadProgress]);
+    load();
+  }, [load]);
 
-  // === Stats globali ===
-  const stats = useMemo(() => {
-    const totalPaths = paths.length;
-    const totalModules = paths.reduce((sum, p) => sum + (p.modules?.length || 0), 0);
-    const completedModules = paths.reduce((sum, p) => {
-      const arr = userProgress[p.id];
-      return sum + (Array.isArray(arr) ? arr.length : 0);
-    }, 0);
-    const pct = totalModules ? Math.round((completedModules / totalModules) * 100) : 0;
-    return { totalPaths, totalModules, completedModules, pct };
-  }, [paths, userProgress]);
+  // ─── Filtri lato frontend ───────────────────────────────────────────────────
 
-  // === Helpers progress ===
-  const hasDone = (pathId, moduleId) => {
-    const arr = userProgress[pathId];
-    return Array.isArray(arr) && arr.includes(moduleId);
-  };
-
-  const markLocalDone = (pathId, moduleId) => {
-    setUserProgress(prev => {
-      const next = { ...prev };
-      const arr = Array.isArray(next[pathId]) ? [...next[pathId]] : [];
-      if (!arr.includes(moduleId)) arr.push(moduleId);
-      next[pathId] = arr;
-      return next;
+  const filteredCourses = useMemo(() => {
+    return courses.filter((c) => {
+      if (filterCategory && c.category !== filterCategory) return false;
+      // "ALL" nel DB significa che il corso è adatto a tutti i ruoli
+      if (filterTargetRole && c.targetRole !== filterTargetRole && c.targetRole !== "ALL") return false;
+      if (filterType && c.type !== filterType) return false;
+      return true;
     });
-  };
+  }, [courses, filterCategory, filterTargetRole, filterType]);
 
-  // === Azione: completa modulo (ottimistico + POST idempotente) ===
-  const completeModule = async (pathId, moduleId) => {
-    if (!userId) {
-      alert("Devi accedere per tracciare i progressi.");
-      return;
-    }
-    if (hasDone(pathId, moduleId)) return; // già fatto
+  const hasActiveFilters = filterCategory || filterTargetRole || filterType;
+  const isEmpty = !loading && !error && courses.length === 0;
+  const isEmptyFiltered = !loading && !error && courses.length > 0 && filteredCourses.length === 0;
 
-    // update ottimistico
-    markLocalDone(pathId, moduleId);
-
-    // POST idempotente
-    try {
-      setSaving(true);
-      if (USE_API) {
-        await api.post(`v1/learning-paths/${pathId}/progress`, { moduleId });
-      } else {
-        const raw = localStorage.getItem("demo_lp_progress");
-        const obj = raw ? JSON.parse(raw) : {};
-        const arr = Array.isArray(obj[pathId]) ? obj[pathId] : [];
-        if (!arr.includes(moduleId)) arr.push(moduleId);
-        obj[pathId] = arr;
-        localStorage.setItem("demo_lp_progress", JSON.stringify(obj));
-      }
-      await loadProgress(); // riallineo dal server
-    } catch (err) {
-      console.error("LP save error:", err?.response || err);
-      alert("Salvataggio progresso non riuscito. Riprova.");
-      // rollback
-      setUserProgress(prev => {
-        const next = { ...prev };
-        const arr = Array.isArray(next[pathId]) ? next[pathId].filter(id => id !== moduleId) : [];
-        next[pathId] = arr;
-        return next;
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <section className="page-section page-text">
-        <div className="container">
-          <h1 className="page-title">Percorsi di apprendimento</h1>
-          <p>Caricamento…</p>
-        </div>
-      </section>
-    );
-  }
+  // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <section className="page-section page-text">
+    <section className="page-section page-bg page-text">
       <div className="container">
-        <div className="page-header">
+
+        {/* Intestazione pagina */}
+        <header className="page-header">
           <h1 className="page-title">Percorsi di apprendimento</h1>
+          <p className="page-subtitle" style={{ maxWidth: 760 }}>
+            Risorse formative gratuite e premium per conoscere HelpLab,
+            partecipare meglio alle sfide e approfondire i temi della
+            sostenibilità verificabile. I corsi si tengono su YouTube e
+            LifterLMS — clicca per accedere alla piattaforma esterna.
+          </p>
+        </header>
 
-          {/* Badge statistiche globali */}
-          <div className="chip" title={`${stats.completedModules}/${stats.totalModules} moduli`}>
-            Completamento totale: {stats.pct}%
+        {/* ─── Filtri ──────────────────────────────────────────────────────── */}
+        <div className="lp-filters" role="search" aria-label="Filtra corsi">
+
+          {/* Filtro categoria — dropdown perché ha 6 valori */}
+          <div className="lp-filters__group">
+            <label htmlFor="filter-category" className="lp-filters__label">
+              Categoria
+            </label>
+            <select
+              id="filter-category"
+              className="control control-small control-pill"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
           </div>
-        </div>
 
-        {error && <div className="callout error" style={{ marginBottom: 12 }}>{error}</div>}
-
-        {/* griglia dei percorsi */}
-        <div className="lp-grid">
-          {paths.map((p) => {
-            const modules = Array.isArray(p.modules) ? p.modules : [];
-            const doneCount = Array.isArray(userProgress[p.id]) ? userProgress[p.id].length : 0;
-            const pct = modules.length ? Math.round((doneCount / modules.length) * 100) : 0;
-
-            return (
-              <article key={p.id} className="lp-card">
-                <header className="lp-card__header">
-                  <h2 className="lp-card__title">{p.title || "Percorso"}</h2>
-                  {/* Badge per-card */}
-                  <span className="chip" title={`${doneCount}/${modules.length} moduli`}>{pct}%</span>
-                </header>
-
-                {/* Progress bar per-card */}
-                <div
-                  style={{
-                    margin: "6px 0 10px",
-                    height: 8,
-                    background: "rgba(255,255,255,0.15)",
-                    borderRadius: 9999,
-                    overflow: "hidden",
-                  }}
-                  aria-label={`Avanzamento ${pct}%`}
-                  role="progressbar"
-                  aria-valuenow={pct}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
+          {/* Filtro ruolo target — chip selezionabili */}
+          <div className="lp-filters__group">
+            <span className="lp-filters__label" id="filter-role-label">
+              Ruolo
+            </span>
+            <div
+              className="lp-filters__chips"
+              role="group"
+              aria-labelledby="filter-role-label"
+            >
+              {TARGET_ROLES.map((r) => (
+                <button
+                  key={r.value}
+                  className={`chip chip-filter ${filterTargetRole === r.value ? "is-active" : ""}`}
+                  onClick={() => setFilterTargetRole(r.value)}
+                  aria-pressed={filterTargetRole === r.value}
                 >
-                  <div
-                    style={{
-                      width: `${pct}%`,
-                      height: "100%",
-                      background:
-                        "linear-gradient(90deg, rgba(34,197,94,1) 0%, rgba(16,185,129,1) 100%)",
-                    }}
-                  />
-                </div>
-                <small className="muted" style={{ display: "block", marginBottom: 8 }}>
-                  {doneCount}/{modules.length} moduli completati
-                </small>
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                {p.description && <p className="lp-card__desc">{p.description}</p>}
+          {/* Filtro tipo — chip selezionabili */}
+          <div className="lp-filters__group">
+            <span className="lp-filters__label" id="filter-type-label">
+              Tipo
+            </span>
+            <div
+              className="lp-filters__chips"
+              role="group"
+              aria-labelledby="filter-type-label"
+            >
+              {TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  className={`chip chip-filter ${filterType === t.value ? "is-active" : ""}`}
+                  onClick={() => setFilterType(t.value)}
+                  aria-pressed={filterType === t.value}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                <ul className="lp-list">
-                  {modules.map((m) => {
-                    const done = hasDone(p.id, m.id);
-                    return (
-                      <li key={m.id} className={`lp-list__item ${done ? "is-done" : ""}`}>
-                        <div className="lp-list__label">
-                          {m.title || `Modulo ${m.id}`}
-                          {done && <span className="pill success" style={{ marginLeft: 8 }}>Completato</span>}
-                        </div>
-                        <div className="lp-list__actions">
-                          <button
-                            className={`btn btn-small ${done ? "btn-outline" : "btn-primary"}`}
-                            onClick={() => completeModule(p.id, m.id)}
-                            disabled={done || saving}
-                          >
-                            {done ? "Fatto" : "Segna completato"}
-                          </button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </article>
-            );
-          })}
+          {/* Reset filtri — visibile solo se almeno un filtro è attivo */}
+          {hasActiveFilters && (
+            <button
+              className="btn btn-ghost btn-small lp-filters__reset"
+              onClick={() => {
+                setFilterCategory("");
+                setFilterTargetRole("");
+                setFilterType("");
+              }}
+            >
+              ✕ Rimuovi filtri
+            </button>
+          )}
         </div>
+
+        {/* ─── Stato: errore ───────────────────────────────────────────────── */}
+        {error && (
+          <div className="callout error" role="alert">
+            <p>{error}</p>
+            <button className="btn btn-outline btn-small" onClick={load}>
+              Riprova
+            </button>
+          </div>
+        )}
+
+        {/* ─── Stato: loading (skeleton) ───────────────────────────────────── */}
+        {loading && (
+          <div
+            className="lp-grid"
+            aria-busy="true"
+            aria-label="Caricamento corsi in corso"
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        )}
+
+        {/* ─── Stato: catalogo vuoto (nessun corso in DB) ──────────────────── */}
+        {isEmpty && (
+          <div className="callout neutral" role="status">
+            <p>
+              I corsi saranno disponibili a breve.{" "}
+              <a
+                href="https://t.me/helplab"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Seguici su Telegram
+              </a>{" "}
+              per restare aggiornato!
+            </p>
+          </div>
+        )}
+
+        {/* ─── Stato: filtri senza risultati ───────────────────────────────── */}
+        {isEmptyFiltered && (
+          <div className="callout neutral" role="status">
+            <p>Nessun corso disponibile per i filtri selezionati.</p>
+            <button
+              className="btn btn-outline btn-small"
+              onClick={() => {
+                setFilterCategory("");
+                setFilterTargetRole("");
+                setFilterType("");
+              }}
+            >
+              Rimuovi i filtri
+            </button>
+          </div>
+        )}
+
+        {/* ─── Griglia corsi ───────────────────────────────────────────────── */}
+        {!loading && !error && filteredCourses.length > 0 && (
+          <>
+            {/* Contatore risultati — aiuta l'orientamento, spec. su mobile */}
+            <p className="lp-results-count" aria-live="polite">
+              {filteredCourses.length}{" "}
+              {filteredCourses.length === 1 ? "corso trovato" : "corsi trovati"}
+              {hasActiveFilters && " con i filtri selezionati"}
+            </p>
+
+            <div className="lp-grid" role="list">
+              {filteredCourses.map((course) => (
+                <div key={course.id} role="listitem">
+                  <CourseCard course={course} />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
       </div>
     </section>
   );

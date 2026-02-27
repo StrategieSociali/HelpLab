@@ -25,6 +25,7 @@ import CreateChallenge from './pages/challenges/CreateChallenge';
 import MyContributions from "@/pages/me/MyContributions";
 import UserProfile from './pages/UserProfile';
 import LearningPaths from './pages/LearningPaths';
+import AdminLearningPaths from './pages/admin/AdminLearningPaths';
 import Leaderboard from './pages/Leaderboard';
 import BusinessPackages from './pages/BusinessPackages';
 import Roadmap from './pages/Roadmap';
@@ -222,6 +223,14 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path={routes.admin.learningPaths}
+                element={
+                 <ProtectedRoute allowedRoles={['admin']}>
+                   <AdminLearningPaths />
+                 </ProtectedRoute>
+                 }
+               />
 
               {/* ===== 404 ===== */}
               <Route path="*" element={<NotFound />} />

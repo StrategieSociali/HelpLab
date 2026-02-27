@@ -280,7 +280,7 @@ export default function Header() {
                       className="btn btn-ghost"
                       onClick={() => setAdminOpen((prev) => !prev)}
                     >
-                      {t("nav.title.admin")} {adminOpen ? "▴" : "▾"}
+                      {t("auth.admin.label")} {adminOpen ? "▴" : "▾"}
                     </button>
                     {adminOpen && (
                       <div className="admin-menu__list">
@@ -289,14 +289,14 @@ export default function Header() {
                           className="btn btn-ghost"
                           onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
                         >
-                          {t("nav.title.proposals")}
+                          {t("auth.admin.proposals")}
                         </NavLink>
                         <NavLink
                           to={routes.admin.assignJudge}
                           className="btn btn-ghost"
                           onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
                         >
-                          {t("nav.title.assignJudges")}
+                          {t("auth.admin.assignJudges")}
                         </NavLink>
                         {/* NUOVO: Gestione eventi */}
                         <NavLink
@@ -305,6 +305,14 @@ export default function Header() {
                           onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
                         >
                           {t("nav.title.adminEvents", "Gestione eventi")}
+                        </NavLink>
+                        {/* NUOVO: Gestione corsi */}
+                        <NavLink
+                          to={routes.admin.learningPaths}
+                          className="btn btn-ghost"
+                          onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
+                        >
+                          {t("auth.admin.learningPaths", "Gestione corsi")}
                         </NavLink>
                       </div>
                     )}
@@ -315,14 +323,14 @@ export default function Header() {
                   className="btn btn-ghost"
                   onClick={() => setMenuOpen(false)}
                 >
-                  {t("nav.createChallenge")}
+                  {t("auth.actions.createChallenge")}
                 </NavLink>
                 <NavLink
                   to={routes.dashboard.userProfile}
                   className="btn btn-ghost"
                   onClick={() => setMenuOpen(false)}
                 >
-                  {t("nav.profile")}
+                  {t("auth.actions.profile")}
                 </NavLink>
                 <LogoutButton onAfterLogout={() => setMenuOpen(false)} />
               </>
@@ -387,6 +395,14 @@ export default function Header() {
                       >
                         {t("auth.admin.events", "Gestione eventi")}
                       </NavLink>
+                      {/* NUOVO: Gestione corsi */}
+                      <NavLink
+                        to={routes.admin.learningPaths}
+                        className="btn btn-ghost"
+                        onClick={() => setAdminDesktopOpen(false)}
+                      >
+                        {t("auth.admin.learningPaths", "Gestione corsi")}
+                      </NavLink>
                     </div>
                   )}
                 </div>
@@ -432,6 +448,7 @@ export default function Header() {
  *   nav.events             → "Eventi"           (IT) / "Events"         (EN)
  *   nav.title.adminEvents  → "Gestione eventi"  (IT) / "Manage events"  (EN)
  *   auth.admin.events      → "Gestione eventi"  (IT) / "Manage events"  (EN)
+ *   auth.admin.learningPaths → "Gestione corsi" (IT) / "Manage courses" (EN)
  *
  * Chiavi MODIFICATE (solo label visiva, chiave invariata):
  *   nav.challenges  — il dropdown ora si chiama "Partecipa" ma la chiave

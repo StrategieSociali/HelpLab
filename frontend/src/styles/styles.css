@@ -812,7 +812,7 @@ button.chip:active {
   color: white; 
 }
 
-═══════════════════════════════════════════════════════════════════════════
+/*═══════════════════════════════════════════════════════════════════════════
    LABEL STANDALONE
    Per label fuori da .form-group (come in StepImpact)
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -1338,7 +1338,7 @@ select.control {
 .community-section {
   position: relative; 
   padding: var(--space-3xl) 0; 
-  background-image: url('./assets/community-earth.jpg');
+  background-image: url('../assets/community-earth.jpg');
   background-size: cover; 
   background-position: center; 
   background-attachment: fixed;
