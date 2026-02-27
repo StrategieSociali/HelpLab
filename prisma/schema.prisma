@@ -110,59 +110,6 @@ model challenges {
   @@index([proposal_id], map: "idx_challenges_proposal_id")
 }
 
-model learning_modules {
-  id                   BigInt                 @id @default(autoincrement()) @db.UnsignedBigInt
-  path_id              BigInt                 @db.UnsignedBigInt
-  title                String                 @db.VarChar(200)
-  content_url          String?                @db.VarChar(500)
-  order_index          Int                    @default(1)
-  est_minutes          Int?
-  learning_paths       learning_paths         @relation(fields: [path_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_lm_path")
-  user_module_progress user_module_progress[]
-
-  @@unique([path_id, order_index], map: "uq_path_order")
-}
-
-model learning_paths {
-  id                  BigInt                    @id @default(autoincrement()) @db.UnsignedBigInt
-  slug                String                    @unique(map: "slug") @db.VarChar(160)
-  title               String                    @db.VarChar(200)
-  description         String?                   @db.Text
-  level               learning_paths_level?
-  estimated_minutes   Int?
-  tags_json           Json?
-  published           Boolean                   @default(true)
-  created_at          DateTime                  @default(now()) @db.DateTime(0)
-  updated_at          DateTime                  @default(now()) @db.DateTime(0)
-  type                learning_paths_type?      @default(manual)
-  external_url        String?                   @db.VarChar(255)
-  playlist_embed_id   String?                   @db.VarChar(100)
-  user_can_complete   Boolean                   @default(false)
-  learning_modules    learning_modules[]
-  simplified_progress learning_paths_progress[]
-
-  @@index([level], map: "idx_level")
-}
-
-// 🆕 Tracciamento completamento per type != manual
-model learning_paths_progress {
-  id           BigInt   @id @default(autoincrement())
-  user_id      BigInt   @db.UnsignedBigInt
-  path_id      BigInt   @db.UnsignedBigInt
-  completed_at DateTime @default(now()) @db.DateTime(0)
-
-  users          users          @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  learning_paths learning_paths @relation(fields: [path_id], references: [id], onDelete: Cascade)
-
-  @@unique([user_id, path_id], map: "uq_user_path")
-}
-
-// ✅ Enum per tipo percorso
-enum learning_paths_type {
-  manual // percorso con moduli (già gestito ora)
-  external // es. YouTube, Vimeo, ecc.
-  lifter // gestito su LifterLMS
-}
 
 model sponsors {
   id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
@@ -181,17 +128,6 @@ model sponsors {
   sponsorships challenge_sponsorships[] @relation("sponsor_sponsorships")
 }
 
-model user_module_progress {
-  user_id          BigInt           @db.UnsignedBigInt
-  module_id        BigInt           @db.UnsignedBigInt
-  completed_at     DateTime         @default(now()) @db.DateTime(0)
-  learning_modules learning_modules @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ump_mod")
-  users            users            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ump_user")
-
-  @@id([user_id, module_id])
-  @@index([module_id], map: "fk_ump_mod")
-}
-
 model users {
   id                                      BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
   username                                String                   @unique(map: "username") @db.VarChar(80)
@@ -208,13 +144,11 @@ model users {
   challenges                              challenges[]
   points_transactions                     points_transactions[]
   review_audit                            review_audit[]
-  user_module_progress                    user_module_progress[]
 
   // Relazioni inverse
   sponsor_profile   sponsors?                 @relation("user_sponsor")
   sponsor_ratings   sponsor_ratings[]         @relation("sponsor_rater") // utente valuta sponsor
   sponsorships      challenge_sponsorships[]  @relation("user_sponsor_link")
-  learning_progress learning_paths_progress[] // completamento learning path
 
   // Relazione eventi creati dall'utente
   events            events[]
@@ -410,6 +344,37 @@ model event_consents {
 }
 
 // ============================================================
+// LEARNING PATH CATALOG — v1.1
+// Catalogo curato di corsi esterni (YouTube, LifterLMS, ecc.)
+// HelpLab non è un LMS: rimanda alla piattaforma esterna.
+// Il tracciamento completamento utenti verrà aggiunto in futuro.
+// ============================================================
+
+
+model learning_path_catalog {
+  id              BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
+  title           String             @db.VarChar(200)
+  description     String             @db.Text
+  category        LearningCategory
+  target_role     LearningTargetRole @default(ALL)
+  type            LearningType       @default(FREE)
+  provider        LearningProvider
+  external_url    String             @db.VarChar(500)
+  thumbnail_url   String?            @db.VarChar(500)
+  duration_minutes Int?
+  sort_order      Int                @default(0)
+  is_published    Boolean            @default(false)
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @default(now()) @updatedAt
+
+  @@index([category], map: "idx_lpc_category")
+  @@index([target_role], map: "idx_lpc_target_role")
+  @@index([type], map: "idx_lpc_type")
+  @@index([is_published, sort_order], map: "idx_lpc_published_sort")
+}
+
+
+// ============================================================
 // ENUMS
 // ============================================================
 
@@ -424,12 +389,6 @@ enum challenge_submissions_status {
   pending
   approved
   rejected
-}
-
-enum learning_paths_level {
-  beginner
-  intermediate
-  advanced
 }
 
 enum challenges_status {
@@ -467,3 +426,32 @@ enum events_status {
   ended
   rejected
 }
+
+enum LearningCategory {
+  ONBOARDING
+  PLATFORM_USAGE
+  DATA_LITERACY
+  SUSTAINABILITY
+  GAME_THEORY
+  TECHNICAL
+}
+
+enum LearningTargetRole {
+  ALL
+  VOLUNTEER
+  JUDGE
+  SPONSOR
+  PA
+}
+
+enum LearningType {
+  FREE
+  PREMIUM
+}
+
+enum LearningProvider {
+  YOUTUBE
+  LIFTERLMS
+  EXTERNAL
+}
+
