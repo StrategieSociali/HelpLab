@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { api, API_PATHS } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/utils/roles";
+import "../../styles/dynamic-pages.css";
 
 const PAGE_SIZE = 20;
 
@@ -90,7 +91,7 @@ export function AdminProposals() {
           <h2 className="page-title">Proposte sfide</h2>
           <div className="page-actions" style={{ display: "flex", gap: 8 }}>
             <select
-              className="control control-pill select--light"
+              className="control select--light"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -98,7 +99,7 @@ export function AdminProposals() {
               <option value="approved">Approvate</option>
               <option value="rejected">Respinte</option>
             </select>
-            <button className="btn btn-outline btn-pill" onClick={() => load({ append: false })} disabled={loading}>
+            <button className="btn btn-outline" onClick={() => load({ append: false })} disabled={loading}>
               Aggiorna
             </button>
           </div>

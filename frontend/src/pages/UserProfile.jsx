@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { isJudge } from "@/utils/roles";
 import { useTranslation } from "react-i18next";
 import LogoutButton from "@/components/common/LogoutButton";
+import "../styles/dynamic-pages.css";
 
 
 export default function UserProfile() {
@@ -120,7 +121,7 @@ useEffect(() => {
         {/* Submissions utente */}
         {dashboard?.submissions?.length > 0 && (
           <div className="card" style={{ padding: 16, marginTop: 24 }}>
-            <h3 className="page-title" style={{ marginBottom: 10 }}>
+            <h3 className="dynamic-title" style={{ marginBottom: 10 }}>
               {t("submissions.title")}
             </h3>
             <ul className="space-y-2">
@@ -149,7 +150,7 @@ useEffect(() => {
         
         {isJudgeUser && (
   <div className="card" style={{ padding: 16, marginTop: 24 }}>
-    <h3 className="page-title">{t("judge.title")}</h3>
+    <h3 className="dynamic-title">{t("judge.title")}</h3>
     <p className="muted">
       Accedi alla tua area di moderazione per valutare le challenge assegnate.
     </p>
@@ -165,7 +166,7 @@ useEffect(() => {
         
         {dashboardUser?.role === 'sponsor' && (
   <div className="card" style={{ padding: 16, marginTop: 24 }}>
-    <h3 className="page-title">Profilo Sponsor</h3>
+    <h3 className="dynamic-title">Profilo Sponsor</h3>
     <p className="muted">
       Gestisci le informazioni pubbliche della tua organizzazione
     </p>

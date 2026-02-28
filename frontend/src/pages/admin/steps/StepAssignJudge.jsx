@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { api, API_PATHS } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/utils/roles";
+import "../../../styles/dynamic-pages.css";
 
 const PAGE_SIZE = 20;
 
@@ -91,7 +92,7 @@ export default function StepAssignJudge() {
               <div>
                 <div className="muted small" style={{ marginBottom: 6 }}>Sfide senza giudice</div>
                 <select
-                  className="control control-pill select--dark"
+                  className="control select--dark"
                   value={selectedChallengeId || ""}
                   onChange={(e) => setSelectedChallengeId(e.target.value)}
                   style={{ width: "100%" }}
@@ -108,7 +109,7 @@ export default function StepAssignJudge() {
               <div>
                 <div className="muted small" style={{ marginBottom: 6 }}>Giudici disponibili</div>
                 <select
-                  className="control control-pill select--dark"
+                  className="control select--dark"
                   value={selectedJudgeId || ""}
                   onChange={(e) => setSelectedJudgeId(e.target.value)}
                   style={{ width: "100%" }}

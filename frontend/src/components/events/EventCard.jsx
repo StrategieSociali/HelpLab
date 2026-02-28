@@ -20,6 +20,7 @@
  */
 
 import React from "react";
+import "../../styles/dynamic-pages.css";
 
 // ─── Helper: etichetta leggibile per lo stato evento ─────────────────────────
 function statusLabel(status) {
@@ -34,9 +35,10 @@ function statusLabel(status) {
 
 // Riusa le classi status-badge di dynamic-pages.css
 function statusBadgeClass(status) {
-  if (status === "published") return "status-badge status-badge--approved";
-  if (status === "ended")     return "status-badge status-badge--rejected";
-  if (status === "draft")     return "status-badge status-badge--pending";
+  if (status === "published") return "status-badge status-badge--published";
+  if (status === "ended")     return "status-badge status-badge--ended";
+  if (status === "draft")     return "status-badge status-badge--draft";
+  if (status === "rejected")  return "status-badge status-badge--rejected";
   return "status-badge";
 }
 

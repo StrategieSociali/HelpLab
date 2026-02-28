@@ -20,6 +20,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import TextBlock from "@/components/UI/TextBlock";
 import { api, API_PATHS } from "@/api/client";
+import "../../styles/dynamic-pages.css";
 
 /* ======================
    Helpers
@@ -358,7 +359,7 @@ export default function MyContributions() {
         {cursor && !loading && (
           <div style={{ textAlign: "center", marginTop: 16 }}>
             <button
-              className="btn btn-outline btn-pill"
+              className="btn btn-outline"
               onClick={() => fetchSubmissions({ append: true })}
               disabled={loadingMore}
             >
