@@ -127,8 +127,12 @@ body {
   position: sticky; 
   top: 0; 
   z-index: 50;
-  background: #2f3237; /* barra scura definitiva */
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  /* Dark premium con blur */
+  background: rgba(10, 15, 25, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.20);
 }
 
 .header-inner,
@@ -290,7 +294,12 @@ body {
   margin-top: -4px;
   padding: 0.5rem 1rem;
   padding-top: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  /* Dark premium con blur - LEGGIBILE */
+  background: rgba(10, 15, 25, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
@@ -869,6 +878,32 @@ select option:checked {
 select.control option:hover {
   background: #f3f4f6;
   color: #111827;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECT OPTIONS SU PAGINE SCURE
+   Override per select dentro .page-section (pagine scure)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.page-section select option,
+.page-bg select option,
+.page-text select option {
+  background: #1e293b;  /* slate scuro */
+  color: #ffffff;
+}
+
+.page-section select option:checked,
+.page-bg select option:checked,
+.page-text select option:checked {
+  background: #0f766e;  /* teal scuro */
+  color: #ffffff;
+}
+
+.page-section select option:hover,
+.page-bg select option:hover,
+.page-text select option:hover {
+  background: #334155;  /* slate più chiaro */
+  color: #ffffff;
 }
 
 /* Textarea */

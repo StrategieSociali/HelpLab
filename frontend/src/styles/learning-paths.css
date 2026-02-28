@@ -472,9 +472,10 @@
   display: flex;
   flex-direction: column;
   border-radius: 14px;
-  background: rgba(20, 24, 36, 0.97);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  /* Migliorato contrasto - meno trasparente */
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 
@@ -528,6 +529,79 @@
   align-items: center;
   flex-wrap: wrap;
   cursor: pointer;
+}
+
+/* ─── OVERRIDE FORM CONTROLS NEL MODALE ───────────────────────────────────── */
+
+/* Input e textarea: border-radius moderato (NO pill) */
+.lp-admin-modal input.control,
+.lp-admin-modal textarea.control {
+  border-radius: var(--radius-sm, 6px);  /* NO pill - testo non tagliato */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 10px 14px;
+}
+
+.lp-admin-modal input.control:focus,
+.lp-admin-modal textarea.control:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+/* Select: stesso stile degli input */
+.lp-admin-modal select.control {
+  border-radius: var(--radius-sm, 6px);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.lp-admin-modal select.control:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+/* Select options: sfondo scuro, testo bianco */
+.lp-admin-modal select.control option {
+  background: #1e293b;
+  color: #ffffff;
+  padding: 8px 12px;
+}
+
+.lp-admin-modal select.control option:checked {
+  background: #0f766e;  /* teal scuro */
+  color: #ffffff;
+}
+
+/* Hint text: più leggibile */
+.lp-admin-modal .hint {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.4;
+}
+
+/* Input valid/invalid */
+.lp-admin-modal input.input-valid,
+.lp-admin-modal textarea.input-valid {
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.lp-admin-modal input.input-invalid,
+.lp-admin-modal textarea.input-invalid {
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Checkbox: stile migliorato */
+.lp-admin-modal input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #10b981;  /* verde primary */
 }
 
 /* ─── MOBILE ─────────────────────────────────────────────────────────────── */

@@ -1,100 +1,212 @@
-# HelpLab
-Humanity Empowered for Local Progress
+# HelpLab Frontend
 
-## Disclaimer
-This project is in its **early stages**, and we are working on core features (challenges), take a look at the roadmap (https://helplab.space/roadmap) for more details. Follow us if you want to stay up to date.
+## Project Description
 
-## 🚀 Empowering People, Transforming Communities
+HelpLab is a civic tech platform for verifiable sustainability and social impact. This React-based frontend enables citizens, judges, sponsors, and public administration to track, verify, and measure local environmental and social actions.
 
-HelpLab is an open-source platform designed to **encourage sustainable behaviors** through challenges, learning paths, and gamification. It also includes a **micro-payment system** using the Bitcoin Lightning Network (or other solution like CashU) to facilitate the local exchange of micro-services and second-hand products, fostering a **circular economy**.
+**Core Features:**
+- Challenge-based volunteering with verification system
+- Real-time live dashboards for events
+- ESG-compliant impact reporting (CSRD/ESRS)
+- Learning paths with progress tracking
+- Sponsor rating and evaluation
+- Bitcoin Lightning Network micropayments integration
 
-## 🛠 Features for individuals
-- **🌱 Challenges:** Participate in sustainability-focused challenges through gamification.
-- **📚 E-Learning:** Access courses, best practices, and educational content.
-- **🛒 E-Commerce:** Buy, sell, and exchange micro-products and services.
-- **💬 Social Interaction:** Connect and communicate with other users.
-- **🎮 Engagement System:** Earn points based on your challenge participation.
+**Tech Stack:**
+- React 18.3 + React Router 6.26
+- Vite 5.0 (build tool)
+- Tailwind CSS 4.0 + Custom CSS modules
+- Axios for API calls
+- i18next for internationalization
 
-## 🛠 Features for companies
-- **🌱 Challenges:** Sponsor a challenge and get useful data and information for your CSRD projects in return.
-- **📚 E-Learning:** Access courses, best practices, and educational content for your employees.
-- **💬 Social Interaction:** Build a community among your employees or customers to improve environmental and social performance.
-- **🎮 Engagement System:** Offer CSR or corporate welfare solutions to whomever you want.
+---
 
-## 🏗 Tech Stack
-### **Frontend** - Open Source
-- React.js
-- Tailwind CSS
-- JWT authentication
+## Project Structure
 
-### **Backend** - Closed source with open API
-- Node.js (Microservices architecture)
-- MySQL (Relational database)
-- Bitcoin Lightning Network integration
-
-### **Infrastructure**
-- Ubuntu 22.04 (Server)
-- Secure transaction handling
-- API gateway for microservices communication
-
-## 📦 Repository Structure
 ```
-/helplab-space
-│── frontend/           # React frontend source code
-│── backend/            # Node.js backend source code
-│── database/           # Database schema and documentation
-│── docs/               # Technical manuals and guides
-│── .github/            # Issue templates, workflows
-│── CONTRIBUTING.md     # Guidelines for contributors
-│── CODE_OF_CONDUCT.md  # Community rules
-│── README.md           # Project overview
-│── LICENSE             # Open-source license
+src/
+├── api/              # API client and endpoints
+├── components/       # Reusable React components
+│   ├── common/       # Shared components (Header, Footer)
+│   ├── events/       # Event-specific components
+│   ├── judge/        # Judge dashboard components
+│   ├── sponsors/     # Sponsor components
+│   └── UI/           # Base UI elements
+├── context/          # React Context (Auth)
+├── pages/            # Page components
+│   ├── admin/        # Admin pages
+│   ├── challenges/   # Challenge pages and forms
+│   ├── events/       # Event pages
+│   ├── judge/        # Judge-specific pages
+│   ├── me/           # User personal area
+│   └── sponsors/     # Sponsor pages
+├── styles/           # CSS files
+│   ├── styles.css           # Global styles
+│   ├── dynamic-pages.css    # Operational pages utilities
+│   ├── learning-paths.css   # Learning paths catalog
+│   └── [feature].css        # Feature-specific styles
+├── utils/            # Helper functions
+├── routes.js         # Route definitions
+└── App.jsx           # Main app component
 ```
 
-## 🏁 Getting Started
-### **Prerequisites**
-- **Node.js** and **npm** installed
-- **MySQL** database running
-- **Bitcoin Lightning Node** (optional for payment features)
+---
 
-### **Installation**
-For users:
-- git clone https://github.com/your-repo/helplab-space.git
-- cd frontend
-- npm install
-- npm run build
-- copy the contento of ../dist folder
-- put the contents of the folder on your server
-- that's all
+## Getting Started
 
-For developpers:
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
 ```bash
-# Clone the repository
-git clone https://github.com/your-repo/helplab-space.git
-cd helplab-space
+git clone https://github.com/StrategieSociali/HelpLab.git
+cd HelpLab
+```
 
-# Install dependencies for frontend and backend
-cd frontend && npm install
+2. Install dependencies:
+```bash
+npm install
+```
 
-# Start the frontend
-cd ../frontend
-npm start
+3. Create `.env` file:
+```bash
+VITE_API_URL=https://dev-api.helplab.space/api
+```
 
-# Start the backend
-Contact us for API access (freemium disposable access)
+4. Start development server:
+```bash
+npm run dev
+```
 
-### **Database Setup**
-- Currently only available via API (see above)
+5. Build for production:
+```bash
+npm run build
+```
 
-## 🤝 Contributing
-We welcome contributions! Check out our **[CONTRIBUTING.md](CONTRIBUTING.md)** for guidelines on how to get started.
+---
 
-## 📜 License
-HelpLab is released under the **MIT License**. See the [LICENSE](LICENSE) file for more details.
+## Versioning & Commit Standards
 
-## 🌎 Community & Support
-- Join our **[Telegram](https://t.me/+h_Rh9IpYpgZjZjc0)**
-- Report issues via **[GitHub Issues](https://github.com/your-repo/helplab-space/issues)**
+HelpLab Frontend follows **Semantic Versioning** with these conventions:
 
-Let’s build a more sustainable world together! 🌍💚
+### Version Format: X.Y.Z
 
+**X (Major)** - New feature classes or breaking changes  
+Example: `1.0.0 → 2.0.0` (Events feature class added)
+
+**Y (Minor)** - Single new features within current major version  
+Example: `1.1.0 → 1.2.0` (Learning Paths feature added)
+
+**Z (Patch)** - Bug fixes, CSS cleanup, performance improvements  
+Example: `1.2.0 → 1.2.1` (Design system consolidation)
+
+### Critical Updates
+
+Security or critical bug fixes are tagged as:
+```
+X.Y.Z - CRITICAL UPDATE
+```
+
+### Commit Message Format
+
+```
+Release vX.Y.Z - Short Title
+
+## Summary
+Brief overview (2-3 sentences)
+
+## Changes
+- Category 1: key changes
+- Category 2: key changes
+
+## Impact
+- What improved
+- What was fixed
+
+## Breaking Changes
+List any breaking changes, or "None"
+```
+
+### Examples
+
+**Patch Release:**
+```
+Release v1.2.1 - CSS Cleanup & Design System Consolidation
+```
+
+**Minor Release:**
+```
+Release v1.2.0 - Learning Paths Feature
+```
+
+**Critical Update:**
+```
+Release v1.1.8 - CRITICAL UPDATE - XSS Vulnerability Patch
+```
+
+---
+
+## Deployment
+
+### Staging (dev-api.helplab.space)
+Automatic deployment on push to `develop` branch.
+
+### Production (api.helplab.space)
+Manual deployment from `main` branch after validation.
+
+**Deployment Steps:**
+1. Test locally with `npm run build && npm run preview`
+2. Create pull request to `main`
+3. After merge, tag release: `git tag vX.Y.Z`
+4. Push tag: `git push origin vX.Y.Z`
+5. Build production bundle
+6. Upload to production server
+
+---
+
+## Environment Variables
+
+```bash
+VITE_API_URL          # Backend API base URL
+```
+
+---
+
+## Contributing
+
+This is an open-source project managed by a non-profit organization. Contributions are welcome!
+
+**How to Contribute:**
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes following versioning standards
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open Pull Request
+
+**Code Style:**
+- Use semantic HTML and accessible components (WCAG 2.1 AA)
+- Follow existing CSS architecture (global → dynamic-pages → feature-specific)
+- Comment non-obvious UX choices
+- Keep components small and reusable
+
+---
+
+## License
+
+This project is open source and available under the MIT License.
+
+---
+
+## Links
+
+- **Website**: [https://helplab.space](https://helplab.space)
+- **API Documentation**: [Backend Handoff v0.9](./helplab_fe_handoff_v0_9.md)
+- **Telegram Community**: [Join us](https://t.me/+h_Rh9IpYpgZjZjc0)
+- **GitHub**: [StrategieSociali/HelpLab](https://github.com/StrategieSociali/HelpLab)
+
+---
+
+**Empowering people, transforming communities** 🌱
