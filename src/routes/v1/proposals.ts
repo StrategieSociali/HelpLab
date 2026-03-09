@@ -271,7 +271,8 @@ export async function proposalsV1Routes(app: FastifyInstance) {
         location_address: true,
         deadline:         true,
         target:           true,
-        challenge_id:     true
+        challenge_id:     true,
+        sponsor_interest: true
       }
     })
 
@@ -294,7 +295,8 @@ export async function proposalsV1Routes(app: FastifyInstance) {
         rules:    '',
         deadline: p.deadline ? new Date(p.deadline) : null,
         target_json: p.target as any,
-        status:   'open'
+        status:   'open',
+        sponsor_interest: p.sponsor_interest ?? false
       }
 
       if (type === 'climate' && approved_co2 !== undefined) {

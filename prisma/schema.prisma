@@ -51,54 +51,54 @@ model challenge_submissions {
   created_at           DateTime                         @default(now()) @db.DateTime(0)
   reviewed_at          DateTime?                        @db.DateTime(0)
 
-  // Relazioni principali
-  challenges challenges @relation(fields: [challenge_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csub_ch")
-  users      users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csub_us")
-
-  // Nuova relazione con i task
-  task challenge_tasks? @relation(fields: [task_id], references: [id])
+  challenges challenges      @relation(fields: [challenge_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csub_ch")
+  users      users            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csub_us")
+  task       challenge_tasks? @relation(fields: [task_id], references: [id])
 
   points_transactions points_transactions[]
   review_audit        review_audit[]
 
   @@index([user_id], map: "fk_csub_us")
   @@index([challenge_id, created_at], map: "idx_challenge_created")
-  @@index([task_id], map: "idx_csub_task") // opzionale ma utile
+  @@index([task_id], map: "idx_csub_task")
 }
 
 model challenges {
-  id                     BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
-  proposal_uuid          String?                  @db.Char(36)
-  slug                   String                   @unique(map: "slug") @db.VarChar(160)
-  title                  String                   @db.VarChar(200)
-  type                   String                   @default("generic") @db.VarChar(80)
-  location               String?                  @db.VarChar(255)
-  rules                  String?                  @db.Text
-  deadline               DateTime?                @db.Date
-  status                 challenges_status        @default(open)
-  budget_amount          Decimal?                 @db.Decimal(10, 2)
-  budget_currency        String?                  @db.Char(3)
-  sponsor_id             BigInt?                  @db.UnsignedBigInt
-  judge_user_id          BigInt?                  @db.UnsignedBigInt
-  created_by             BigInt?                  @db.UnsignedBigInt
-  target_json            Json?
-  created_at             DateTime                 @default(now()) @db.DateTime(0)
-  updated_at             DateTime                 @default(now()) @db.DateTime(0)
-  proposal_id            String?                  @unique(map: "proposal_id") @db.Char(36)
+  id               BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  proposal_uuid    String?           @db.Char(36)
+  slug             String            @unique(map: "slug") @db.VarChar(160)
+  title            String            @db.VarChar(200)
+  type             String            @default("generic") @db.VarChar(80)
+  location         String?           @db.VarChar(255)
+  rules            String?           @db.Text
+  deadline         DateTime?         @db.Date
+  status           challenges_status @default(open)
+  budget_amount    Decimal?          @db.Decimal(10, 2)
+  budget_currency  String?           @db.Char(3)
+  sponsor_id       BigInt?           @db.UnsignedBigInt
+  judge_user_id    BigInt?           @db.UnsignedBigInt
+  created_by       BigInt?           @db.UnsignedBigInt
+  target_json      Json?
+  created_at       DateTime          @default(now()) @db.DateTime(0)
+  updated_at       DateTime          @default(now()) @db.DateTime(0)
+  proposal_id      String?           @unique(map: "proposal_id") @db.Char(36)
+  approved_co2     Float?            @db.Double
+  max_points       Int?
+  sponsor_interest Boolean           @default(false)
+
   challenge_participants challenge_participants[]
   challenge_scores       challenge_scores[]
   challenge_submissions  challenge_submissions[]
   challenge_tasks        challenge_tasks[]
-  approved_co2           Float?                   @db.Double // kg CO₂ approvati dall'admin
-  max_points             Int? // punti massimi assegnabili
+  points_transactions    points_transactions[]
+  sponsorships           challenge_sponsorships[] @relation("challenge_sponsorships")
+  event_links            event_challenges[]
+  sponsorship_requests   sponsorship_requests[]
 
-  users_challenges_created_byTousers users?                   @relation("challenges_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_ch_created_by")
-  users                              users?                   @relation(fields: [judge_user_id], references: [id], onUpdate: NoAction, map: "fk_ch_judge")
-  sponsors                           sponsors?                @relation(fields: [sponsor_id], references: [id], onUpdate: NoAction, map: "fk_ch_sponsor")
-  challenge_proposals                challenge_proposals?     @relation(fields: [proposal_id], references: [id], onUpdate: NoAction, map: "fk_chal_proposal")
-  points_transactions                points_transactions[]
-  sponsorships                       challenge_sponsorships[] @relation("challenge_sponsorships")
-  event_links                        event_challenges[]
+  users_challenges_created_byTousers users?               @relation("challenges_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_ch_created_by")
+  users                              users?               @relation(fields: [judge_user_id], references: [id], onUpdate: NoAction, map: "fk_ch_judge")
+  sponsors                           sponsors?            @relation(fields: [sponsor_id], references: [id], onUpdate: NoAction, map: "fk_ch_sponsor")
+  challenge_proposals                challenge_proposals? @relation(fields: [proposal_id], references: [id], onUpdate: NoAction, map: "fk_chal_proposal")
 
   @@index([judge_user_id], map: "fk_ch_judge")
   @@index([sponsor_id], map: "fk_ch_sponsor")
@@ -108,64 +108,6 @@ model challenges {
   @@index([proposal_uuid], map: "idx_ch_proposal_uuid")
   @@index([updated_at], map: "idx_ch_updated")
   @@index([proposal_id], map: "idx_challenges_proposal_id")
-}
-
-
-model sponsors {
-  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  user_id      BigInt   @unique @db.UnsignedBigInt
-  name         String   @db.VarChar(180)
-  website      String?  @db.VarChar(255)
-  description  String?  @db.Text
-  logo_url     String?  @db.VarChar(255)
-  public_score Int?     @default(0)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @default(now())
-
-  user         users                    @relation("user_sponsor", fields: [user_id], references: [id], onDelete: Cascade, map: "fk_sponsor_user")
-  challenges   challenges[] // mantenuta
-  ratings      sponsor_ratings[]        @relation("sponsor_reviews") // sponsor riceve recensioni
-  sponsorships challenge_sponsorships[] @relation("sponsor_sponsorships")
-}
-
-model users {
-  id                                      BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
-  username                                String                   @unique(map: "username") @db.VarChar(80)
-  email                                   String?                  @unique(map: "email")
-  password_hash                           String?                  @db.VarChar(255)
-  nickname                                String?                  @unique
-  role                                    users_role?              @default(user)
-  created_at                              DateTime                 @default(now()) @db.DateTime(0)
-  challenge_participants                  challenge_participants[]
-  challenge_proposals                     challenge_proposals[]
-  challenge_scores                        challenge_scores[]
-  challenge_submissions                   challenge_submissions[]
-  challenges_challenges_created_byTousers challenges[]             @relation("challenges_created_byTousers")
-  challenges                              challenges[]
-  points_transactions                     points_transactions[]
-  review_audit                            review_audit[]
-
-  // Relazioni inverse
-  sponsor_profile   sponsors?                 @relation("user_sponsor")
-  sponsor_ratings   sponsor_ratings[]         @relation("sponsor_rater") // utente valuta sponsor
-  sponsorships      challenge_sponsorships[]  @relation("user_sponsor_link")
-
-  // Relazione eventi creati dall'utente
-  events            events[]
-  event_consents    event_consents[]
-}
-
-model form_submissions {
-  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  name           String   @db.VarChar(200)
-  email          String   @db.VarChar(255)
-  interests_json Json?
-  newsletter     Boolean  @default(false)
-  ip             String?  @db.VarChar(45)
-  ua             String?  @db.VarChar(255)
-  created_at     DateTime @default(now()) @db.DateTime(0)
-
-  @@index([email], map: "idx_email")
 }
 
 model challenge_proposals {
@@ -193,8 +135,9 @@ model challenge_proposals {
   approved_at              DateTime?               @db.DateTime(0)
   created_at               DateTime                @default(now()) @db.DateTime(0)
   updated_at               DateTime                @default(now()) @db.DateTime(0)
-  users                    users?                  @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_cp_user")
-  challenges               challenges?
+
+  users      users?      @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_cp_user")
+  challenges challenges?
 
   @@index([user_id], map: "idx_cp_user")
   @@index([status], map: "idx_cp_status")
@@ -202,41 +145,77 @@ model challenge_proposals {
   @@index([status, created_at], map: "idx_cp_status_created")
 }
 
-model review_audit {
-  id                    BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
-  submission_id         BigInt                @db.UnsignedBigInt
-  reviewer_user_id      BigInt                @db.UnsignedBigInt
-  action                review_audit_action
-  points_awarded        Int?
-  note                  String?               @db.VarChar(255)
-  created_at            DateTime              @default(now()) @db.DateTime(0)
-  users                 users                 @relation(fields: [reviewer_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_audit_reviewer")
-  challenge_submissions challenge_submissions @relation(fields: [submission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_audit_submission")
+model challenge_tasks {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  challenge_id   BigInt   @db.UnsignedBigInt
+  title          String   @db.VarChar(200)
+  description    String?  @db.Text
+  order_index    Int      @default(0)
+  created_at     DateTime @default(now()) @db.DateTime(0)
+  max_points     Int?
+  co2_quota      Float?   @db.Double
+  payload_schema Json?
 
-  @@index([reviewer_user_id], map: "reviewer_user_id")
-  @@index([submission_id], map: "submission_id")
+  challenges            challenges              @relation(fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_task_challenge")
+  challenge_submissions challenge_submissions[]
+
+  @@unique([challenge_id, order_index], map: "uq_task_challenge_order")
+  @@index([challenge_id], map: "idx_task_challenge")
+}
+
+model challenge_sponsorships {
+  id               BigInt                     @id @default(autoincrement()) @db.UnsignedBigInt
+  challenge_id     BigInt                     @db.UnsignedBigInt
+  sponsor_id       BigInt                     @db.UnsignedBigInt
+  amount_eur       Int                        @default(0)
+  sponsored_at     DateTime                   @default(now())
+  public_comment   String?                    @db.Text
+  private_notes    String?                    @db.Text
+  payment_status   sponsorship_payment_status @default(pending)
+  payment_deadline DateTime?                  @db.Date
+  confirmed_at     DateTime?                  @db.DateTime(0)
+
+  challenge challenges @relation("challenge_sponsorships", fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_challenge_sponsorship_challenge")
+  sponsor   sponsors   @relation("sponsor_sponsorships", fields: [sponsor_id], references: [id], onDelete: Cascade, map: "fk_challenge_sponsorship_sponsor")
+
+  @@unique([challenge_id, sponsor_id])
+  @@index([sponsor_id])
+}
+
+model form_submissions {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  name           String   @db.VarChar(200)
+  email          String   @db.VarChar(255)
+  interests_json Json?
+  newsletter     Boolean  @default(false)
+  ip             String?  @db.VarChar(45)
+  ua             String?  @db.VarChar(255)
+  created_at     DateTime @default(now()) @db.DateTime(0)
+
+  @@index([email], map: "idx_email")
 }
 
 model points_transactions {
-  id                     String                @id @db.VarChar(50)
-  user_id                BigInt                @db.UnsignedBigInt
-  challenge_id           BigInt                @db.UnsignedBigInt
-  submission_id          BigInt                @db.UnsignedBigInt
-  event                  String                @db.VarChar(80)
+  id                     String   @id @db.VarChar(50)
+  user_id                BigInt   @db.UnsignedBigInt
+  challenge_id           BigInt   @db.UnsignedBigInt
+  submission_id          BigInt   @db.UnsignedBigInt
+  event                  String   @db.VarChar(80)
   delta                  Int
   meta_json              Json?
-  version                String                @default("1.0") @db.VarChar(10)
-  created_at             DateTime              @default(now()) @db.DateTime(0)
-  auto_base_points       Int?                  @default(0)
-  judge_points           Int?                  @default(0)
-  final_points           Int?                  @default(0)
-  consistency_bonus_pct  Float?                @default(0)
-  repetition_penalty_pct Float?                @default(0)
-  improvement_bonus_pct  Float?                @default(0)
-  scoring_config_version String?               @default("1.0")
-  challenges             challenges            @relation(fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_pt_challenge")
-  submissions            challenge_submissions @relation(fields: [submission_id], references: [id], onDelete: Cascade, map: "fk_pt_submission")
-  users                  users                 @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_pt_user")
+  version                String   @default("1.0") @db.VarChar(10)
+  created_at             DateTime @default(now()) @db.DateTime(0)
+  auto_base_points       Int?     @default(0)
+  judge_points           Int?     @default(0)
+  final_points           Int?     @default(0)
+  consistency_bonus_pct  Float?   @default(0)
+  repetition_penalty_pct Float?   @default(0)
+  improvement_bonus_pct  Float?   @default(0)
+  scoring_config_version String?  @default("1.0")
+
+  challenges  challenges            @relation(fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_pt_challenge")
+  submissions challenge_submissions @relation(fields: [submission_id], references: [id], onDelete: Cascade, map: "fk_pt_submission")
+  users       users                 @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_pt_user")
 
   @@unique([submission_id, event], map: "uq_pt_submission_event")
   @@index([challenge_id, created_at], map: "idx_pt_challenge_created")
@@ -244,39 +223,38 @@ model points_transactions {
   @@index([event], map: "idx_pt_event")
 }
 
-model challenge_tasks {
-  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  challenge_id BigInt   @db.UnsignedBigInt
-  title        String   @db.VarChar(200)
-  description  String?  @db.Text
-  order_index  Int      @default(0)
-  created_at   DateTime @default(now()) @db.DateTime(0)
+model review_audit {
+  id               BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  submission_id    BigInt              @db.UnsignedBigInt
+  reviewer_user_id BigInt              @db.UnsignedBigInt
+  action           review_audit_action
+  points_awarded   Int?
+  note             String?             @db.VarChar(255)
+  created_at       DateTime            @default(now()) @db.DateTime(0)
 
-  challenges            challenges              @relation(fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_task_challenge")
-  challenge_submissions challenge_submissions[]
-  max_points            Int?
-  co2_quota             Float?                  @db.Double
-  payload_schema        Json?                   // schema di validazione campi obbligatori nel payload della submission
+  users                 users                 @relation(fields: [reviewer_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_audit_reviewer")
+  challenge_submissions challenge_submissions @relation(fields: [submission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_audit_submission")
 
-  @@unique([challenge_id, order_index], map: "uq_task_challenge_order")
-  @@index([challenge_id], map: "idx_task_challenge")
+  @@index([reviewer_user_id], map: "reviewer_user_id")
+  @@index([submission_id], map: "submission_id")
 }
 
-model challenge_sponsorships {
-  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  challenge_id   BigInt   @db.UnsignedBigInt
-  sponsor_id     BigInt   @db.UnsignedBigInt
-  amount_eur     Int      @default(0)
-  sponsored_at   DateTime @default(now())
-  public_comment String?  @db.Text
-  private_notes  String?  @db.Text
+model sponsors {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id      BigInt   @unique @db.UnsignedBigInt
+  name         String   @db.VarChar(180)
+  website      String?  @db.VarChar(255)
+  description  String?  @db.Text
+  logo_url     String?  @db.VarChar(255)
+  public_score Int?     @default(0)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now())
 
-  challenge challenges @relation("challenge_sponsorships", fields: [challenge_id], references: [id], onDelete: Cascade, map: "fk_challenge_sponsorship_challenge")
-  sponsor   sponsors   @relation("sponsor_sponsorships", fields: [sponsor_id], references: [id], onDelete: Cascade, map: "fk_challenge_sponsorship_sponsor")
-  user      users      @relation("user_sponsor_link", fields: [sponsor_id], references: [id], onDelete: Cascade, map: "fk_challenge_sponsorship_user")
-
-  @@unique([challenge_id, sponsor_id])
-  @@index([sponsor_id])
+  user                 users                    @relation("user_sponsor", fields: [user_id], references: [id], onDelete: Cascade, map: "fk_sponsor_user")
+  challenges           challenges[]
+  ratings              sponsor_ratings[]        @relation("sponsor_reviews")
+  sponsorships         challenge_sponsorships[] @relation("sponsor_sponsorships")
+  sponsorship_requests sponsorship_requests[]
 }
 
 model sponsor_ratings {
@@ -290,6 +268,38 @@ model sponsor_ratings {
   user    users    @relation("sponsor_rater", fields: [user_id], references: [id], onDelete: Cascade, map: "fk_rating_user")
 
   @@id([sponsor_id, user_id])
+}
+
+model users {
+  id            BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  username      String      @unique(map: "username") @db.VarChar(80)
+  email         String?     @unique(map: "email")
+  password_hash String?     @db.VarChar(255)
+  nickname      String?     @unique
+  role          users_role? @default(user)
+  created_at    DateTime    @default(now()) @db.DateTime(0)
+
+  challenge_participants                  challenge_participants[]
+  challenge_proposals                     challenge_proposals[]
+  challenge_scores                        challenge_scores[]
+  challenge_submissions                   challenge_submissions[]
+  challenges_challenges_created_byTousers challenges[]             @relation("challenges_created_byTousers")
+  challenges                              challenges[]
+  points_transactions                     points_transactions[]
+  review_audit                            review_audit[]
+
+  // Relazioni inverse
+  sponsor_profile sponsors?         @relation("user_sponsor")
+  sponsor_ratings sponsor_ratings[] @relation("sponsor_rater")
+
+  // Relazione eventi
+  events         events[]
+  event_consents event_consents[]
+
+  // Sponsorship e ruoli
+  reviewed_sponsorship_requests sponsorship_requests[] @relation("sr_reviewer")
+  role_requests                 role_requests[]        @relation("user_role_requests")
+  reviewed_role_requests        role_requests[]        @relation("admin_role_reviews")
 }
 
 // ============================================================
@@ -312,9 +322,10 @@ model events {
   created_at       DateTime      @default(now())
   updated_at       DateTime      @default(now()) @updatedAt
 
-  creator          users?             @relation(fields: [created_by], references: [id], onDelete: SetNull)
-  challenge_links  event_challenges[]
-  consents         event_consents[]
+  creator              users?             @relation(fields: [created_by], references: [id], onDelete: SetNull)
+  challenge_links      event_challenges[]
+  consents             event_consents[]
+  sponsorship_requests sponsorship_requests[]
 }
 
 model event_challenges {
@@ -332,7 +343,6 @@ model event_consents {
   id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
   event_id     BigInt   @db.UnsignedBigInt
   user_id      BigInt   @db.UnsignedBigInt
-  // Testo cristallizzato al momento dell'accettazione — GDPR compliance
   consent_text String   @db.Text
   consented_at DateTime @default(now())
 
@@ -344,35 +354,86 @@ model event_consents {
 }
 
 // ============================================================
-// LEARNING PATH CATALOG — v1.1
-// Catalogo curato di corsi esterni (YouTube, LifterLMS, ecc.)
-// HelpLab non è un LMS: rimanda alla piattaforma esterna.
-// Il tracciamento completamento utenti verrà aggiunto in futuro.
+// SPONSORSHIP REQUESTS — Candidature sponsorizzazione (v0.9.1)
 // ============================================================
 
+model sponsorship_requests {
+  id                  BigInt                     @id @default(autoincrement()) @db.UnsignedBigInt
+  sponsor_id          BigInt                     @db.UnsignedBigInt
+  challenge_id        BigInt?                    @db.UnsignedBigInt
+  event_id            BigInt?                    @db.UnsignedBigInt
+  target_type         sponsorship_request_target
+  motivation          String                     @db.Text
+  report_requests     String?                    @db.Text
+  budget_proposed_eur Int?
+  status              sponsorship_request_status @default(pending_review)
+  admin_notes         String?                    @db.Text
+  reviewed_by         BigInt?                    @db.UnsignedBigInt
+  reviewed_at         DateTime?                  @db.DateTime(0)
+  created_at          DateTime                   @default(now())
+  updated_at          DateTime                   @default(now()) @updatedAt
+
+  sponsor   sponsors    @relation(fields: [sponsor_id], references: [id], onDelete: Cascade, map: "fk_sr_sponsor")
+  challenge challenges? @relation(fields: [challenge_id], references: [id], onDelete: SetNull, map: "fk_sr_challenge")
+  event     events?     @relation(fields: [event_id], references: [id], onDelete: SetNull, map: "fk_sr_event")
+  reviewer  users?      @relation("sr_reviewer", fields: [reviewed_by], references: [id], onDelete: SetNull, map: "fk_sr_reviewer")
+
+  @@index([sponsor_id], map: "idx_sr_sponsor")
+  @@index([challenge_id], map: "idx_sr_challenge")
+  @@index([event_id], map: "idx_sr_event")
+  @@index([status], map: "idx_sr_status")
+}
+
+// ============================================================
+// ROLE REQUESTS — Richieste di upgrade ruolo (v0.9.2)
+// ============================================================
+
+model role_requests {
+  id               BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id          BigInt              @db.UnsignedBigInt
+  requested_role   role_request_type
+  motivation       String              @db.Text
+  company_name     String?             @db.VarChar(180) // nome azienda — pre-popola sponsors.name all'approvazione
+  status           role_request_status @default(pending)
+  rejection_reason String?             @db.Text         // visibile all'utente — controproposta
+  admin_notes      String?             @db.Text         // solo admin — note interne e storico
+  reviewed_by      BigInt?             @db.UnsignedBigInt
+  reviewed_at      DateTime?           @db.DateTime(0)
+  created_at       DateTime            @default(now())
+  updated_at       DateTime            @default(now()) @updatedAt
+
+  user     users  @relation("user_role_requests", fields: [user_id], references: [id], onDelete: Cascade, map: "fk_rr_user")
+  reviewer users? @relation("admin_role_reviews", fields: [reviewed_by], references: [id], onDelete: SetNull, map: "fk_rr_reviewer")
+
+  @@index([user_id], map: "idx_rr_user")
+  @@index([status], map: "idx_rr_status")
+}
+
+// ============================================================
+// LEARNING PATH CATALOG — v1.1
+// ============================================================
 
 model learning_path_catalog {
-  id              BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
-  title           String             @db.VarChar(200)
-  description     String             @db.Text
-  category        LearningCategory
-  target_role     LearningTargetRole @default(ALL)
-  type            LearningType       @default(FREE)
-  provider        LearningProvider
-  external_url    String             @db.VarChar(500)
-  thumbnail_url   String?            @db.VarChar(500)
+  id               BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
+  title            String             @db.VarChar(200)
+  description      String             @db.Text
+  category         LearningCategory
+  target_role      LearningTargetRole @default(ALL)
+  type             LearningType       @default(FREE)
+  provider         LearningProvider
+  external_url     String             @db.VarChar(500)
+  thumbnail_url    String?            @db.VarChar(500)
   duration_minutes Int?
-  sort_order      Int                @default(0)
-  is_published    Boolean            @default(false)
-  created_at      DateTime           @default(now())
-  updated_at      DateTime           @default(now()) @updatedAt
+  sort_order       Int                @default(0)
+  is_published     Boolean            @default(false)
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @default(now()) @updatedAt
 
   @@index([category], map: "idx_lpc_category")
   @@index([target_role], map: "idx_lpc_target_role")
   @@index([type], map: "idx_lpc_type")
   @@index([is_published, sort_order], map: "idx_lpc_published_sort")
 }
-
 
 // ============================================================
 // ENUMS
@@ -389,6 +450,12 @@ enum challenge_submissions_status {
   pending
   approved
   rejected
+}
+
+enum challenge_submissions_visibility {
+  private
+  participants
+  public
 }
 
 enum challenges_status {
@@ -414,16 +481,40 @@ enum review_audit_action {
   reject
 }
 
-enum challenge_submissions_visibility {
-  private
-  participants
-  public
-}
-
 enum events_status {
   draft
   published
   ended
+  rejected
+}
+
+enum sponsorship_payment_status {
+  pending
+  confirmed
+  cancelled
+}
+
+enum sponsorship_request_target {
+  challenge
+  event
+  platform
+}
+
+enum sponsorship_request_status {
+  pending_review
+  approved
+  rejected
+  withdrawn
+}
+
+enum role_request_type {
+  judge
+  sponsor
+}
+
+enum role_request_status {
+  pending
+  approved
   rejected
 }
 
@@ -454,4 +545,3 @@ enum LearningProvider {
   LIFTERLMS
   EXTERNAL
 }
-

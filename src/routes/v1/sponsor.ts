@@ -139,31 +139,19 @@ export async function sponsorRoutes(app: FastifyInstance) {
 
   // ================================
   // GET /api/v1/sponsors/:id
-  // Pubblico — dettaglio sponsor
+  // Pubblico — dettaglio sponsor con sponsorships attive (stato pagamento incluso)
   // ================================
   app.get('/sponsors/:id', {
     schema: {
       tags: ['Sponsors'],
-      summary: 'Dettaglio pubblico di uno sponsor',
+      summary: 'Dettaglio pubblico di uno sponsor con storico sponsorizzazioni',
       params: {
         type: 'object',
         properties: { id: { type: 'string' } },
         required: ['id']
       },
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            id: { type: 'number' },
-            name: { type: 'string' },
-            website: { anyOf: [{ type: 'string' }, { type: 'null' }] },
-            description: { anyOf: [{ type: 'string' }, { type: 'null' }] },
-            logo_url: { anyOf: [{ type: 'string' }, { type: 'null' }] },
-            public_score: { anyOf: [{ type: 'number' }, { type: 'null' }] },
-            created_at: { type: 'string' }
-          },
-          required: ['id', 'name']
-        },
+        200: { type: 'object', additionalProperties: true },
         404: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
@@ -184,7 +172,26 @@ export async function sponsorRoutes(app: FastifyInstance) {
         description: true,
         logo_url: true,
         public_score: true,
-        created_at: true
+        created_at: true,
+        sponsorships: {
+          select: {
+            challenge_id:    true,
+            amount_eur:      true,
+            public_comment:  true,
+            payment_status:  true,
+            payment_deadline: true,
+            confirmed_at:    true,
+            sponsored_at:    true,
+            challenge: {
+              select: {
+                title:  true,
+                slug:   true,
+                status: true
+              }
+            }
+          },
+          orderBy: { sponsored_at: 'desc' }
+        }
       }
     })
 
@@ -192,7 +199,37 @@ export async function sponsorRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: 'not found' })
     }
 
-    return reply.send(serializeBigInt(sponsor))
+    // Nota: amount_eur esposto solo se > 0 (lo sponsor può scegliere di non renderlo pubblico)
+    // private_notes e admin_notes NON escono mai qui
+    const sponsorships = sponsor.sponsorships.map(s => ({
+      challenge_id:     Number(s.challenge_id),
+      challenge_title:  s.challenge?.title ?? null,
+      challenge_slug:   s.challenge?.slug ?? null,
+      challenge_status: s.challenge?.status ?? null,
+      amount_eur:       s.amount_eur > 0 ? s.amount_eur : null,
+      public_comment:   s.public_comment ?? null,
+      payment_status:   s.payment_status,
+      payment_deadline: s.payment_deadline
+        ? s.payment_deadline.toISOString().slice(0, 10)
+        : null,
+      confirmed_at:     s.confirmed_at ? s.confirmed_at.toISOString() : null,
+      sponsored_at:     s.sponsored_at instanceof Date
+        ? s.sponsored_at.toISOString()
+        : String(s.sponsored_at)
+    }))
+
+    return reply.send({
+      id:           Number(sponsor.id),
+      name:         sponsor.name,
+      website:      sponsor.website ?? null,
+      description:  sponsor.description ?? null,
+      logo_url:     sponsor.logo_url ?? null,
+      public_score: sponsor.public_score ?? null,
+      created_at:   sponsor.created_at instanceof Date
+        ? sponsor.created_at.toISOString()
+        : String(sponsor.created_at),
+      sponsorships
+    })
   })
 
   // ================================

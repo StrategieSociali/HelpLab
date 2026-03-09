@@ -43,9 +43,10 @@ export async function challengesV1Routes(app: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          limit:  { type: 'number' },
-          cursor: { type: 'string' },
-          status: { type: 'string', enum: ['open', 'in_review', 'closed'] }
+          limit:           { type: 'number' },
+          cursor:          { type: 'string' },
+          status:          { type: 'string', enum: ['open', 'in_review', 'closed'] },
+          seeking_sponsor: { type: 'string', enum: ['true', 'false'] }
         }
       },
       response: {
@@ -87,9 +88,14 @@ export async function challengesV1Routes(app: FastifyInstance) {
     const validStatuses = ['open', 'in_review', 'closed']
     const statusFilter = q.status && validStatuses.includes(q.status) ? q.status : undefined
 
+    const seekingSponsor = q.seeking_sponsor === 'true' ? true
+                       : q.seeking_sponsor === 'false' ? false
+                       : undefined
+
     const where: any = {
-      ...(cursorDate   ? { updated_at: { lt: cursorDate } } : {}),
-      ...(statusFilter ? { status: statusFilter }           : {})
+      ...(cursorDate       ? { updated_at: { lt: cursorDate } }       : {}),
+      ...(statusFilter     ? { status: statusFilter }                 : {}),
+      ...(seekingSponsor !== undefined ? { sponsor_interest: seekingSponsor } : {})
     }
 
     const rows = await prisma.challenges.findMany({
@@ -108,6 +114,7 @@ export async function challengesV1Routes(app: FastifyInstance) {
         sponsor_id:      true,
         judge_user_id:   true,
         target_json:     true,
+        sponsor_interest: true,
         updated_at:      true,
         sponsors: { select: { name: true } },
         users:    { select: { id: true, username: true } }
@@ -140,6 +147,7 @@ export async function challengesV1Routes(app: FastifyInstance) {
         sponsor:            r.sponsors?.name ? { name: r.sponsors.name } : null,
         judge,
         target:             r.target_json ?? null,
+        sponsor_interest:   r.sponsor_interest ?? false,
         scoreboard:         [],
         updatedAt:          r.updated_at ? r.updated_at.toISOString() : null
       }
@@ -215,6 +223,7 @@ export async function challengesV1Routes(app: FastifyInstance) {
         sponsor_id:      true,
         judge_user_id:   true,
         target_json:     true,
+        sponsor_interest: true,
         updated_at:      true,
         created_at:      true,
         sponsors: { select: { name: true } },
@@ -244,6 +253,7 @@ export async function challengesV1Routes(app: FastifyInstance) {
       sponsor:            r.sponsors?.name ? { name: r.sponsors.name } : null,
       judge,
       target:             r.target_json ?? null,
+      sponsor_interest:   r.sponsor_interest ?? false,
       participants_count: 0,
       scoreboard:         [],
       updatedAt:          r.updated_at ? r.updated_at.toISOString() : null,
