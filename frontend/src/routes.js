@@ -17,9 +17,18 @@ export const routes = {
   leaderboard: '/leaderboard',
 
   community: {
-    sponsors: '/sponsors',
-    sponsorProfile: (id = ':id') => `/sponsors/${id}`,
-    sponsorEdit: "/dashboard/sponsor",
+    sponsors:           '/sponsors',
+    sponsorProfile:     (id = ':id') => `/sponsors/${id}`,
+    sponsorEdit:        '/dashboard/sponsor',
+    // Guida pubblica alla sponsorizzazione (accessibile senza login)
+    sponsorGuide:       '/sponsorizza',
+    // Form candidatura: raggiungibile dalla guida o dal dettaglio challenge
+    sponsorshipRequest: (challengeId = '') =>
+      challengeId
+        ? `/dashboard/sponsor/candidatura?challenge=${challengeId}`
+        : `/dashboard/sponsor/candidatura`,
+    // Dashboard personale dello sponsor: lista candidature e stati pagamento
+    mySponsorships:     '/dashboard/sponsor/candidature',
   },
 
   /* ======================
@@ -80,11 +89,8 @@ export const routes = {
     proposals:   '/dashboard/admin/proposals',
     assignJudge: '/dashboard/admin/assign-judge',
     events:      '/dashboard/admin/eventi',
-  },
-  admin: {
-  proposals:    '/dashboard/admin/proposals',
-  assignJudge:  '/dashboard/admin/assign-judge',
-  learningPaths: '/dashboard/admin/corsi',   // ← aggiungi questa
+    learningPaths: '/dashboard/admin/corsi',   // ← aggiungi questa
+    sponsorships: '/dashboard/admin/sponsorships',
 },
 
   /* ======================

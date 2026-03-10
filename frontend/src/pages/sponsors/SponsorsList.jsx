@@ -78,7 +78,7 @@ export default function SponsorsList() {
   </p>
 
   <div style={{ marginTop: 28 }}>
-    <Link to="/business/packages" className="btn btn-sm btn-outline">
+    <Link to={routes.community.sponsorGuide} className="btn btn-sm btn-outline">
       Diventa sponsor
     </Link>
   </div>

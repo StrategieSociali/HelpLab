@@ -1,5 +1,5 @@
 /**
- * Challenges.jsx
+ * src/pages/Challenges.jsx
  * ----------------
  * Pagina pubblica che mostra le sfide attive della community.
  *
@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import { api, API_PATHS } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { isJudge } from "@/utils/roles";
+import SponsorshipBadge from "@/components/sponsors/SponsorshipBadge";
 
 // --------------------------------------------------
 // Helper: visualizzazione robusta del nome del giudice
@@ -81,6 +82,7 @@ const normalizeChallengeItem = (c) => {
     target: c.target ?? null,
     scoreboard: c.scoreboard ?? [],
     updatedAt: c.updatedAt,
+    sponsor_interest: c.sponsor_interest ?? false,
   };
 };
 
@@ -248,6 +250,16 @@ export default function Challenges() {
                   {ch.status === 'open' ? 'Aperta' : ch.status}
                 </div>
                 {ch.type && <div className="chip chip-type">{ch.type}</div>}
+
+                {/* Badge "Cerca sponsor" — visibile solo se il backend segnala
+                    sponsor_interest === true. Cliccando porta alla guida
+                    sponsorizzazioni senza interrompere il flusso volontario. */}
+                {ch.sponsor_interest && (
+                  <SponsorshipBadge
+                    size="sm"
+                    onClick={() => navigate(routes.community.sponsorGuide)}
+                  />
+                )}
               </div>
 
               <h3 className="card-title">{ch.title}</h3>

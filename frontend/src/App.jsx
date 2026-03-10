@@ -40,6 +40,10 @@ import JudgeChallengeOverview from './pages/judge/JudgeChallengeOverview';
 import SponsorPublicProfile from './pages/sponsors/SponsorPublicProfile';
 import SponsorsList from "./pages/sponsors/SponsorsList";
 import SponsorProfileEditor from "./pages/sponsors/SponsorProfileEditor";
+import SponsorGuide from "./pages/sponsors/SponsorGuide";
+import SponsorshipRequestForm from "./pages/sponsors/SponsorshipRequestForm";
+import MySponsorships from "./pages/sponsors/MySponsorships";
+import AdminSponsorships from "./pages/admin/AdminSponsorships";
 
 // ── 🎉 EVENTI (sprint events v1.1) ──────────────────────────────────────────
 import EventsList from './pages/events/EventsList';
@@ -76,6 +80,8 @@ export default function App() {
               {/* ===== COMMUNITY / SPONSORS ===== */}
               <Route path={routes.community.sponsors}          element={<SponsorsList />} />
               <Route path={routes.community.sponsorProfile()}  element={<SponsorPublicProfile />} />
+              {/* Guida sponsorizzazioni — pubblica, accessibile senza login */}
+              <Route path={routes.community.sponsorGuide}        element={<SponsorGuide />} />
 
               {/* redirect legacy */}
               <Route
@@ -159,6 +165,24 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* Form candidatura sponsorizzazione — riceve ?challenge=ID opzionale */}
+              <Route
+                path={routes.community.sponsorshipRequest()}
+                element={
+                  <ProtectedRoute allowedRoles={['sponsor']}>
+                    <SponsorshipRequestForm />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Dashboard candidature sponsor — lista + stati pagamento */}
+              <Route
+                path={routes.community.mySponsorships}
+                element={
+                  <ProtectedRoute allowedRoles={['sponsor']}>
+                    <MySponsorships />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* ===== CHALLENGES — CREAZIONE ===== */}
               <Route
@@ -171,6 +195,9 @@ export default function App() {
               />
 
               {/* ===== EVENTI — CREAZIONE (admin) ===== */}
+              {/* ⚠️  ATTENZIONE: routes.events.create è già definito sopra per tutti i ruoli.
+                  Questa route non viene mai raggiunta dal router (vince sempre la prima).
+                  Da risolvere in uno sprint dedicato alla gestione permessi eventi. */}
               <Route
                 path={routes.events.create}
                 element={
@@ -220,6 +247,15 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminEvents />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Pannello admin: candidature sponsorizzazione + role requests */}
+              <Route
+                path={routes.admin.sponsorships}
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminSponsorships />
                   </ProtectedRoute>
                 }
               />

@@ -17,15 +17,14 @@
  */
  
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import TextBlock from "@/components/UI/TextBlock";
 import { formatDate } from "@/utils/date";
 import SponsorRatingsSummary from "@/components/sponsors/SponsorRatingsSummary";
 import SponsorRatingsList from "@/components/sponsors/SponsorRatingsList";
 import SponsorRatingsForm  from "@/components/sponsors/SponsorRatingsForm";
-
-
-const API_BASE = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, "");
+import { api } from "@/api/client";
+import { routes } from "@/routes";
 
 
 export default function SponsorPublicProfile() {
@@ -43,17 +42,8 @@ export default function SponsorPublicProfile() {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(`${API_BASE}/v1/sponsors/${id}`);
-
-        if (!res.ok) {
-          if (res.status === 404) {
-            throw new Error("Sponsor non trovato");
-          }
-          throw new Error("Errore nel caricamento sponsor");
-        }
-
-        const data = await res.json();
-        if (mounted) setSponsor(data);
+        const res = await api.get(`/v1/sponsors/${id}`);
+        if (mounted) setSponsor(res.data);
       } catch (err) {
         if (mounted) setError(err.message);
       } finally {
@@ -150,6 +140,98 @@ return (
         )}
         
 
+
+        {/* ── Sezione sponsorizzazioni attive/passate ─────────────────────────
+            Mostra le challenge sponsorizzate con payment_status pubblico.
+            Il payment_status è esposto dal BE per permettere alla community
+            di valutare l'affidabilità dello sponsor nei pagamenti. */}
+        {sponsor.sponsorships && sponsor.sponsorships.length > 0 && (
+          <div style={{ marginTop: 32 }}>
+            <h2 className="page-subtitle" style={{ marginBottom: 12 }}>
+              Sfide sostenute
+            </h2>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {sponsor.sponsorships.map((s) => (
+                <div
+                  key={s.challenge_id}
+                  className="card"
+                  style={{ padding: "12px 16px" }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+
+                    {/* Titolo challenge — cliccabile se ha uno slug */}
+                    <div>
+                      {s.challenge_slug ? (
+                        <Link
+                          to={routes.dashboard.challengeLive(s.challenge_id)}
+                          className="small"
+                          style={{ fontWeight: 600 }}
+                        >
+                          {s.challenge_title}
+                        </Link>
+                      ) : (
+                        <span className="small" style={{ fontWeight: 600 }}>
+                          {s.challenge_title}
+                        </span>
+                      )}
+                      {s.challenge_status && (
+                        <span
+                          className="chip chip-neutral"
+                          style={{ marginLeft: 8, fontSize: "0.7rem" }}
+                        >
+                          {s.challenge_status}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Stato pagamento — badge colorato per affidabilità */}
+                    <span
+                      className={
+                        s.payment_status === "confirmed"
+                          ? "chip chip-success"
+                          : s.payment_status === "cancelled"
+                          ? "chip chip-error"
+                          : "chip chip-neutral"
+                      }
+                      title="Stato del pagamento della sponsorizzazione"
+                    >
+                      {s.payment_status === "confirmed" && "✔ Pagamento confermato"}
+                      {s.payment_status === "pending"   && "⏳ Pagamento in attesa"}
+                      {s.payment_status === "cancelled" && "✖ Pagamento annullato"}
+                    </span>
+                  </div>
+
+                  {/* Meta: importo + date */}
+                  <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 6 }}>
+                    {s.amount_eur && (
+                      <span className="small muted">
+                        Importo: <strong>{s.amount_eur}€</strong>
+                      </span>
+                    )}
+                    {s.sponsored_at && (
+                      <span className="small muted">
+                        Dal: <strong>{formatDate(s.sponsored_at)}</strong>
+                      </span>
+                    )}
+                    {s.confirmed_at && (
+                      <span className="small muted">
+                        Confermato: <strong>{formatDate(s.confirmed_at)}</strong>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Commento pubblico opzionale */}
+                  {s.public_comment && (
+                    <p className="small muted" style={{ marginTop: 6, fontStyle: "italic" }}>
+                      "{s.public_comment}"
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Rating form COMPARE SEMPRE LIMITARLO AI LOGGATI E A CHI HA FATTO UNA SUBMISSION*/}
         <SponsorRatingsForm sponsorId={sponsor.id} />

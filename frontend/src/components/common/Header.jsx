@@ -314,6 +314,14 @@ export default function Header() {
                         >
                           {t("auth.admin.learningPaths", "Gestione corsi")}
                         </NavLink>
+                        {/* NUOVO: Gestione sponsorizzazioni */}
+                        <NavLink
+                          to={routes.admin.sponsorships}
+                          className="btn btn-ghost"
+                          onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
+                        >
+                          {t("auth.admin.sponsorships", "Gestione sponsorizzazioni")}
+                        </NavLink>
                       </div>
                     )}
                   </div>
@@ -403,6 +411,14 @@ export default function Header() {
                       >
                         {t("auth.admin.learningPaths", "Gestione corsi")}
                       </NavLink>
+                      {/* NUOVO: Gestione sponsorizzazioni */}
+                      <NavLink
+                        to={routes.admin.sponsorships}
+                        className="btn btn-ghost"
+                        onClick={() => setAdminDesktopOpen(false)}
+                      >
+                        {t("auth.admin.sponsorships", "Gestione sponsorizzazioni")}
+                      </NavLink>
                     </div>
                   )}
                 </div>
@@ -448,7 +464,8 @@ export default function Header() {
  *   nav.events             → "Eventi"           (IT) / "Events"         (EN)
  *   nav.title.adminEvents  → "Gestione eventi"  (IT) / "Manage events"  (EN)
  *   auth.admin.events      → "Gestione eventi"  (IT) / "Manage events"  (EN)
- *   auth.admin.learningPaths → "Gestione corsi" (IT) / "Manage courses" (EN)
+ *   auth.admin.learningPaths  → "Gestione corsi"           (IT) / "Manage courses"        (EN)
+ *   auth.admin.sponsorships  → "Gestione sponsorizzazioni" (IT) / "Manage sponsorships" (EN)
  *
  * Chiavi MODIFICATE (solo label visiva, chiave invariata):
  *   nav.challenges  — il dropdown ora si chiama "Partecipa" ma la chiave

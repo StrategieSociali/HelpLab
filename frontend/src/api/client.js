@@ -63,6 +63,17 @@ export const API_PATHS = {
   refresh:  `/v1/auth/refresh`,
   me:       `/v1/auth/me`,
   register: `/v1/auth/register`,
+  
+  // sponsorship — sponsor
+  sponsorshipRequests:            ()   => `/v1/sponsorship-requests`,
+  sponsorshipRequestsMine:        ()   => `/v1/sponsorship-requests/mine`,
+  sponsorshipRequestDelete:       (id) => `/v1/sponsorship-requests/${id}`,
+  
+  // sponsorship — admin
+  adminSponsorshipRequests:       (q = "") => `/v1/admin/sponsorship-requests${q}`,
+  adminSponsorshipApprove:        (id) => `/v1/admin/sponsorship-requests/${id}/approve`,
+  adminSponsorshipReject:         (id) => `/v1/admin/sponsorship-requests/${id}/reject`,
+  adminSponsorshipConfirmPayment: (id) => `/v1/admin/sponsorships/${id}/confirm-payment`,
 
   // ─── events (v1) ──────────────────────────────────────────────────────────
   // Le funzioni con logica più complessa (admin, consent, link challenge)
@@ -75,4 +86,13 @@ export const API_PATHS = {
   adminEvents:     (q = "") => `/v1/admin/events${q}`,
   eventConsent:    (id) => `/v1/events/${id}/consent`,
   eventChallenges: (id) => `/v1/events/${id}/challenges`,
+  
+  // ─── role requests — utente (richiesta upgrade ruolo: user → sponsor/judge) ─
+  roleRequests:            ()        => `/v1/role-requests`,
+  roleRequestsMine:        ()        => `/v1/role-requests/mine`,
+
+  // ─── role requests — admin ──────────────────────────────────────────────────
+  adminRoleRequests:       (q = "") => `/v1/admin/role-requests${q}`,
+  adminRoleRequestApprove: (id)     => `/v1/admin/role-requests/${id}/approve`,
+  adminRoleRequestReject:  (id)     => `/v1/admin/role-requests/${id}/reject`,
 };
