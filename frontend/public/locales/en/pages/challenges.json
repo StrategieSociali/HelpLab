@@ -1,0 +1,38 @@
+{
+  "_comment": "/src/pages/Challenges.jsx",
+  "title": "Community challenges",
+  "subtitle": "Take part in concrete local actions, supported by organisations and validated to ensure real, measurable results.",
+  "filters": {
+    "searchPlaceholder": "Search by place, topic or organisation…",
+    "sortRecent": "Most recent",
+    "sortTitle": "Title A–Z",
+    "sortDeadline": "Deadline"
+  },
+  "status": {
+    "loading": "Loading challenges…"
+  },
+  "errors": {
+    "load": "Error loading challenges"
+  },
+  "card": {
+    "statusOpen": "Open",
+    "location": "Location",
+    "budget": "Budget",
+    "deadline": "Deadline",
+    "targetTitle": "What is needed to complete the challenge",
+    "targetBinary": "Activity completion",
+    "targetNote": "The goal makes the contribution verifiable.",
+    "sponsor": "Supported by",
+    "judge": "Validated by",
+    "lastUpdated": "Last updated:",
+    "cta": {
+      "participate": "Join the challenge",
+      "myContributions": "My contributions",
+      "loginToJoin": "Log in to participate",
+      "liveDashboard": "Follow the live impact"
+    }
+  },
+  "pagination": {
+    "loadMore": "Load more"
+  }
+}

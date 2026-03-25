@@ -399,7 +399,7 @@ export default function SponsorshipRequestForm() {
         </form>
 
         {/* Link utili */}
-        <p className="small muted" style={{ marginTop: 32 }}>
+        <p className="small muted sponsor-footer-links" style={{ marginTop: 32 }}>
           Hai bisogno di aggiornare il tuo profilo aziendale prima di procedere?{" "}
           <Link to={routes.community.sponsorEdit}>Vai al profilo sponsor</Link>.
         </p>

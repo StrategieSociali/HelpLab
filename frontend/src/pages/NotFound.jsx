@@ -1,62 +1,70 @@
-// /src/pages/NotFound.jsx
-// Pagina 404 con lo stesso look dei form/pannelli (gradient scuro + card “vetrosa”).
-// Usiamo soltanto classi che esistono già nel tuo CSS globale:
-// - registration-section  → sfondo scuro a gradiente + tipografia chiara
-// - container             → larghezza responsiva con padding orizzontale
-// - registration-form     → “card” vetrosa con bordo arrotondato e blur
-// - cta-button            → pulsanti/Link con gradiente verde
-//
-// Zero nuovi stili: puntiamo alla coerenza visiva con le pagine Login/Register.
+// src/pages/NotFound.jsx
+/**
+ * Pagina 404 - Not Found
+ * 
+ * Design pulito con:
+ * - page-section per coerenza con altre pagine
+ * - card glass per il contenuto
+ * - bottoni standard del design system
+ * - i18n per testi multilingua
+ */
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from "react-i18next";
+import { useTranslation } from 'react-i18next';
 
-
-function NotFound() {
-
-const { t } = useTranslation("pages/notFound", {
-  useSuspense: false,
-});
+export default function NotFound() {
+  const { t } = useTranslation('pages/notFound', {
+    useSuspense: false,
+  });
 
   return (
-    // <main> semantico + aria-labelledby per accessibilità degli screen reader
-    <main className="registration-section" aria-labelledby="nf-title">
-      <div className="container">
-        {/* Riutilizziamo la “card” del form per dare coerenza visiva */}
-        <div className="registration-form" role="region" aria-describedby="nf-desc">
-          {/* Titolo della pagina 404 (leggibile su sfondo scuro grazie al tema) */}
-          <h1 id="nf-title" style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
-            {t("title")}
+    <section className="page-section page-bg page-text">
+      <div className="container" style={{ maxWidth: 640 }}>
+        
+        {/* Card centrale */}
+        <div className="card glass" style={{ padding: '48px 32px', textAlign: 'center' }}>
+          
+          {/* Emoji o icona grande */}
+          <div style={{ fontSize: '4rem', marginBottom: '16px' }} aria-hidden="true">
+            🧭
+          </div>
+
+          {/* Titolo */}
+          <h1 className="page-title" style={{ marginBottom: '12px' }}>
+            {t('title')}
           </h1>
 
-          {/* Testo breve e chiaro su cosa è successo e cosa può fare l’utente */}
-          <p id="nf-desc" style={{ textAlign: 'center', opacity: 0.9, marginBottom: '1.25rem' }}>
-            {t("description")}
+          {/* Descrizione */}
+          <p className="muted" style={{ marginBottom: '32px', fontSize: '1rem' }}>
+            {t('description')}
           </p>
 
-          {/* Azioni principali (usiamo i CTA verdi già presenti nello stile) */}
-          <div
-            // piccolo layout inline per posizionare i pulsanti; non creiamo nuove classi
-            style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}
-          >
-            {/* Link alla Home */}
-            <Link to="/" className="cta-button" aria-label="Torna alla Home">
-              {t("actions.home")}
-              <span className="arrow">→</span>
+          {/* Azioni */}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/" className="btn btn-primary" aria-label={t('actions.homeAria')}>
+              {t('actions.home')}
             </Link>
-
-            {/* Link al Login */}
-            <Link to="/login" className="cta-button" aria-label="Vai al Login">
-              {t("actions.login")}
-              <span className="arrow">→</span>
+            <Link to="/login" className="btn btn-outline" aria-label={t('actions.loginAria')}>
+              {t('actions.login')}
             </Link>
           </div>
         </div>
+
+        {/* Link utili secondari */}
+        <p className="muted small" style={{ textAlign: 'center', marginTop: '24px' }}>
+          {t('help.text')}{' '}
+          <a 
+            href="https://t.me/+h_Rh9IpYpgZjZjc0" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ color: 'rgb(74,222,128)', textDecoration: 'none', fontWeight: 600 }}
+          >
+            {t('help.link')}
+          </a>
+        </p>
+
       </div>
-    </main>
+    </section>
   );
 }
-
-export default NotFound;
-

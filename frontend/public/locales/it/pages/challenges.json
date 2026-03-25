@@ -1,0 +1,38 @@
+{
+  "_comment": "/src/pages/Challenges.jsx",
+  "title": "Le sfide della nostra community",
+  "subtitle": "Partecipa ad azioni concrete sul territorio, sostenute da organizzazioni e validate per garantire risultati reali e misurabili.",
+  "filters": {
+    "searchPlaceholder": "Cerca per luogo, tema o organizzazione…",
+    "sortRecent": "Più recenti",
+    "sortTitle": "Titolo A–Z",
+    "sortDeadline": "Scadenza"
+  },
+  "status": {
+    "loading": "Caricamento sfide…"
+  },
+  "errors": {
+    "load": "Errore nel caricamento"
+  },
+  "card": {
+    "statusOpen": "Aperta",
+    "location": "Luogo",
+    "budget": "Budget",
+    "deadline": "Scadenza",
+    "targetTitle": "Cosa serve per completare la sfida",
+    "targetBinary": "Completamento dell'attività",
+    "targetNote": "L'obiettivo serve a rendere il contributo verificabile.",
+    "sponsor": "Sostenuta da",
+    "judge": "Validata da",
+    "lastUpdated": "Ultimo aggiornamento:",
+    "cta": {
+      "participate": "Partecipa alla sfida",
+      "myContributions": "I miei contributi",
+      "loginToJoin": "Accedi per partecipare",
+      "liveDashboard": "Segui l'impatto live"
+    }
+  },
+  "pagination": {
+    "loadMore": "Carica altri"
+  }
+}

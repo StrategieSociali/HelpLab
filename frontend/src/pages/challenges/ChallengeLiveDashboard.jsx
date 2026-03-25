@@ -22,6 +22,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api } from "@/api/client";
 import { routes } from "@/routes";
 
@@ -83,7 +84,8 @@ function BigCounter({ label, value, unit, accent = false }) {
 }
 
 // ─── Componente: riga task stats ──────────────────────────────────────────────
-function TaskStatRow({ task }) {
+// `t` passato come prop perché il componente è fuori dal provider hook
+function TaskStatRow({ task, t }) {
   const total = (task.approved_count || 0) + (task.pending_count || 0) + (task.rejected_count || 0);
   const pct = total > 0 ? Math.round((task.approved_count / total) * 100) : 0;
 
@@ -92,7 +94,7 @@ function TaskStatRow({ task }) {
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
         <span style={{ fontSize: "0.9rem" }}>{task.task_title}</span>
         <span style={{ fontSize: "0.85rem", opacity: 0.6, flexShrink: 0 }}>
-          {task.approved_count} approvate · {task.pending_count} in attesa
+          {t("tasks.approvedCount", { count: task.approved_count })} · {t("tasks.pendingCount", { count: task.pending_count })}
         </span>
       </div>
       {/* Barra di progresso */}
@@ -113,13 +115,14 @@ function TaskStatRow({ task }) {
 
 // ─── Componente principale ────────────────────────────────────────────────────
 export default function ChallengeLiveDashboard() {
+  const { t } = useTranslation("pages/challengeLive", { useSuspense: false });
   const { id } = useParams();
 
-  const [summary, setSummary]     = useState(null);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState("");
+  const [summary, setSummary]       = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState("");
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [tasksOpen, setTasksOpen] = useState(false);
+  const [tasksOpen, setTasksOpen]   = useState(false);
 
   const fetchSummary = useCallback(async () => {
     try {
@@ -129,7 +132,7 @@ export default function ChallengeLiveDashboard() {
       setError("");
     } catch (err) {
       console.error("Errore caricamento summary:", err);
-      setError("Impossibile aggiornare i dati. Riprova.");
+      setError(t("errors.load"));
     } finally {
       setLoading(false);
     }
@@ -142,8 +145,8 @@ export default function ChallengeLiveDashboard() {
     return () => clearInterval(interval);
   }, [fetchSummary]);
 
-  const ch    = summary?.challenge;
-  const stats = summary?.submissions_stats;
+  const ch     = summary?.challenge;
+  const stats  = summary?.submissions_stats;
   const impact = summary?.impact;
   const tasks  = summary?.tasks_stats || [];
   const top5   = summary?.leaderboard_top || [];
@@ -159,58 +162,59 @@ export default function ChallengeLiveDashboard() {
             className="muted small"
             style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 12 }}
           >
-            ← Tutte le sfide
+            ← {t("nav.backToChallenges")}
           </Link>
 
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
             <div>
               <h1 className="page-title" style={{ marginBottom: 4 }}>
-                {ch?.title || `Sfida #${id}`}
+                {ch?.title || t("fallbackTitle", { id })}
               </h1>
               <div className="muted small">
-                Dashboard live · aggiornamento automatico ogni 30 secondi
+                {t("header.subtitle")}
               </div>
             </div>
             {lastUpdate && (
               <div className="muted small" style={{ flexShrink: 0, paddingTop: 4 }}>
-                Ultimo aggiornamento: {lastUpdate.toLocaleTimeString()}
+                {t("header.lastUpdate")} {lastUpdate.toLocaleTimeString()}
                 <button
                   onClick={fetchSummary}
                   className="btn btn-outline btn-small"
                   style={{ marginLeft: 8 }}
-                  aria-label="Aggiorna ora"
+                  aria-label={t("header.refreshAria")}
                 >
-                  ↻ Aggiorna
+                  ↻ {t("header.refresh")}
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        {loading && <div className="callout neutral">Caricamento dati…</div>}
+        {loading && <div className="callout neutral">{t("status.loading")}</div>}
         {error && !loading && <div className="callout error">{error}</div>}
 
         {summary && (
           <>
             {/* ── Counter principali ──────────────────────────────────────── */}
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 32 }}>
+              {/* CO₂ e unità kg/km sono simboli internazionali — non tradotti */}
               <BigCounter
-                label="CO₂ evitata"
+                label={t("counters.co2")}
                 value={fmt(impact?.total_co2_saved_kg)}
                 unit="kg"
                 accent
               />
               <BigCounter
-                label="Km percorsi"
+                label={t("counters.km")}
                 value={fmt(impact?.total_km, 0)}
                 unit="km"
               />
               <BigCounter
-                label="Partecipanti attivi"
+                label={t("counters.participants")}
                 value={stats?.approved ?? "—"}
               />
               <BigCounter
-                label="In attesa di validazione"
+                label={t("counters.pending")}
                 value={stats?.pending ?? "—"}
               />
             </div>
@@ -234,15 +238,17 @@ export default function ChallengeLiveDashboard() {
                   aria-expanded={tasksOpen}
                 >
                   <h2 className="dynamic-title" style={{ margin: 0, flex: 1 }}>
-                    Dettaglio per percorso
+                    {t("tasks.title")}
                   </h2>
-                  <span className="muted small">{tasksOpen ? "▲ Chiudi" : "▼ Mostra"}</span>
+                  <span className="muted small">
+                    {tasksOpen ? t("tasks.collapse") : t("tasks.expand")}
+                  </span>
                 </button>
 
                 {tasksOpen && (
                   <div style={{ marginTop: 16 }}>
-                    {tasks.map((t) => (
-                      <TaskStatRow key={t.task_id} task={t} />
+                    {tasks.map((task) => (
+                      <TaskStatRow key={task.task_id} task={task} t={t} />
                     ))}
                   </div>
                 )}
@@ -252,7 +258,7 @@ export default function ChallengeLiveDashboard() {
             {/* ── Top 5 leaderboard ───────────────────────────────────────── */}
             {top5.length > 0 && (
               <div className="card" style={{ padding: 16 }}>
-                <h2 className="dynamic-title">🏆 Top partecipanti</h2>
+                <h2 className="dynamic-title">🏆 {t("leaderboard.title")}</h2>
                 <ol style={{ margin: "12px 0 0", padding: 0, listStyle: "none" }}>
                   {top5.map((entry, i) => (
                     <li

@@ -1,0 +1,42 @@
+{
+  "_comment": "/src/pages/challenges/ChallengeLiveDashboard.jsx",
+  "fallbackTitle": "Challenge #{{id}}",
+
+  "nav": {
+    "backToChallenges": "All challenges"
+  },
+
+  "header": {
+    "subtitle": "Live dashboard · auto-refresh every 30 seconds",
+    "lastUpdate": "Last updated:",
+    "refresh": "Refresh",
+    "refreshAria": "Refresh now"
+  },
+
+  "status": {
+    "loading": "Loading data…"
+  },
+
+  "errors": {
+    "load": "Unable to update data. Please try again."
+  },
+
+  "counters": {
+    "co2": "CO₂ avoided",
+    "km": "Km travelled",
+    "participants": "Active participants",
+    "pending": "Awaiting validation"
+  },
+
+  "tasks": {
+    "title": "Breakdown by route",
+    "expand": "▼ Show",
+    "collapse": "▲ Close",
+    "approvedCount": "{{count}} approved",
+    "pendingCount": "{{count}} pending"
+  },
+
+  "leaderboard": {
+    "title": "Top participants"
+  }
+}

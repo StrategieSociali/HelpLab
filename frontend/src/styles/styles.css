@@ -643,6 +643,13 @@ main {
   box-shadow: 0 16px 40px -12px rgba(0,0,0,.55); 
 }
 
+/* Glass variant - backdrop blur effect (opzionale)
+   Uso: <div className="card glass"> per effetto vetro smerigliato */
+.glass {
+  backdrop-filter: var(--blur-medium, blur(6px));
+  -webkit-backdrop-filter: var(--blur-medium, blur(6px));
+}
+
 .card-header { 
   display: flex; 
   gap: 8px; 
@@ -710,6 +717,35 @@ button.chip:hover:not(.chip--active) {
   background: rgba(255,255,255,.15);
   border-color: rgba(255,255,255,.4);
   transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHIP SEMANTIC VARIANTS
+   Status indicators for sponsorships, payments, requests, etc.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.chip-neutral {
+  background: rgba(148,163,184,0.15);
+  border-color: rgba(148,163,184,0.3);
+  color: rgb(203,213,225);
+}
+
+.chip-success {
+  background: rgba(34,197,94,0.15);
+  border-color: rgba(34,197,94,0.35);
+  color: rgb(74,222,128);
+}
+
+.chip-error {
+  background: rgba(239,68,68,0.15);
+  border-color: rgba(239,68,68,0.35);
+  color: rgb(248,113,113);
+}
+
+.chip-warning {
+  background: rgba(234,179,8,0.15);
+  border-color: rgba(234,179,8,0.35);
+  color: rgb(250,204,21);
 }
 
 button.chip:active {
@@ -1983,6 +2019,36 @@ select.control {
   word-wrap: break-word;     /* fallback browser vecchi */
   word-break: break-word;    /* forza break anche su parole lunghe */
   max-width: 100%;           /* non esce mai dal container */
+}
+
+/* Sponsor links - challenge/event titles con accent verde brand */
+.sponsor-profile-card a:not(.sponsor-website):not(.btn),
+.sponsor-header a:not(.sponsor-website):not(.btn) {
+  color: rgb(74,222,128);  /* verde chiaro brand */
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s, text-decoration 0.2s;
+}
+
+.sponsor-profile-card a:not(.sponsor-website):not(.btn):hover,
+.sponsor-header a:not(.sponsor-website):not(.btn):hover {
+  color: rgb(134,239,172);  /* più chiaro on hover */
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Sponsor footer links - verde accent per link testuali generici */
+.sponsor-footer-links a {
+  color: rgb(74,222,128);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s, text-decoration 0.2s;
+}
+
+.sponsor-footer-links a:hover {
+  color: rgb(134,239,172);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ─── Sponsor List & Search ────────────────────────────────────────────────── */

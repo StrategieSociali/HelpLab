@@ -1,15 +1,15 @@
 {
   "_comment": "/src/pages/NotFound.jsx",
-
   "title": "Pagina non trovata",
-
   "description": "La risorsa che stai cercando potrebbe essere stata spostata o non esiste più. Puoi tornare alla Home oppure accedere per continuare.",
-
   "actions": {
     "home": "Torna alla Home",
     "homeAria": "Torna alla Home",
     "login": "Vai al Login",
     "loginAria": "Vai al Login"
+  },
+  "help": {
+    "text": "Hai bisogno di aiuto?",
+    "link": "Contattaci su Telegram"
   }
 }
-

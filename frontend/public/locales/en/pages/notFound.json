@@ -10,6 +10,9 @@
     "homeAria": "Go back to the Home page",
     "login": "Go to Login",
     "loginAria": "Go to the Login page"
+  },
+  "help": {
+    "text": "Do you need more help?",
+    "link": "Contact us on Telegram"
   }
 }
-

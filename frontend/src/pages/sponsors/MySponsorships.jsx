@@ -185,7 +185,7 @@ function SponsorshipCard({ item, onWithdraw, withdrawing }) {
         {item.challenge_slug && (
           <Link
             to={routes.dashboard.challengeLive(item.challenge_id)}
-            className="btn btn-ghost btn-small"
+            className="btn btn-ghost"
           >
             📊 Segui l'impatto live
           </Link>
@@ -194,7 +194,7 @@ function SponsorshipCard({ item, onWithdraw, withdrawing }) {
         {/* Ritiro candidatura — solo se pending_review */}
         {canWithdraw && (
           <button
-            className="btn btn-outline btn-small"
+            className="btn btn-outline"
             style={{ color: "var(--color-error, #c0392b)" }}
             disabled={withdrawing}
             onClick={() => onWithdraw(item.id)}

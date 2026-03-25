@@ -91,11 +91,11 @@ function SeekingChallengeCard({ challenge, onSelect }) {
   return (
     <article className="card ch-card glass">
       <div className="card-header">
-        <span className="chip chip-status">
+        <span className="chip">
           {challenge.status === "open" ? "Aperta" : challenge.status}
         </span>
         {challenge.location && (
-          <span className="chip chip-type">{challenge.location}</span>
+          <span className="chip">{challenge.location}</span>
         )}
       </div>
 
@@ -127,7 +127,7 @@ function SeekingChallengeCard({ challenge, onSelect }) {
         </button>
         <Link
           to={routes.dashboard.challengeLive(challenge.id)}
-          className="btn btn-ghost btn-small"
+          className="btn btn-ghost"
         >
           Segui l'impatto live
         </Link>
@@ -202,13 +202,18 @@ function RoleRequestStatus({ request, onRefreshToken, onNewRequest }) {
           <p className="small muted" style={{ marginTop: 8 }}>
             Puoi inviare una nuova richiesta tenendo conto del feedback ricevuto.
           </p>
-          <button
-            className="btn btn-outline"
-            style={{ marginTop: 12 }}
-            onClick={onNewRequest}
-          >
-            Invia nuova richiesta
-          </button>
+         <button
+          className="btn btn-outline"
+           style={{ 
+             marginTop: 12,
+             borderColor: 'rgb(185,28,28)',
+             color: 'rgb(185,28,28)',
+             fontWeight: 600
+           }}
+          onClick={onNewRequest}
+         >
+           Invia nuova richiesta
+        </button>
         </>
       )}
     </div>
@@ -636,7 +641,7 @@ export default function SponsorGuide() {
 
         {/* ── LINK UTILI ─────────────────────────────────────────── */}
         <section style={{ marginTop: 48, paddingBottom: 40 }}>
-          <p className="muted small">
+          <p className="muted small sponsor-footer-links">
             Hai già il ruolo sponsor?{" "}
             <Link to={routes.auth.login}>Accedi</Link> per gestire le tue
             candidature. Vuoi saperne di più sui pacchetti business?{" "}

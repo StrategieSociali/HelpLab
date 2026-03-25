@@ -307,7 +307,7 @@ export default function LearningPaths() {
             </label>
             <select
               id="filter-category"
-              className="control control-small control-pill"
+              className="control control"
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
             >
@@ -366,7 +366,7 @@ export default function LearningPaths() {
           {/* Reset filtri — visibile solo se almeno un filtro è attivo */}
           {hasActiveFilters && (
             <button
-              className="btn btn-ghost btn-small lp-filters__reset"
+              className="btn btn-ghost  lp-filters__reset"
               onClick={() => {
                 setFilterCategory("");
                 setFilterTargetRole("");
@@ -382,7 +382,7 @@ export default function LearningPaths() {
         {error && (
           <div className="callout error" role="alert">
             <p>{error}</p>
-            <button className="btn btn-outline btn-small" onClick={load}>
+            <button className="btn btn-outline " onClick={load}>
               Riprova
             </button>
           </div>
@@ -423,7 +423,7 @@ export default function LearningPaths() {
           <div className="callout neutral" role="status">
             <p>Nessun corso disponibile per i filtri selezionati.</p>
             <button
-              className="btn btn-outline btn-small"
+              className="btn btn-outline "
               onClick={() => {
                 setFilterCategory("");
                 setFilterTargetRole("");

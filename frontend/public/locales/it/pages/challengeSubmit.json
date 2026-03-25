@@ -1,0 +1,87 @@
+{
+  "_comment": "/src/pages/challenges/ChallengeSubmitPage.jsx",
+  "title": "Invia il tuo contributo",
+  "subtitle": "Scegli il task a cui si riferisce la tua attività, raccontaci cosa hai fatto e carica le evidenze richieste. Il contributo sarà validato da un giudice per garantire correttezza e trasparenza.",
+
+  "status": {
+    "loadingTasks": "Caricamento task della challenge…"
+  },
+
+  "errors": {
+    "noTasks": "Questa challenge non ha ancora task definiti.",
+    "loadTasks": "Impossibile caricare i task della challenge.",
+    "notAuthenticated": "Devi essere autenticato per inviare un contributo.",
+    "noTaskSelected": "Seleziona il task a cui si riferisce il tuo contributo.",
+    "submitFailed": "Invio non riuscito. Riprova tra qualche istante."
+  },
+
+  "validation": {
+    "minPhotos": "Carica almeno {{count}} foto come evidenza.",
+    "required": "Il campo \"{{label}}\" è obbligatorio.",
+    "minValue": "Inserisci un valore valido per \"{{label}}\" (minimo: {{min}})."
+  },
+
+  "taskSelect": {
+    "label": "A quale obiettivo si riferisce il tuo contributo?",
+    "placeholder": "Seleziona un task…",
+    "hint": "Ogni contributo deve essere collegato a uno degli obiettivi della challenge."
+  },
+
+  "activityDescription": {
+    "label": "Descrizione attività",
+    "optional": "opzionale",
+    "placeholder": "Aggiungi dettagli su cosa hai fatto, se vuoi",
+    "hint": "Non è obbligatoria, ma aiuta il giudice a capire meglio il tuo contributo."
+  },
+
+  "mobility": {
+    "loading": "Caricamento opzioni…",
+    "placeholder": "Seleziona un'opzione…"
+  },
+
+  "photo": {
+    "altText": "Evidenza {{index}}",
+    "uploaded": "✓ Foto caricata",
+    "remove": "Rimuovi",
+    "removeAria": "Rimuovi foto {{index}}",
+    "uploadAria": "Carica foto {{index}}",
+    "uploading": "Caricamento in corso…",
+    "uploadBtn": "Carica foto {{index}}",
+    "addMore": "+ Aggiungi un'altra foto",
+    "counter": "{{uploaded}} foto caricata su {{total}} totali.",
+    "counterMissing": "Ne mancano ancora {{missing}}.",
+    "errors": {
+      "format": "Formato non supportato. Usa JPG, PNG o WEBP.",
+      "size": "Il file è troppo grande. Massimo 10 MB per foto.",
+      "upload": "Errore durante il caricamento. Riprova."
+    }
+  },
+
+  "cta": {
+    "submit": "Invia contributo",
+    "submitting": "Invio in corso…"
+  },
+
+  "fields": {
+    "km_percorsi": {
+      "label": "Quanti km hai percorso in bicicletta?",
+      "placeholder": "Es. 12.5",
+      "hint": "Inserisci la distanza totale percorsa in bicicletta per raggiungere il luogo dell'evento."
+    },
+    "vehicle_id": {
+      "label": "Con quale mezzo saresti venuto altrimenti?",
+      "placeholder": "",
+      "hint": "Indica con quale mezzo saresti venuto se non avessi usato la bicicletta. Serve per calcolare le emissioni evitate."
+    },
+    "evidences": {
+      "label": "Foto del tuo percorso",
+      "placeholder": "",
+      "hint": "Carica almeno {{count}} foto che dimostri la tua partecipazione. Puoi fotografare la bici con il paesaggio sullo sfondo o il punto di arrivo."
+    },
+    "kg_rifiuti": {
+      "label": "Quanti kg di rifiuti hai raccolto?",
+      "placeholder": "Es. 3.2",
+      "hint": "Indica il peso approssimativo dei rifiuti raccolti e correttamente smaltiti."
+    }
+  }
+}

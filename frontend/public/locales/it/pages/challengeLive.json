@@ -1,0 +1,42 @@
+{
+  "_comment": "/src/pages/challenges/ChallengeLiveDashboard.jsx",
+  "fallbackTitle": "Sfida #{{id}}",
+
+  "nav": {
+    "backToChallenges": "Tutte le sfide"
+  },
+
+  "header": {
+    "subtitle": "Dashboard live · aggiornamento automatico ogni 30 secondi",
+    "lastUpdate": "Ultimo aggiornamento:",
+    "refresh": "Aggiorna",
+    "refreshAria": "Aggiorna ora"
+  },
+
+  "status": {
+    "loading": "Caricamento dati…"
+  },
+
+  "errors": {
+    "load": "Impossibile aggiornare i dati. Riprova."
+  },
+
+  "counters": {
+    "co2": "CO₂ evitata",
+    "km": "Km percorsi",
+    "participants": "Partecipanti attivi",
+    "pending": "In attesa di validazione"
+  },
+
+  "tasks": {
+    "title": "Dettaglio per percorso",
+    "expand": "▼ Mostra",
+    "collapse": "▲ Chiudi",
+    "approvedCount": "{{count}} approvate",
+    "pendingCount": "{{count}} in attesa"
+  },
+
+  "leaderboard": {
+    "title": "Top partecipanti"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "_comment": "/src/pages/challenges/ChallengeSubmitPage.jsx",
+  "title": "Submit your contribution",
+  "subtitle": "Choose the task your activity refers to, tell us what you did, and upload the required evidence. Your contribution will be validated by a judge to ensure accuracy and transparency.",
+
+  "status": {
+    "loadingTasks": "Loading challenge tasks…"
+  },
+
+  "errors": {
+    "noTasks": "This challenge has no tasks defined yet.",
+    "loadTasks": "Unable to load challenge tasks.",
+    "notAuthenticated": "You must be logged in to submit a contribution.",
+    "noTaskSelected": "Please select the task your contribution refers to.",
+    "submitFailed": "Submission failed. Please try again in a moment."
+  },
+
+  "validation": {
+    "minPhotos": "Please upload at least {{count}} photo as evidence.",
+    "required": "The field \"{{label}}\" is required.",
+    "minValue": "Please enter a valid value for \"{{label}}\" (minimum: {{min}})."
+  },
+
+  "taskSelect": {
+    "label": "Which objective does your contribution refer to?",
+    "placeholder": "Select a task…",
+    "hint": "Every contribution must be linked to one of the challenge objectives."
+  },
+
+  "activityDescription": {
+    "label": "Activity description",
+    "optional": "optional",
+    "placeholder": "Add details about what you did, if you like",
+    "hint": "Not required, but it helps the judge better understand your contribution."
+  },
+
+  "mobility": {
+    "loading": "Loading options…",
+    "placeholder": "Select an option…"
+  },
+
+  "photo": {
+    "altText": "Evidence {{index}}",
+    "uploaded": "✓ Photo uploaded",
+    "remove": "Remove",
+    "removeAria": "Remove photo {{index}}",
+    "uploadAria": "Upload photo {{index}}",
+    "uploading": "Uploading…",
+    "uploadBtn": "Upload photo {{index}}",
+    "addMore": "+ Add another photo",
+    "counter": "{{uploaded}} photo uploaded out of {{total}} total.",
+    "counterMissing": "{{missing}} more needed.",
+    "errors": {
+      "format": "Unsupported format. Use JPG, PNG or WEBP.",
+      "size": "File is too large. Maximum 10 MB per photo.",
+      "upload": "Upload failed. Please try again."
+    }
+  },
+
+  "cta": {
+    "submit": "Submit contribution",
+    "submitting": "Submitting…"
+  },
+
+  "fields": {
+    "km_percorsi": {
+      "label": "How many km did you cycle?",
+      "placeholder": "E.g. 12.5",
+      "hint": "Enter the total distance cycled to reach the event location."
+    },
+    "vehicle_id": {
+      "label": "What transport would you have used otherwise?",
+      "placeholder": "",
+      "hint": "Indicate what you would have used instead of cycling. This is used to calculate avoided emissions."
+    },
+    "evidences": {
+      "label": "Photos of your journey",
+      "placeholder": "",
+      "hint": "Upload at least {{count}} photo showing your participation. You can photograph your bike with the scenery or the arrival point."
+    },
+    "kg_rifiuti": {
+      "label": "How many kg of waste did you collect?",
+      "placeholder": "E.g. 3.2",
+      "hint": "Indicate the approximate weight of waste collected and properly disposed of."
+    }
+  }
+}
