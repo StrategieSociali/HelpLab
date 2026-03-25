@@ -11,6 +11,13 @@
  * Solo il giudice assegnato alla challenge o un admin possono modificarla.
  * Il giudice non può cambiare lo stato della challenge né riassegnare il giudice —
  * quelle operazioni sono riservate all'admin.
+ *
+ * SECURITY FIXES (v0.9.6 → be-1.0):
+ * - [CRITICA] Slug sanitizzato: limite 160 caratteri e solo caratteri ammessi
+ * - [CRITICA] BigInt() su :id protetto da guardia con risposta 400 pulita
+ *   + attachValidation:true per impedire a Fastify v5 di rispondere prima del handler
+ * - [CRITICA] judge_user_id interno non esposto: judge.id è null se users non è caricato
+ * - [CRITICA] sponsor_id rimosso dal select Prisma (selezionato ma non usato)
  */
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
@@ -29,6 +36,33 @@ const patchChallengeSchema = z.object({
   deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato atteso: YYYY-MM-DD').optional(),
   type:     z.string().max(80).optional()
 }).strict()
+
+// ================================
+// Helper: parsing sicuro di un ID BigInt dal parametro URL.
+// Ritorna null se il valore non è un intero positivo valido.
+// Protegge da eccezioni non gestite di BigInt() con input invalido.
+// ================================
+function parseBigIntId(raw: string): bigint | null {
+  if (!/^\d+$/.test(raw)) return null
+  try {
+    const val = BigInt(raw)
+    if (val <= 0n) return null
+    return val
+  } catch {
+    return null
+  }
+}
+
+// ================================
+// Helper: sanitizza e valida uno slug.
+// Ammette solo caratteri alfanumerici, trattini e underscore, max 160 caratteri.
+// Restituisce null se il valore non è un slug valido.
+// ================================
+function parseSlug(raw: string): string | null {
+  if (raw.length > 160) return null
+  if (!/^[a-z0-9_-]+$/i.test(raw)) return null
+  return raw
+}
 
 
 export async function challengesV1Routes(app: FastifyInstance) {
@@ -111,12 +145,14 @@ export async function challengesV1Routes(app: FastifyInstance) {
         status:          true,
         budget_amount:   true,
         budget_currency: true,
-        sponsor_id:      true,
+        // FIX [CRITICA]: sponsor_id rimosso — selezionato ma mai usato nel mapping.
         judge_user_id:   true,
         target_json:     true,
         sponsor_interest: true,
         updated_at:      true,
         sponsors: { select: { name: true } },
+        // FIX [CRITICA]: users caricato per nome e id del giudice.
+        // judge.id viene popolato SOLO da users.id, mai da judge_user_id direttamente.
         users:    { select: { id: true, username: true } }
       },
       orderBy: { updated_at: 'desc' },
@@ -128,8 +164,11 @@ export async function challengesV1Routes(app: FastifyInstance) {
 
     const items = slice.map((r) => {
       const idNum = r.id != null ? Number(r.id) : null
-      const judge = r.judge_user_id != null
-        ? { id: Number(r.users?.id ?? r.judge_user_id), name: r.users?.username ?? null }
+
+      // FIX [CRITICA]: judge.id espone solo l'id proveniente dalla join users.
+      // Se users è null (join fallita), judge è null — MAI usare judge_user_id come fallback.
+      const judge = (r.judge_user_id != null && r.users != null)
+        ? { id: Number(r.users.id), name: r.users.username }
         : null
 
       return {
@@ -196,16 +235,30 @@ export async function challengesV1Routes(app: FastifyInstance) {
             createdAt:          { anyOf: [{ type: 'string' }, { type: 'null' }] }
           }
         },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
         404: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
   }, async (req, reply) => {
     const { idOrSlug } = (req as any).params as { idOrSlug: string }
 
-    const isNumericId = /^\d+$/.test(idOrSlug)
-    const where = isNumericId
-      ? { id: BigInt(idOrSlug) as any }
-      : { slug: idOrSlug }
+    // FIX [CRITICA]: slug non aveva limite di lunghezza né validazione caratteri.
+    // Ora distinguiamo esplicitamente tra ID numerico e slug e validiamo entrambi.
+    let where: { id: bigint } | { slug: string }
+
+    if (/^\d+$/.test(idOrSlug)) {
+      const parsedId = parseBigIntId(idOrSlug)
+      if (parsedId === null) {
+        return reply.code(400).send({ error: 'ID non valido' })
+      }
+      where = { id: parsedId as any }
+    } else {
+      const slug = parseSlug(idOrSlug)
+      if (slug === null) {
+        return reply.code(400).send({ error: 'Slug non valido' })
+      }
+      where = { slug }
+    }
 
     const r = await prisma.challenges.findFirst({
       where,
@@ -220,7 +273,7 @@ export async function challengesV1Routes(app: FastifyInstance) {
         status:          true,
         budget_amount:   true,
         budget_currency: true,
-        sponsor_id:      true,
+        // FIX [CRITICA]: sponsor_id rimosso — non usato nel mapping.
         judge_user_id:   true,
         target_json:     true,
         sponsor_interest: true,
@@ -234,8 +287,10 @@ export async function challengesV1Routes(app: FastifyInstance) {
     if (!r) return reply.code(404).send({ error: 'not found' })
 
     const idNum = r.id != null ? Number(r.id) : null
-    const judge = r.judge_user_id != null
-      ? { id: Number(r.users?.id ?? r.judge_user_id), name: r.users?.username ?? null }
+
+    // FIX [CRITICA]: judge.id viene popolato SOLO da users.id, mai dal fallback judge_user_id.
+    const judge = (r.judge_user_id != null && r.users != null)
+      ? { id: Number(r.users.id), name: r.users.username }
       : null
 
     return reply.send({
@@ -270,13 +325,19 @@ export async function challengesV1Routes(app: FastifyInstance) {
   // ================================
   app.patch('/challenges/:id', {
     preHandler: requireAuth(users_role.judge),
+    // FIX [CRITICA — Fastify v5]: attachValidation: true impedisce a Fastify/AJV
+    // di rispondere automaticamente con 400 generico quando il parametro :id
+    // non supera la validazione dello schema. L'errore viene passato al handler
+    // come req.validationError, e la nostra guardia parseBigIntId() gestisce
+    // tutti i casi invalidi con un messaggio 400 controllato.
+    attachValidation: true,
     schema: {
       tags: ['Challenges v1'],
       summary: 'Modifica challenge (giudice assegnato o admin)',
       description: 'Il giudice assegnato può modificare title, location, rules, deadline e type. Le operazioni di cambio stato, riassegnazione giudice e gestione sponsor sono riservate all\'admin.',
       params: {
         type: 'object',
-        properties: { id: { type: 'number' } },
+        properties: { id: { type: 'string' } },
         required: ['id']
       },
       body: {
@@ -301,7 +362,13 @@ export async function challengesV1Routes(app: FastifyInstance) {
     }
   }, async (req: any, reply) => {
     const { id } = req.params as { id: string }
-    const challengeId = BigInt(id)
+
+    // FIX [CRITICA]: parseBigIntId gestisce tutti i casi invalidi restituendo null.
+    // Protegge dall'eccezione non gestita di BigInt() con input come "abc" o "1.5".
+    const challengeId = parseBigIntId(String(id))
+    if (challengeId === null) {
+      return reply.code(400).send({ error: 'ID non valido' })
+    }
 
     const challenge = await prisma.challenges.findUnique({
       where:  { id: challengeId },

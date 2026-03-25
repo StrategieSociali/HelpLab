@@ -7,8 +7,13 @@
  * - POST /challenge-proposals → creazione di una nuova proposta (utente autenticato)
  * - PATCH /challenge-proposals/:id/approve → approvazione proposta e creazione challenge (solo admin)
  * - PATCH /challenge-proposals/:id/reject → rifiuto proposta con motivazione (solo admin)
+ *
+ * SECURITY FIX (be-1.0):
+ * - [CRITICA] approved_co2 e max_points validati con Zod prima di essere scritti nel DB.
+ *   Prima arrivavano da req.body senza controllo di tipo o range.
  */
 import { FastifyInstance } from 'fastify'
+import { z } from 'zod'
 import { prisma } from '../../db/client.js'
 import { proposalBodySchema } from '../../schemas/scoringSchemas.js'
 import { requireAuth } from '../../utils/requireAuth.js'
@@ -37,6 +42,14 @@ function cleanPayload(input: any): any {
   }
   return input
 }
+
+// FIX [CRITICA]: schema Zod per i campi opzionali dell'endpoint approve.
+// approved_co2: numero >= 0 oppure null/assente (non ha senso una CO2 negativa)
+// max_points: intero >= 1 con un tetto ragionevole oppure null/assente
+const approveBodySchema = z.object({
+  approved_co2: z.number().min(0).nullable().optional(),
+  max_points:   z.number().int().min(1).max(100000).nullable().optional()
+}).strict()
 
 export async function proposalsV1Routes(app: FastifyInstance) {
   // =========================
@@ -248,6 +261,7 @@ export async function proposalsV1Routes(app: FastifyInstance) {
             updatedAt:   { type: 'string' }
           }
         },
+        400: { type: 'object', properties: { error: { type: 'string' }, errors: { type: 'object' } } },
         401: { type: 'object', properties: { error: { type: 'string' } } },
         403: { type: 'object', properties: { error: { type: 'string' } } },
         404: { type: 'object', properties: { error: { type: 'string' } } },
@@ -259,7 +273,17 @@ export async function proposalsV1Routes(app: FastifyInstance) {
     const id = String((req.params as any).id || '')
     if (!id) return reply.code(404).send({ error: 'not found' })
 
-    const { approved_co2, max_points } = req.body || {}
+    // FIX [CRITICA]: approved_co2 e max_points validati con Zod.
+    // Prima venivano letti da req.body e passati direttamente a Prisma
+    // senza nessun controllo di tipo o range.
+    // - approved_co2: deve essere un numero >= 0 (CO2 negativa non ha senso)
+    // - max_points: deve essere un intero >= 1 con tetto a 100.000
+    // Entrambi accettano null (campo non fornito = nessuna modifica).
+    const bodyParsed = approveBodySchema.safeParse(req.body || {})
+    if (!bodyParsed.success) {
+      return reply.code(400).send({ errors: bodyParsed.error.flatten().fieldErrors })
+    }
+    const { approved_co2, max_points } = bodyParsed.data
 
     const p = await prisma.challenge_proposals.findUnique({
       where: { id },
@@ -299,10 +323,10 @@ export async function proposalsV1Routes(app: FastifyInstance) {
         sponsor_interest: p.sponsor_interest ?? false
       }
 
-      if (type === 'climate' && approved_co2 !== undefined) {
+      if (type === 'climate' && approved_co2 !== undefined && approved_co2 !== null) {
         challengeData.approved_co2 = approved_co2
       }
-      if (max_points !== undefined) {
+      if (max_points !== undefined && max_points !== null) {
         challengeData.max_points = max_points
       }
 
