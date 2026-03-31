@@ -18,6 +18,11 @@
  * All'approvazione di una submission viene invalidata la cache del summary
  * della challenge (TTL 30s) per aggiornare immediatamente i counter CO2
  * nella dashboard evento.
+ *
+ * Sicurezza:
+ * - FIX 1 (mar 2026): validazione URL Cloudinary su tutti i campi url_array.
+ *   Ogni URL deve iniziare con https://res.cloudinary.com/dmxlulwdv/
+ *   Applicata in POST (creazione) e PATCH (modifica submission rifiutata).
  */
 import type { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
@@ -46,6 +51,24 @@ interface PayloadFieldSchema {
 interface TaskPayloadSchema {
   fields: PayloadFieldSchema[]
 }
+
+
+// ================================
+// FIX 1 — Prefisso Cloudinary consentito
+// Centralizzato qui: se il cloud_name cambia, si aggiorna solo questa costante.
+// ================================
+const CLOUDINARY_ALLOWED_PREFIX = 'https://res.cloudinary.com/dmxlulwdv/'
+
+/**
+ * Verifica che tutti gli URL di un campo url_array provengano dal bucket
+ * Cloudinary del progetto. Restituisce l'array degli URL non conformi.
+ */
+function validateCloudinaryUrls(urls: unknown[]): string[] {
+  return urls.filter(
+    (u) => typeof u !== 'string' || !u.startsWith(CLOUDINARY_ALLOWED_PREFIX)
+  ) as string[]
+}
+
 
 // ================================
 // Motore di validazione payload
@@ -103,9 +126,18 @@ function validatePayload(payload: Record<string, unknown>, schema: TaskPayloadSc
             `"${field.name}" richiede almeno ${minItems} element${minItems === 1 ? 'o' : 'i'}`
           )
         }
-        const invalidUrls = value.filter(v => typeof v !== 'string' || v.trim() === '')
-        if (invalidUrls.length > 0) {
+        // Controlla che ogni elemento sia una stringa non vuota
+        const invalidItems = value.filter(v => typeof v !== 'string' || v.trim() === '')
+        if (invalidItems.length > 0) {
           errors.push(`"${field.name}" contiene elementi non validi`)
+          break
+        }
+        // FIX 1 — Controlla che ogni URL provenga da Cloudinary
+        const nonCloudinary = validateCloudinaryUrls(value)
+        if (nonCloudinary.length > 0) {
+          errors.push(
+            `"${field.name}" contiene URL non consentiti: le immagini devono essere caricate tramite la piattaforma`
+          )
         }
         break
       }

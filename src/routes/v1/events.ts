@@ -26,6 +26,10 @@
  * - Il summary espone solo risultati aggregati (co2_saved_kg, total_km, partecipanti)
  * - I coefficienti numerici CO2 non vengono mai esposti
  * - I dati personali dei volontari non compaiono in nessuna response pubblica
+ *
+ * Sicurezza:
+ * - FIX 4 (mar 2026): tutti i parametri URL numerici (:id, :challengeId) sono
+ *   protetti con parseBigIntParam — risponde 400 invece di crashare.
  */
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
@@ -35,6 +39,22 @@ import { serializeBigInt } from '../../utils/serialize.js'
 import { users_role, events_status } from '@prisma/client'
 import { z } from 'zod'
 import { getCache, setCache, deleteCache } from '../../utils/memoryCache.js'
+
+// ============================================================
+// FIX 4 — Helper: parsing sicuro di parametri URL numerici
+// Restituisce null se il valore non è un intero positivo valido.
+// ============================================================
+function parseBigIntParam(value: unknown): bigint | null {
+  if (value === undefined || value === null) return null
+  const s = String(value).trim()
+  if (!/^\d+$/.test(s)) return null
+  try {
+    const n = BigInt(s)
+    return n > 0n ? n : null
+  } catch {
+    return null
+  }
+}
 
 // ============================================================
 // Helpers
@@ -221,6 +241,8 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
   //   - draft / rejected  → solo creatore o admin (401/404 per tutti gli altri)
   //
   // Usa optionalAuth: decodifica il token se presente, non blocca se assente.
+  // Il parametro può essere un ID numerico o uno slug testuale: nessuna
+  // validazione bigint qui, la stringa slug è gestita separatamente.
   // ----------------------------------------------------------
   fastify.get('/events/:idOrSlug', { preHandler: optionalAuth() }, async (req: FastifyRequest, reply: FastifyReply) => {
     const { idOrSlug } = req.params as { idOrSlug: string }
@@ -291,10 +313,10 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
   // GET /events/:id/summary — Dashboard live (cache 30s)
   // ----------------------------------------------------------
   fastify.get('/events/:id/summary', async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id } = req.params as { id: string }
-    const eventId = BigInt(id)
-    const cacheKey = summaryKey(eventId)
+    const eventId = parseBigIntParam((req.params as any).id)
+    if (!eventId) return reply.status(400).send({ error: 'ID evento non valido' })
 
+    const cacheKey = summaryKey(eventId)
     const cached = getCache(cacheKey)
     if (cached) return reply.send(cached)
 
@@ -507,24 +529,14 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
 
   // ----------------------------------------------------------
   // PATCH /events/:id — Modifica evento
-  //
-  // Stati modificabili:
-  //   - draft:     creatore o admin
-  //   - published: creatore o admin (evento live, può cambiare)
-  //   - rejected:  creatore o admin (per correggere e riottentere approvazione)
-  //   - ended:     IMMUTABILE per tutti — dati bloccati per auditabilità
-  //
-  // Comportamento speciale su rejected:
-  //   - Se è il creatore a modificare un evento rejected → status torna automaticamente a draft
-  //     (segnala all'admin che c'è qualcosa di nuovo da valutare)
-  //   - Se è l'admin a modificare un evento rejected → status rimane rejected
-  //     (l'admin non si auto-notifica)
   // ----------------------------------------------------------
   fastify.patch('/events/:id', { preHandler: requireAuth() }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id } = req.params as { id: string }
-    const user   = (req as any).user
+    const eventId = parseBigIntParam((req.params as any).id)
+    if (!eventId) return reply.status(400).send({ error: 'ID evento non valido' })
 
-    const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
+    const user = (req as any).user
+
+    const ev = await prisma.events.findUnique({ where: { id: eventId } })
     if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
 
     const isAdmin   = user.role === users_role.admin
@@ -538,9 +550,6 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     if (ev.status === events_status.ended) {
       return reply.status(403).send({ error: 'Gli eventi conclusi non possono essere modificati' })
     }
-
-    // Il creatore (non admin) può modificare solo draft, published e rejected
-    // (tutti tranne ended, già gestito sopra)
 
     const parsed = updateEventSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -566,10 +575,9 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     if (data.location_geo     !== undefined) updateData.location_geo     = data.location_geo
 
     // Reset automatico a draft se il creatore modifica un evento rejected
-    // L'admin non triggera questo comportamento
     if (!isAdmin && ev.status === events_status.rejected) {
       updateData.status           = events_status.draft
-      updateData.rejection_reason = null  // pulizia — il rifiuto non è più rilevante
+      updateData.rejection_reason = null
     }
 
     const updated = await prisma.events.update({
@@ -584,10 +592,12 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
   // POST /events/:id/consent — Accetta consenso privacy
   // ----------------------------------------------------------
   fastify.post('/events/:id/consent', { preHandler: requireAuth() }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id } = req.params as { id: string }
-    const user   = (req as any).user
+    const eventId = parseBigIntParam((req.params as any).id)
+    if (!eventId) return reply.status(400).send({ error: 'ID evento non valido' })
 
-    const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
+    const user = (req as any).user
+
+    const ev = await prisma.events.findUnique({ where: { id: eventId } })
     if (!ev)                                   return reply.status(404).send({ error: 'Evento non trovato' })
     if (ev.status !== events_status.published) return reply.status(400).send({ error: 'Il consenso può essere accettato solo per eventi pubblicati' })
 
@@ -599,7 +609,7 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     const consent = await prisma.event_consents.upsert({
       where: {
         event_id_user_id: {
-          event_id: BigInt(id),
+          event_id: eventId,
           user_id:  BigInt(user.id)
         }
       },
@@ -608,7 +618,7 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
         consented_at: new Date()
       },
       create: {
-        event_id:     BigInt(id),
+        event_id:     eventId,
         user_id:      BigInt(user.id),
         consent_text: parsed.data.consent_text
       }
@@ -625,13 +635,15 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
   // DELETE /events/:id/consent — Revoca consenso
   // ----------------------------------------------------------
   fastify.delete('/events/:id/consent', { preHandler: requireAuth() }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id } = req.params as { id: string }
-    const user   = (req as any).user
+    const eventId = parseBigIntParam((req.params as any).id)
+    if (!eventId) return reply.status(400).send({ error: 'ID evento non valido' })
+
+    const user = (req as any).user
 
     const consent = await prisma.event_consents.findUnique({
       where: {
         event_id_user_id: {
-          event_id: BigInt(id),
+          event_id: eventId,
           user_id:  BigInt(user.id)
         }
       }
@@ -642,7 +654,7 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     await prisma.event_consents.delete({
       where: {
         event_id_user_id: {
-          event_id: BigInt(id),
+          event_id: eventId,
           user_id:  BigInt(user.id)
         }
       }
@@ -692,13 +704,12 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
 
   // ----------------------------------------------------------
   // ADMIN — PATCH /events/:id/approve — draft o rejected → published
-  // Accetta entrambi gli stati per consentire riapprovazione diretta
-  // di eventi precedentemente rifiutati senza passare per draft
   // ----------------------------------------------------------
   fastify.patch('/events/:id/approve', { preHandler: requireAuth(users_role.admin) }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id } = req.params as { id: string }
+    const eventId = parseBigIntParam((req.params as any).id)
+    if (!eventId) return reply.status(400).send({ error: 'ID evento non valido' })
 
-    const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
+    const ev = await prisma.events.findUnique({ where: { id: eventId } })
     if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
 
     const approvableStatuses: events_status[] = [events_status.draft, events_status.rejected]
@@ -718,12 +729,12 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
 
   // ----------------------------------------------------------
   // ADMIN — PATCH /events/:id/reject — draft o published → rejected
-  // Accetta published per consentire il ritiro di eventi già pubblicati
   // ----------------------------------------------------------
   fastify.patch('/events/:id/reject', { preHandler: requireAuth(users_role.admin) }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id } = req.params as { id: string }
+    const eventId = parseBigIntParam((req.params as any).id)
+    if (!eventId) return reply.status(400).send({ error: 'ID evento non valido' })
 
-    const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
+    const ev = await prisma.events.findUnique({ where: { id: eventId } })
     if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
 
     const rejectableStatuses: events_status[] = [events_status.draft, events_status.published]
@@ -738,13 +749,11 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ errors: parsed.error.flatten().fieldErrors })
     }
 
-    const reasonNote = parsed.data.reason ?? null
-
     const updated = await prisma.events.update({
       where: { id: ev.id },
       data: {
         status:           events_status.rejected,
-        rejection_reason: reasonNote
+        rejection_reason: parsed.data.reason ?? null
       }
     })
 
@@ -758,12 +767,12 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
 
   // ----------------------------------------------------------
   // ADMIN — PATCH /events/:id/end — published → ended
-  // ended è lo stato finale immutabile
   // ----------------------------------------------------------
   fastify.patch('/events/:id/end', { preHandler: requireAuth(users_role.admin) }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id } = req.params as { id: string }
+    const eventId = parseBigIntParam((req.params as any).id)
+    if (!eventId) return reply.status(400).send({ error: 'ID evento non valido' })
 
-    const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
+    const ev = await prisma.events.findUnique({ where: { id: eventId } })
     if (!ev)                                   return reply.status(404).send({ error: 'Evento non trovato' })
     if (ev.status !== events_status.published) return reply.status(400).send({ error: `L'evento deve essere in stato published. Stato attuale: ${ev.status}` })
 
@@ -779,24 +788,19 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
 
   // ----------------------------------------------------------
   // POST /events/:id/challenges — Collega challenge
-  //
-  // Autorizzazione:
-  //   - Admin: sempre, qualsiasi stato tranne ended
-  //   - Creatore: solo se evento in draft
-  //
-  // Rationale: il creatore compone il proprio evento (evento + challenge)
-  // prima che l'admin lo approvi. L'admin approva il pacchetto completo.
   // ----------------------------------------------------------
   fastify.post('/events/:id/challenges', { preHandler: requireAuth() }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id } = req.params as { id: string }
-    const user   = (req as any).user
+    const eventId = parseBigIntParam((req.params as any).id)
+    if (!eventId) return reply.status(400).send({ error: 'ID evento non valido' })
+
+    const user = (req as any).user
 
     const parsed = linkChallengeSchema.safeParse(req.body)
     if (!parsed.success) {
       return reply.status(400).send({ errors: parsed.error.flatten().fieldErrors })
     }
 
-    const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
+    const ev = await prisma.events.findUnique({ where: { id: eventId } })
     if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
 
     const isAdmin   = user.role === users_role.admin
@@ -806,26 +810,25 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
       return reply.status(403).send({ error: 'Non autorizzato' })
     }
 
-    // ended è immutabile per tutti
     if (ev.status === events_status.ended) {
       return reply.status(403).send({ error: 'Gli eventi conclusi non possono essere modificati' })
     }
 
-    // Il creatore può collegare challenge solo su eventi in draft
     if (!isAdmin && ev.status !== events_status.draft) {
       return reply.status(403).send({ error: 'Puoi collegare challenge solo a eventi in bozza' })
     }
 
-    const challenge = await prisma.challenges.findUnique({
-      where: { id: BigInt(parsed.data.challenge_id) }
-    })
+    const challengeId = parseBigIntParam(parsed.data.challenge_id)
+    if (!challengeId) return reply.status(400).send({ error: 'ID challenge non valido' })
+
+    const challenge = await prisma.challenges.findUnique({ where: { id: challengeId } })
     if (!challenge) return reply.status(404).send({ error: 'Challenge non trovata' })
 
     const existing = await prisma.event_challenges.findUnique({
       where: {
         event_id_challenge_id: {
-          event_id:     BigInt(id),
-          challenge_id: BigInt(parsed.data.challenge_id)
+          event_id:     eventId,
+          challenge_id: challengeId
         }
       }
     })
@@ -833,32 +836,33 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
 
     await prisma.event_challenges.create({
       data: {
-        event_id:     BigInt(id),
-        challenge_id: BigInt(parsed.data.challenge_id)
+        event_id:     eventId,
+        challenge_id: challengeId
       }
     })
 
-    invalidateEventSummaryCache(BigInt(id))
+    invalidateEventSummaryCache(eventId)
 
     return reply.status(201).send({
-      event_id:        Number(id),
-      challenge_id:    parsed.data.challenge_id,
+      event_id:        Number(eventId),
+      challenge_id:    Number(challengeId),
       challenge_title: challenge.title
     })
   })
 
   // ----------------------------------------------------------
   // DELETE /events/:id/challenges/:challengeId — Scollega challenge
-  //
-  // Autorizzazione:
-  //   - Admin: sempre, qualsiasi stato tranne ended
-  //   - Creatore: solo se evento in draft
   // ----------------------------------------------------------
   fastify.delete('/events/:id/challenges/:challengeId', { preHandler: requireAuth() }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id, challengeId } = req.params as { id: string; challengeId: string }
+    const eventId = parseBigIntParam((req.params as any).id)
+    if (!eventId) return reply.status(400).send({ error: 'ID evento non valido' })
+
+    const challengeId = parseBigIntParam((req.params as any).challengeId)
+    if (!challengeId) return reply.status(400).send({ error: 'ID challenge non valido' })
+
     const user = (req as any).user
 
-    const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
+    const ev = await prisma.events.findUnique({ where: { id: eventId } })
     if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
 
     const isAdmin   = user.role === users_role.admin
@@ -879,8 +883,8 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     const link = await prisma.event_challenges.findUnique({
       where: {
         event_id_challenge_id: {
-          event_id:     BigInt(id),
-          challenge_id: BigInt(challengeId)
+          event_id:     eventId,
+          challenge_id: challengeId
         }
       }
     })
@@ -890,13 +894,13 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
     await prisma.event_challenges.delete({
       where: {
         event_id_challenge_id: {
-          event_id:     BigInt(id),
-          challenge_id: BigInt(challengeId)
+          event_id:     eventId,
+          challenge_id: challengeId
         }
       }
     })
 
-    invalidateEventSummaryCache(BigInt(id))
+    invalidateEventSummaryCache(eventId)
 
     return reply.status(204).send()
   })
@@ -905,13 +909,14 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
   // ADMIN — GET /events/:id/consents/export — CSV partecipanti con consenso
   // ----------------------------------------------------------
   fastify.get('/events/:id/consents/export', { preHandler: requireAuth(users_role.admin) }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id } = req.params as { id: string }
+    const eventId = parseBigIntParam((req.params as any).id)
+    if (!eventId) return reply.status(400).send({ error: 'ID evento non valido' })
 
-    const ev = await prisma.events.findUnique({ where: { id: BigInt(id) } })
+    const ev = await prisma.events.findUnique({ where: { id: eventId } })
     if (!ev) return reply.status(404).send({ error: 'Evento non trovato' })
 
     const consents = await prisma.event_consents.findMany({
-      where: { event_id: BigInt(id) },
+      where: { event_id: eventId },
       include: {
         user: { select: { id: true, nickname: true, email: true } }
       },
@@ -925,7 +930,7 @@ export default async function eventsRoutes(fastify: FastifyInstance) {
       return `${Number(c.user.id)},${nickname},${email},${c.consented_at.toISOString()}`
     }).join('\n')
 
-    const filename = `consents_event_${id}_${new Date().toISOString().slice(0, 10)}.csv`
+    const filename = `consents_event_${Number(eventId)}_${new Date().toISOString().slice(0, 10)}.csv`
 
     return reply
       .header('Content-Type', 'text/csv; charset=utf-8')

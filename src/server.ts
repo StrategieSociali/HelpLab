@@ -5,6 +5,10 @@
  *
  * Entry point dell'applicazione.
  * Tutte le route v1 sono registrate tramite il router aggregato in routes/v1/index.ts
+ *
+ * Sicurezza:
+ * - FIX 2 (mar 2026): blocco avvio in production se COOKIE_SECRET non è definita.
+ *   Warning in sviluppo se si usa il fallback.
  */
 
 import Fastify from 'fastify'
@@ -21,6 +25,41 @@ dotenv.config()
 // Route v1 (router aggregato)
 import { v1Routes } from './routes/v1/index.js'
 
+
+// ================================
+// FIX 2 — Validazione variabili d'ambiente critiche
+// Eseguita prima di qualsiasi altra operazione.
+// ================================
+function validateEnv(): string {
+  const isProd = process.env.NODE_ENV === 'production'
+  const secret = process.env.COOKIE_SECRET
+
+  if (!secret) {
+    if (isProd) {
+      // In produzione non c'è fallback accettabile: una chiave nota
+      // permetterebbe a chiunque di forgiare cookie firmati validi.
+      console.error(
+        '[FATAL] COOKIE_SECRET non è definita. ' +
+        'Imposta la variabile d\'ambiente COOKIE_SECRET prima di avviare il server in produzione.'
+      )
+      process.exit(1)
+    }
+
+    // In sviluppo si può procedere ma con un warning visibile
+    const fallback = process.env.JWT_SECRET || 'changeme'
+    console.warn(
+      '[WARN] COOKIE_SECRET non definita — uso fallback "' + fallback + '". ' +
+      'Non usare in produzione.'
+    )
+    return fallback
+  }
+
+  return secret
+}
+
+const cookieSecret = validateEnv()
+
+
 async function start() {
   const server = Fastify({ logger: true })
 
@@ -33,7 +72,7 @@ async function start() {
     .map(o => o.trim())
     .filter(Boolean)
 
-    await server.register(cors, {
+  await server.register(cors, {
     origin: origins.length ? origins : false,
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE']
@@ -58,8 +97,10 @@ async function start() {
   })
 
   // === Cookie
+  // FIX 2: cookieSecret è già stato validato in validateEnv().
+  // In produzione è garantito che non sia il fallback 'changeme'.
   await server.register(cookie, {
-    secret: process.env.COOKIE_SECRET || process.env.JWT_SECRET || 'changeme',
+    secret: cookieSecret,
     parseOptions: {
       httpOnly: true,
       sameSite: 'none',

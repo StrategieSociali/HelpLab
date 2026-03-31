@@ -410,6 +410,22 @@ model role_requests {
 }
 
 // ============================================================
+// REVOKED TOKENS — Blocklist refresh token (FIX 5, mar 2026)
+// Salva l'hash SHA-256 del refresh token al logout.
+// Il token in chiaro non viene mai salvato.
+// expires_at = momento in cui il token sarebbe scaduto naturalmente (7 giorni).
+// I record con expires_at minore di now vengono eliminati inline al refresh.
+// ============================================================
+model revoked_tokens {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  token_hash  String   @unique @db.Char(64)   // SHA-256 hex, sempre 64 caratteri
+  revoked_at  DateTime @default(now())
+  expires_at  DateTime @db.DateTime(0)        // quando il token sarebbe scaduto
+
+  @@index([expires_at], map: "idx_rt_expires")
+}
+
+// ============================================================
 // LEARNING PATH CATALOG — v1.1
 // ============================================================
 

@@ -27,12 +27,33 @@
  *     { "name": "evidences",   "type": "url_array", "minItems": 1, "required": true }
  *   ]
  * }
+ *
+ * Sicurezza:
+ * - FIX 4 (mar 2026): tutti i parametri URL numerici (:id, :taskId) sono
+ *   protetti con parseBigIntParam — risponde 400 invece di crashare.
  */
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/client.js'
 import { requireAuth } from '../../utils/requireAuth.js'
 import { users_role } from '@prisma/client'
 import { z } from 'zod'
+
+
+// ================================
+// FIX 4 — Helper: parsing sicuro di parametri URL numerici
+// Restituisce null se il valore non è un intero positivo valido.
+// ================================
+function parseBigIntParam(value: unknown): bigint | null {
+  if (value === undefined || value === null) return null
+  const s = String(value).trim()
+  if (!/^\d+$/.test(s)) return null
+  try {
+    const n = BigInt(s)
+    return n > 0n ? n : null
+  } catch {
+    return null
+  }
+}
 
 
 // ================================
@@ -53,8 +74,6 @@ export async function tasksV1Routes(app: FastifyInstance) {
   // ================================
   // GET /api/v1/challenges/:id/tasks
   // Pubblico — lista task ordinati per order_index
-  // Espone anche payload_schema per permettere al frontend
-  // di costruire form dinamici in base ai campi richiesti dal task
   // ================================
   app.get('/challenges/:id/tasks', {
     schema: {
@@ -68,16 +87,13 @@ export async function tasksV1Routes(app: FastifyInstance) {
       response: {
         200: {
           type: 'array',
-          items: {
-            type: 'object',
-            additionalProperties: true
-          }
+          items: { type: 'object', additionalProperties: true }
         }
       }
     }
   }, async (req, reply) => {
-    const { id } = req.params as { id: string }
-    const challengeId = BigInt(id)
+    const challengeId = parseBigIntParam((req.params as any).id)
+    if (!challengeId) return reply.code(400).send({ error: 'ID challenge non valido' })
 
     const tasks = await prisma.challenge_tasks.findMany({
       where:   { challenge_id: challengeId },
@@ -128,15 +144,13 @@ export async function tasksV1Routes(app: FastifyInstance) {
         required: ['title']
       },
       response: {
-        201: {
-          type: 'object',
-          additionalProperties: true
-        }
+        201: { type: 'object', additionalProperties: true }
       }
     }
   }, async (req: any, reply) => {
-    const { id } = req.params as { id: string }
-    const challengeId = BigInt(id)
+    const challengeId = parseBigIntParam((req.params as any).id)
+    if (!challengeId) return reply.code(400).send({ error: 'ID challenge non valido' })
+
     const { title, description, order_index, max_points, co2_quota, payload_schema } = req.body
 
     const task = await prisma.challenge_tasks.create({
@@ -194,19 +208,18 @@ export async function tasksV1Routes(app: FastifyInstance) {
         }
       },
       response: {
-        200: {
-          type: 'object',
-          additionalProperties: true
-        },
+        200: { type: 'object', additionalProperties: true },
         400: { type: 'object', properties: { error: { type: 'string' }, errors: { type: 'object' } } },
         403: { type: 'object', properties: { error: { type: 'string' } } },
         404: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
   }, async (req: any, reply) => {
-    const { id, taskId } = req.params as { id: string; taskId: string }
-    const challengeId    = BigInt(id)
-    const taskIdBig      = BigInt(taskId)
+    const challengeId = parseBigIntParam((req.params as any).id)
+    if (!challengeId) return reply.code(400).send({ error: 'ID challenge non valido' })
+
+    const taskIdBig = parseBigIntParam((req.params as any).taskId)
+    if (!taskIdBig) return reply.code(400).send({ error: 'ID task non valido' })
 
     // Verifica che il task appartenga alla challenge indicata
     const task = await prisma.challenge_tasks.findUnique({
@@ -287,16 +300,13 @@ export async function tasksV1Routes(app: FastifyInstance) {
       response: {
         200: {
           type: 'array',
-          items: {
-            type: 'object',
-            additionalProperties: true
-          }
+          items: { type: 'object', additionalProperties: true }
         }
       }
     }
   }, async (req: any, reply) => {
-    const { id } = req.params as { id: string }
-    const taskId = BigInt(id)
+    const taskId = parseBigIntParam((req.params as any).id)
+    if (!taskId) return reply.code(400).send({ error: 'ID task non valido' })
 
     const submissions = await prisma.challenge_submissions.findMany({
       where:  { task_id: taskId },
