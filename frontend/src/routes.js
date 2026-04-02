@@ -89,8 +89,10 @@ export const routes = {
     proposals:   '/dashboard/admin/proposals',
     assignJudge: '/dashboard/admin/assign-judge',
     events:      '/dashboard/admin/eventi',
-    learningPaths: '/dashboard/admin/corsi',   // ← aggiungi questa
+    learningPaths: '/dashboard/admin/corsi',
     sponsorships: '/dashboard/admin/sponsorships',
+    // Report evento: percorso con ID dinamico
+    eventReport:  (id = ':id') => `/dashboard/admin/events/${id}/report`,
 },
 
   /* ======================

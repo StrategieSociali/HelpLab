@@ -27,7 +27,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/utils/roles";
@@ -309,7 +309,15 @@ export default function AdminEvents() {
                       Concluso
                     </span>
                   )}
-
+                  
+                  {/* Report evento — accessibile dall'admin per tutti gli stati */}
+                  <Link
+                    to={routes.admin.eventReport(ev.id)}
+                      className="btn btn-ghost btn-small"
+                      title="Visualizza report di impatto"
+                     >
+                    📄 Report
+                 </Link>
                 </div>
               </div>
             </li>

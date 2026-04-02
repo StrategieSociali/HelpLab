@@ -45,13 +45,16 @@ import SponsorshipRequestForm from "./pages/sponsors/SponsorshipRequestForm";
 import MySponsorships from "./pages/sponsors/MySponsorships";
 import AdminSponsorships from "./pages/admin/AdminSponsorships";
 
-// ── 🎉 EVENTI (sprint events v1.1) ──────────────────────────────────────────
+// ── 🎉 EVENTI ──────────────────────────────────────────
 import EventsList from './pages/events/EventsList';
 import EventDetail from './pages/events/EventDetail';
 import EventLiveDashboard from './pages/events/EventLiveDashboard';
 import CreateEvent from './pages/events/CreateEvent';
 import EditEvent from './pages/events/EditEvent';
 import MyEvents from './pages/events/MyEvents';
+
+// ── REPORT ──────────────────────────────────────────
+import EventReport from "./pages/admin/EventReport";
 
 import '@/styles/styles.css';
 
@@ -267,6 +270,14 @@ export default function App() {
                  </ProtectedRoute>
                  }
                />
+               <Route
+                 path={routes.admin.eventReport()}
+                 element={
+                 <ProtectedRoute role="admin">
+                   <EventReport />
+                 </ProtectedRoute>
+                }
+                />
 
               {/* ===== 404 ===== */}
               <Route path="*" element={<NotFound />} />
