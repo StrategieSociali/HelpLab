@@ -1,0 +1,335 @@
+/* =========================================================================
+   BUSINESSPACKAGES.CSS - Stili dedicati per Business Packages
+   Namespace: .business-*
+   Style: Professionale, orientato al business, con gerarchia visiva chiara
+   ========================================================================= */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   HEADER
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.business-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  margin-bottom: 56px;
+}
+
+.business-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(28px, 4vw, 42px);
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.business-subtitle {
+  color: rgba(255,255,255,.88);
+  font-size: 1.15rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 680px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GRID SYSTEM
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.business-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-bottom: 48px;
+}
+
+/* Featured grid (prime 3 card - servizi principali) */
+.business-grid--featured {
+  margin-bottom: 72px; /* più spazio prima dei servizi standard */
+}
+
+/* Services grid (altri servizi) */
+.business-grid--services {
+  margin-bottom: 56px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CARDS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Card base */
+.business-card {
+  background: rgba(255,255,255, 0.08);
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 18px;
+  padding: 28px;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.business-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,.45);
+  border-color: rgba(255,255,255,.35);
+}
+
+/* Card featured (servizi principali - glow verde) */
+.business-card--featured {
+  background: linear-gradient(
+    135deg, 
+    rgba(16,185,129,0.18) 0%,
+    rgba(59,130,246,0.12) 100%
+  );
+  border: 2px solid rgba(16,185,129,0.65);
+  padding: 32px;
+  box-shadow: 0 8px 28px rgba(16,185,129,0.32);
+}
+
+.business-card--featured:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(16,185,129,0.5);
+  border-color: rgba(16,185,129,0.85);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CARD CONTENT
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Icone */
+.business-card__icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.3));
+}
+
+.business-card--featured .business-card__icon {
+  font-size: 3.5rem;
+  margin-bottom: 20px;
+}
+
+/* Titoli */
+.business-card__title {
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 18px 0;
+  line-height: 1.3;
+}
+
+.business-card--featured .business-card__title {
+  font-size: 1.55rem;
+  margin-bottom: 20px;
+}
+
+/* Divider (hr nelle featured) */
+.business-card__divider {
+  border: none;
+  border-top: 1px solid rgba(16,185,129,0.4);
+  margin: 0 0 20px 0;
+  width: 100%;
+}
+
+/* Content container */
+.business-card__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Singolo item (feature list) */
+.business-card__item {
+  color: rgba(255,255,255,0.87);
+  line-height: 1.5;
+  margin: 0;
+  font-size: 0.95rem;
+  text-align: left;
+  padding-left: 8px;
+  position: relative;
+}
+
+/* Bullet point personalizzato */
+.business-card__item::before {
+  content: "✓";
+  position: absolute;
+  left: -12px;
+  color: rgba(16,185,129,0.8);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.business-card--featured .business-card__item {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.92);
+}
+
+.business-card--featured .business-card__item::before {
+  color: rgba(16,185,129,1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CTA SECTION
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.business-cta {
+  background: linear-gradient(
+    135deg,
+    rgba(16,185,129,0.12) 0%,
+    rgba(59,130,246,0.08) 100%
+  );
+  border: 2px solid rgba(16,185,129,0.5);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  margin-top: 56px;
+  box-shadow: 0 8px 32px rgba(16,185,129,0.25);
+}
+
+.business-cta__title {
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 14px 0;
+}
+
+.business-cta__subtitle {
+  color: rgba(255,255,255,.88);
+  font-size: 1.15rem;
+  margin: 0 0 28px 0;
+  line-height: 1.5;
+}
+
+.business-cta__actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Tablet (2 colonne) */
+@media (max-width: 1024px) {
+  .business-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .business-header {
+    margin-bottom: 44px;
+  }
+
+  .business-title {
+    font-size: clamp(24px, 4vw, 36px);
+  }
+
+  .business-subtitle {
+    font-size: 1.05rem;
+  }
+
+  .business-card {
+    padding: 24px;
+  }
+
+  .business-card--featured {
+    padding: 28px;
+  }
+
+  .business-cta {
+    padding: 32px;
+  }
+
+  .business-cta__title {
+    font-size: 1.75rem;
+  }
+}
+
+/* Mobile (1 colonna) */
+@media (max-width: 640px) {
+  .business-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .business-grid--featured {
+    margin-bottom: 56px;
+  }
+
+  .business-grid--services {
+    margin-bottom: 44px;
+  }
+
+  .business-header {
+    margin-bottom: 36px;
+  }
+
+  .business-title {
+    font-size: clamp(22px, 5vw, 32px);
+  }
+
+  .business-subtitle {
+    font-size: 1rem;
+  }
+
+  .business-card {
+    padding: 22px;
+  }
+
+  .business-card--featured {
+    padding: 26px;
+  }
+
+  .business-card__icon {
+    font-size: 2.5rem;
+  }
+
+  .business-card--featured .business-card__icon {
+    font-size: 3rem;
+  }
+
+  .business-card__title {
+    font-size: 1.25rem;
+  }
+
+  .business-card--featured .business-card__title {
+    font-size: 1.4rem;
+  }
+
+  .business-card__item {
+    font-size: 0.9rem;
+  }
+
+  .business-cta {
+    padding: 28px;
+  }
+
+  .business-cta__title {
+    font-size: 1.6rem;
+  }
+
+  .business-cta__subtitle {
+    font-size: 1rem;
+  }
+
+  .business-cta__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .business-cta__actions .btn {
+    width: 100%;
+    max-width: 320px;
+  }
+}

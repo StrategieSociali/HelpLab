@@ -309,14 +309,15 @@ export default function AdminEvents() {
                       Concluso
                     </span>
                   )}
-{/* Report evento — accessibile dall'admin per tutti gli stati */}
-<Link
-  to={routes.admin.eventReport(ev.id)}
-  className="btn btn-ghost btn-small"
-  title="Visualizza report di impatto"
->
-  📄 Report
-</Link>
+                  
+                  {/* Report evento — accessibile dall'admin per tutti gli stati */}
+                  <Link
+                    to={routes.admin.eventReport(ev.id)}
+                      className="btn btn-ghost btn-small"
+                      title="Visualizza report di impatto"
+                     >
+                    📄 Report
+                 </Link>
                 </div>
               </div>
             </li>

@@ -1,0 +1,894 @@
+/**
+ * EventReport.module.css
+ * Percorso: src/styles/EventReport.module.css
+ *
+ * Foglio di stile per il report di impatto evento (EventReport.jsx).
+ * Usa le CSS variables di :root definite in styles/styles.css.
+ * Aggiunge variabili locali scoped al .reportWrapper.
+ *
+ * Due contesti:
+ *   - Schermo: tema dark coerente con il resto del sito. Superfici glass,
+ *     testo bianco, accenti verdi brand. Nessun sfondo chiaro a schermo.
+ *   - @media print: tema chiaro completo (sfondo bianco, testo scuro).
+ *     Il layout "documento" esiste SOLO in stampa / salvataggio PDF.
+ *
+ * Colori brand: --accent-green-1 (#10b981) / --accent-green-2 (#059669)
+ * coerenti con i token globali di styles.css.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VARIABILI LOCALI — TEMA DARK (schermo)
+   Scoped al .reportWrapper per non inquinare il resto del sito.
+   In @media print vengono sovrascritte con valori chiari.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.reportWrapper {
+  /* Superfici dark — glass identico a .card in styles.css */
+  --report-surface:       rgba(255, 255, 255, 0.06);
+  --report-border:        rgba(255, 255, 255, 0.15);
+
+  /* Testo — bianco su dark */
+  --report-text:          #ffffff;
+  --report-text-muted:    rgba(255, 255, 255, 0.60);
+
+  /* Accenti brand — identici a --accent-green-1 / --accent-green-2 */
+  --report-accent:        #10b981;
+  --report-accent-dark:   #059669;
+  --report-accent-light:  rgba(16, 185, 129, 0.12);
+
+  /* Colori semantici — leggibili su dark, allineati ai chip di styles.css */
+  --report-approved:      rgb(74, 222, 128);    /* chip-success */
+  --report-pending:       rgb(250, 204, 21);    /* chip-warning */
+  --report-rejected:      rgb(203, 213, 225);   /* chip-neutral */
+
+  /* Ombra dark — identica a .card in styles.css */
+  --report-shadow:        0 10px 30px -10px rgba(0, 0, 0, 0.4);
+  --report-radius:        8px;
+  --report-max-width:     860px;
+
+  /* Font — identico al body del sito */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Nessun background: eredita il gradiente scuro di <main> */
+  color: var(--report-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BARRA STAMPA
+   Sticky in cima, nascosta in @media print.
+   Su dark: sfondo glass con bordo sottile, coerente con l'header del sito.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.printBar {
+  position: sticky;
+  top: 0;
+  z-index: 40; /* sotto il site-header (z-index:50) e i suoi dropdown */
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1.5rem;
+  background: rgba(10, 15, 25, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--report-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btnPrint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: linear-gradient(135deg, var(--report-accent), var(--report-accent-dark));
+  color: #ffffff;
+  border: none;
+  border-radius: var(--report-radius);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  letter-spacing: 0.02em;
+}
+
+.btnPrint:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.btnPrint:active {
+  transform: translateY(0);
+}
+
+.btnPrint:focus-visible {
+  outline: 3px solid var(--report-accent);
+  outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTENITORE PRINCIPALE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.reportContainer {
+  max-width: var(--report-max-width);
+  margin: 2rem auto;
+  padding: 0 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEZIONI GENERICHE
+   Card glass dark — identiche a .card in styles.css.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.section {
+  background: var(--report-surface);
+  border: 1px solid var(--report-border);
+  border-radius: var(--report-radius);
+  padding: 2rem;
+  box-shadow: var(--report-shadow);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--report-accent);
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid var(--report-accent-light);
+  letter-spacing: -0.01em;
+}
+
+.subsectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--report-text);
+  margin: 1.25rem 0 0.75rem;
+}
+
+.emptyState {
+  color: var(--report-text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COPERTINA
+   ═══════════════════════════════════════════════════════════════════════════ */
+.cover {
+  border-top: 4px solid var(--report-accent);
+  padding: 2.5rem 2rem;
+}
+
+.coverLogos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.helplabLogo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Immagine logo HelpLab in copertina */
+.helplabLogoImg {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logoText {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--report-accent);
+  letter-spacing: -0.02em;
+}
+
+/* Logo sponsor in copertina: filter invert su dark, rimosso in stampa */
+.sponsorLogoMain {
+  height: 48px;       /* dimensione fissa — i max-* da soli non bastano */
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.coverBadge {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  background: var(--report-accent-light);
+  color: var(--report-accent);
+  border: 1px solid var(--report-accent);
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+.coverTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--report-text);
+  margin: 0 0 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.coverMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid var(--report-border);
+  padding-top: 1.25rem;
+}
+
+.coverMetaItem {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.coverMetaLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--report-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  min-width: 7rem;
+  flex-shrink: 0;
+}
+
+.coverMetaValue {
+  font-size: 0.95rem;
+  color: var(--report-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   KPI SUMMARY
+   ═══════════════════════════════════════════════════════════════════════════ */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.kpiCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.25rem 0.75rem;
+  background: var(--report-accent-light);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--report-radius);
+  gap: 0.4rem;
+}
+
+.kpiIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.kpiValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--report-accent);
+  line-height: 1;
+}
+
+.kpiUnit {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--report-text);
+}
+
+.kpiLabel {
+  font-size: 0.75rem;
+  color: var(--report-text-muted);
+  line-height: 1.3;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABELLA CHALLENGES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tableWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--report-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--report-border);
+}
+
+.table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--report-border);
+  color: var(--report-text);
+  vertical-align: top;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background: var(--report-accent-light);
+}
+
+/* Specificità composita — no !important */
+.textRight {
+  text-align: right;
+}
+
+.table th.textRight {
+  text-align: right;
+}
+
+.challengeTitle {
+  display: block;
+  font-weight: 600;
+  color: var(--report-text);
+}
+
+.challengeDeadline {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--report-text-muted);
+  margin-top: 0.2rem;
+}
+
+.approved {
+  color: var(--report-approved);
+  font-weight: 600;
+}
+
+.pending {
+  color: var(--report-pending);
+  font-weight: 600;
+}
+
+.rejected {
+  color: var(--report-rejected);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GRAFICO A BARRE (CSS puro)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.barChart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 14rem 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .barRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.barLabel {
+  font-size: 0.85rem;
+  color: var(--report-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barTrack {
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--report-accent), var(--report-accent-dark));
+  border-radius: 6px;
+  transition: width 0.4s ease;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.barStats {
+  font-size: 0.78rem;
+  color: var(--report-text-muted);
+  white-space: nowrap;
+  min-width: 12rem;
+  text-align: right;
+}
+
+/* Contenitore breakdown veicoli */
+.breakdownBlock {
+  margin-bottom: 1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EQUIVALENZE CO2
+   ═══════════════════════════════════════════════════════════════════════════ */
+.equivalencesBlock {
+  margin-top: 1.5rem;
+}
+
+.equivalencesGrid {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.equivalenceCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--report-accent-light);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--report-radius);
+  flex: 1;
+  min-width: 200px;
+}
+
+.equivalenceIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.equivalenceText {
+  font-size: 0.9rem;
+  color: var(--report-text);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PARTECIPANTI
+   ═══════════════════════════════════════════════════════════════════════════ */
+.participantsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .participantsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.participantStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.25rem;
+  background: var(--report-accent-light);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--report-radius);
+  gap: 0.4rem;
+}
+
+.participantValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--report-accent);
+  line-height: 1;
+}
+
+.participantLabel {
+  font-size: 0.78rem;
+  color: var(--report-text-muted);
+  line-height: 1.3;
+}
+
+.submissionBreakdown {
+  border-top: 1px solid var(--report-border);
+  padding-top: 1.25rem;
+}
+
+.submissionStats {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.submissionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--report-border);
+}
+
+/*
+  Specificità composita (.submissionBadge + .approved/.pending/.rejected)
+  evita !important. Stesso pattern di .chip + .chip-success in styles.css.
+*/
+.submissionBadge.approved {
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgb(74, 222, 128);
+  color: rgb(74, 222, 128);
+}
+
+.submissionBadge.pending {
+  background: rgba(250, 204, 21, 0.12);
+  border-color: rgb(250, 204, 21);
+  color: rgb(250, 204, 21);
+}
+
+.submissionBadge.rejected {
+  background: rgba(203, 213, 225, 0.08);
+  border-color: rgba(203, 213, 225, 0.4);
+  color: rgb(203, 213, 225);
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VERIFICA
+   ═══════════════════════════════════════════════════════════════════════════ */
+.verificationText {
+  color: var(--report-text);
+  line-height: 1.7;
+  margin: 0 0 1.25rem;
+  font-size: 0.95rem;
+}
+
+.verificationHighlight {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--report-accent-light);
+  border-left: 3px solid var(--report-accent);
+  border-radius: 0 var(--report-radius) var(--report-radius) 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--report-text);
+}
+
+.verificationIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPONSOR
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sponsorsGrid {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.sponsorCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.25rem;
+  border: 1px solid var(--report-border);
+  border-radius: var(--report-radius);
+  background: var(--report-surface);
+  min-width: 140px;
+  gap: 0.5rem;
+}
+
+/* Logo: filter invert su dark per rendere leggibili loghi scuri su sfondo scuro */
+.sponsorLogo {
+  max-height: 56px;
+  max-width: 120px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+/* Avatar testuale — fix bug: display:flex era mancante nell'originale */
+.sponsorLogoFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: var(--report-accent-light);
+  border: 2px solid var(--report-accent);
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--report-accent);
+}
+
+.sponsorName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--report-text);
+}
+
+.sponsorWebsite {
+  font-size: 0.75rem;
+  color: var(--report-text-muted);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.sponsorWebsite:hover {
+  color: var(--report-accent);
+  text-decoration: underline;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NOTA METODOLOGICA
+   ═══════════════════════════════════════════════════════════════════════════ */
+.methodologyText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: var(--report-text);
+  margin-bottom: 1.25rem;
+}
+
+.methodologyText p {
+  margin: 0;
+}
+
+.methodologyMeta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--report-border);
+  font-size: 0.8rem;
+  color: var(--report-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER DEL REPORT
+   ═══════════════════════════════════════════════════════════════════════════ */
+.reportFooter {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--report-surface);
+  border: 1px solid var(--report-border);
+  border-radius: var(--report-radius);
+  font-size: 0.78rem;
+  color: var(--report-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATI LOADING / ERROR
+   ═══════════════════════════════════════════════════════════════════════════ */
+.statusWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  gap: 1rem;
+  color: var(--report-text-muted);
+  font-size: 0.95rem;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--report-border);
+  border-top-color: var(--report-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Rosso leggibile su dark — coerente con chip-error di styles.css */
+.errorMessage {
+  color: rgb(248, 113, 113);
+  font-weight: 500;
+  margin: 0;
+}
+
+.retryButton {
+  padding: 0.5rem 1.25rem;
+  background: linear-gradient(135deg, var(--report-accent), var(--report-accent-dark));
+  color: #fff;
+  border: none;
+  border-radius: var(--report-radius);
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.retryButton:hover {
+  opacity: 0.88;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   @media print
+   TUTTO il tema chiaro vive qui — mai a schermo.
+   Sovrascrive le variabili locali con valori light, azzera glass e shadow.
+   Sfondo bianco puro, testo scuro, layout ottimizzato A4.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media print {
+
+  /* Sovrascrittura variabili: da dark a light */
+  .reportWrapper {
+    --report-surface:       #ffffff;
+    --report-border:        #e5e7eb;
+    --report-text:          #1a1a1a;
+    --report-text-muted:    #6b7280;
+    --report-accent-light:  rgba(16, 185, 129, 0.08);
+    --report-approved:      #16a34a;
+    --report-pending:       #d97706;
+    --report-rejected:      #6b7280;
+    --report-shadow:        none;
+
+    background: white;
+    color: #1a1a1a;
+  }
+
+  /* Reset background e glass su tutti i contenitori */
+  .reportContainer,
+  .section,
+  .reportFooter,
+  .kpiCard,
+  .participantStat,
+  .equivalenceCard,
+  .verificationHighlight,
+  .submissionBadge,
+  .sponsorCard {
+    background: white;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Bordo leggero per separazione visiva su carta */
+  .section {
+    border: 1px solid #e5e7eb;
+    break-inside: avoid;
+  }
+
+  /* Nascondi la barra stampa */
+  .printBar {
+    display: none;
+  }
+
+  /* Valori numerici: verde scuro per contrasto su bianco */
+  .kpiValue,
+  .participantValue,
+  .sectionTitle {
+    color: #059669;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Badge copertina su bianco */
+  .coverBadge {
+    background: white;
+    border-color: #059669;
+    color: #059669;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Loghi: rimuovi filter invert (i loghi funzionano su sfondo chiaro) */
+  .sponsorLogo,
+  .sponsorLogoMain {
+    filter: none;
+  }
+
+  /* Barre grafiche */
+  .barFill {
+    background: #059669;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .barTrack {
+    background: #e5e7eb;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Link sponsor: testo grigio, non clicabile su carta */
+  .sponsorWebsite {
+    color: #6b7280;
+    text-decoration: none;
+  }
+
+  /* Badge submission su bianco */
+  .submissionBadge.approved {
+    color: #16a34a;
+    border-color: #16a34a;
+    background: rgba(22, 163, 74, 0.08);
+  }
+
+  .submissionBadge.pending {
+    color: #d97706;
+    border-color: #d97706;
+    background: rgba(217, 119, 6, 0.08);
+  }
+
+  .submissionBadge.rejected {
+    color: #6b7280;
+    border-color: #6b7280;
+    background: transparent;
+  }
+
+  /* Colori stato tabella su bianco */
+  .approved { color: #16a34a; }
+  .pending  { color: #d97706; }
+  .rejected { color: #6b7280; }
+
+  /* Interruzione di pagina prima delle sezioni più lunghe */
+  .challenges,
+  .impact {
+    break-before: always;
+  }
+
+  /* Footer nel flusso normale — position:fixed causa problemi su alcuni driver PDF */
+  .reportFooter {
+    margin-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    border-radius: 0;
+    font-size: 0.7rem;
+    color: #9ca3af;
+  }
+
+  /* Contenitore: larghezza piena A4 */
+  .reportContainer {
+    max-width: 100%;
+    margin: 0;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  /* Messaggio di errore su bianco */
+  .errorMessage {
+    color: #dc2626;
+  }
+}
