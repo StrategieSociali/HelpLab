@@ -73,7 +73,7 @@ npm install
 
 3. Create `.env` file:
 ```bash
-VITE_API_URL=https://dev-api.helplab.space/api
+VITE_API_URL= ask for dettails
 ```
 
 4. Start development server:
@@ -151,10 +151,8 @@ Release v1.1.8 - CRITICAL UPDATE - XSS Vulnerability Patch
 
 ## Deployment
 
-### Staging (dev-api.helplab.space)
-Automatic deployment on push to `develop` branch.
 
-### Production (api.helplab.space)
+### Production (ask for API)
 Manual deployment from `main` branch after validation.
 
 **Deployment Steps:**
@@ -170,7 +168,7 @@ Manual deployment from `main` branch after validation.
 ## Environment Variables
 
 ```bash
-VITE_API_URL          # Backend API base URL
+VITE_API_URL          # Backend API base URL, ask for details
 ```
 
 ---
@@ -203,7 +201,6 @@ This project is open source and available under the MIT License.
 ## Links
 
 - **Website**: [https://helplab.space](https://helplab.space)
-- **API Documentation**: [Backend Handoff v0.9](./helplab_fe_handoff_v0_9.md)
 - **Telegram Community**: [Join us](https://t.me/+h_Rh9IpYpgZjZjc0)
 - **GitHub**: [StrategieSociali/HelpLab](https://github.com/StrategieSociali/HelpLab)
 

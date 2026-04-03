@@ -1,48 +1,74 @@
 /**
  * EventReport.module.css
- * Percorso: src/pages/admin/EventReport.module.css
+ * Percorso: src/styles/EventReport.module.css
  *
+ * Foglio di stile per il report di impatto evento (EventReport.jsx).
  * Usa le CSS variables di :root definite in styles/styles.css.
- * Aggiunge variabili locali per i colori semantici del report.
+ * Aggiunge variabili locali scoped al .reportWrapper.
  *
  * Due contesti:
- *   - Schermo: layout istituzionale su sfondo chiaro, accenti brand
- *   - @media print: sfondo bianco, testo scuro, ottimizzato A4
+ *   - Schermo: tema dark coerente con il resto del sito. Superfici glass,
+ *     testo bianco, accenti verdi brand. Nessun sfondo chiaro a schermo.
+ *   - @media print: tema chiaro completo (sfondo bianco, testo scuro).
+ *     Il layout "documento" esiste SOLO in stampa / salvataggio PDF.
+ *
+ * Colori brand: --accent-green-1 (#10b981) / --accent-green-2 (#059669)
+ * coerenti con i token globali di styles.css.
  */
 
-/* ─── Variabili locali ───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   VARIABILI LOCALI — TEMA DARK (schermo)
+   Scoped al .reportWrapper per non inquinare il resto del sito.
+   In @media print vengono sovrascritte con valori chiari.
+   ═══════════════════════════════════════════════════════════════════════════ */
 .reportWrapper {
-  --report-bg: #f8f9fa;
-  --report-surface: #ffffff;
-  --report-border: #e5e7eb;
-  --report-text: #1a1a2e;
-  --report-text-muted: #6b7280;
-  --report-accent: var(--color-primary, #2e7d32);
-  --report-accent-light: rgba(46, 125, 50, 0.08);
-  --report-approved: #16a34a;
-  --report-pending: #d97706;
-  --report-rejected: #6b7280;
-  --report-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --report-radius: 8px;
-  --report-max-width: 860px;
+  /* Superfici dark — glass identico a .card in styles.css */
+  --report-surface:       rgba(255, 255, 255, 0.06);
+  --report-border:        rgba(255, 255, 255, 0.15);
 
-  background: var(--report-bg);
-  min-height: 100vh;
-  font-family: "Georgia", "Times New Roman", serif;
+  /* Testo — bianco su dark */
+  --report-text:          #ffffff;
+  --report-text-muted:    rgba(255, 255, 255, 0.60);
+
+  /* Accenti brand — identici a --accent-green-1 / --accent-green-2 */
+  --report-accent:        #10b981;
+  --report-accent-dark:   #059669;
+  --report-accent-light:  rgba(16, 185, 129, 0.12);
+
+  /* Colori semantici — leggibili su dark, allineati ai chip di styles.css */
+  --report-approved:      rgb(74, 222, 128);    /* chip-success */
+  --report-pending:       rgb(250, 204, 21);    /* chip-warning */
+  --report-rejected:      rgb(203, 213, 225);   /* chip-neutral */
+
+  /* Ombra dark — identica a .card in styles.css */
+  --report-shadow:        0 10px 30px -10px rgba(0, 0, 0, 0.4);
+  --report-radius:        8px;
+  --report-max-width:     860px;
+
+  /* Font — identico al body del sito */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Nessun background: eredita il gradiente scuro di <main> */
   color: var(--report-text);
 }
 
-/* ─── Barra stampa (solo a schermo) ─────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   BARRA STAMPA
+   Sticky in cima, nascosta in @media print.
+   Su dark: sfondo glass con bordo sottile, coerente con l'header del sito.
+   ═══════════════════════════════════════════════════════════════════════════ */
 .printBar {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 40; /* sotto il site-header (z-index:50) e i suoi dropdown */
   display: flex;
   justify-content: flex-end;
   padding: 0.75rem 1.5rem;
-  background: var(--report-surface);
+  background: rgba(10, 15, 25, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--report-border);
-  box-shadow: var(--report-shadow);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .btnPrint {
@@ -50,7 +76,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 1.25rem;
-  background: var(--report-accent);
+  background: linear-gradient(135deg, var(--report-accent), var(--report-accent-dark));
   color: #ffffff;
   border: none;
   border-radius: var(--report-radius);
@@ -58,12 +84,17 @@
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease;
   letter-spacing: 0.02em;
 }
 
 .btnPrint:hover {
   opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.btnPrint:active {
+  transform: translateY(0);
 }
 
 .btnPrint:focus-visible {
@@ -71,7 +102,9 @@
   outline-offset: 2px;
 }
 
-/* ─── Contenitore report ─────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTENITORE PRINCIPALE
+   ═══════════════════════════════════════════════════════════════════════════ */
 .reportContainer {
   max-width: var(--report-max-width);
   margin: 2rem auto;
@@ -81,13 +114,18 @@
   gap: 1.5rem;
 }
 
-/* ─── Sezioni generiche ──────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEZIONI GENERICHE
+   Card glass dark — identiche a .card in styles.css.
+   ═══════════════════════════════════════════════════════════════════════════ */
 .section {
   background: var(--report-surface);
   border: 1px solid var(--report-border);
   border-radius: var(--report-radius);
   padding: 2rem;
   box-shadow: var(--report-shadow);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .sectionTitle {
@@ -113,7 +151,9 @@
   margin: 0;
 }
 
-/* ─── Copertina ──────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   COPERTINA
+   ═══════════════════════════════════════════════════════════════════════════ */
 .cover {
   border-top: 4px solid var(--report-accent);
   padding: 2.5rem 2rem;
@@ -134,9 +174,11 @@
   gap: 0.5rem;
 }
 
-.logoLeaf {
-  font-size: 1.8rem;
-  line-height: 1;
+/* Immagine logo HelpLab in copertina */
+.helplabLogoImg {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
 }
 
 .logoText {
@@ -146,10 +188,13 @@
   letter-spacing: -0.02em;
 }
 
+/* Logo sponsor in copertina: filter invert su dark, rimosso in stampa */
 .sponsorLogoMain {
-  max-height: 48px;
+  height: 48px;       /* dimensione fissa — i max-* da soli non bastano */
+  width: auto;
   max-width: 160px;
   object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
 .coverBadge {
@@ -204,7 +249,9 @@
   color: var(--report-text);
 }
 
-/* ─── KPI Summary ────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   KPI SUMMARY
+   ═══════════════════════════════════════════════════════════════════════════ */
 .kpiGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -224,7 +271,7 @@
   text-align: center;
   padding: 1.25rem 0.75rem;
   background: var(--report-accent-light);
-  border: 1px solid var(--report-border);
+  border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: var(--report-radius);
   gap: 0.4rem;
 }
@@ -239,12 +286,12 @@
   font-weight: 700;
   color: var(--report-accent);
   line-height: 1;
-  /* Classe usata anche nel @media print per mantenere il colore */
 }
 
 .kpiUnit {
   font-size: 0.9rem;
   font-weight: 600;
+  color: var(--report-text);
 }
 
 .kpiLabel {
@@ -253,7 +300,9 @@
   line-height: 1.3;
 }
 
-/* ─── Tabella challenges ─────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABELLA CHALLENGES
+   ═══════════════════════════════════════════════════════════════════════════ */
 .tableWrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -291,8 +340,13 @@
   background: var(--report-accent-light);
 }
 
+/* Specificità composita — no !important */
 .textRight {
-  text-align: right !important;
+  text-align: right;
+}
+
+.table th.textRight {
+  text-align: right;
 }
 
 .challengeTitle {
@@ -309,20 +363,22 @@
 }
 
 .approved {
-  color: var(--report-approved) !important;
+  color: var(--report-approved);
   font-weight: 600;
 }
 
 .pending {
-  color: var(--report-pending) !important;
+  color: var(--report-pending);
   font-weight: 600;
 }
 
 .rejected {
-  color: var(--report-rejected) !important;
+  color: var(--report-rejected);
 }
 
-/* ─── Grafico a barre (CSS) ──────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   GRAFICO A BARRE (CSS puro)
+   ═══════════════════════════════════════════════════════════════════════════ */
 .barChart {
   display: flex;
   flex-direction: column;
@@ -353,17 +409,16 @@
 
 .barTrack {
   height: 12px;
-  background: var(--report-border);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   overflow: hidden;
 }
 
 .barFill {
   height: 100%;
-  background: var(--report-accent);
+  background: linear-gradient(90deg, var(--report-accent), var(--report-accent-dark));
   border-radius: 6px;
   transition: width 0.4s ease;
-  /* Forza il colore in stampa */
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
 }
@@ -376,7 +431,14 @@
   text-align: right;
 }
 
-/* ─── Equivalenze CO2 ────────────────────────────────────────────────────── */
+/* Contenitore breakdown veicoli */
+.breakdownBlock {
+  margin-bottom: 1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EQUIVALENZE CO2
+   ═══════════════════════════════════════════════════════════════════════════ */
 .equivalencesBlock {
   margin-top: 1.5rem;
 }
@@ -393,7 +455,7 @@
   gap: 0.75rem;
   padding: 1rem;
   background: var(--report-accent-light);
-  border: 1px solid var(--report-border);
+  border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: var(--report-radius);
   flex: 1;
   min-width: 200px;
@@ -412,7 +474,9 @@
   line-height: 1.4;
 }
 
-/* ─── Partecipanti ───────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   PARTECIPANTI
+   ═══════════════════════════════════════════════════════════════════════════ */
 .participantsGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -433,8 +497,8 @@
   text-align: center;
   padding: 1.25rem;
   background: var(--report-accent-light);
+  border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: var(--report-radius);
-  border: 1px solid var(--report-border);
   gap: 0.4rem;
 }
 
@@ -473,24 +537,32 @@
   border: 1px solid var(--report-border);
 }
 
+/*
+  Specificità composita (.submissionBadge + .approved/.pending/.rejected)
+  evita !important. Stesso pattern di .chip + .chip-success in styles.css.
+*/
 .submissionBadge.approved {
-  background: rgba(22, 163, 74, 0.08);
-  border-color: var(--report-approved);
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgb(74, 222, 128);
+  color: rgb(74, 222, 128);
 }
 
 .submissionBadge.pending {
-  background: rgba(217, 119, 6, 0.08);
-  border-color: var(--report-pending);
+  background: rgba(250, 204, 21, 0.12);
+  border-color: rgb(250, 204, 21);
+  color: rgb(250, 204, 21);
 }
 
 .submissionBadge.rejected {
-  background: var(--report-accent-light);
-  border-color: var(--report-rejected);
-  color: var(--report-text-muted) !important;
-  font-weight: 500 !important;
+  background: rgba(203, 213, 225, 0.08);
+  border-color: rgba(203, 213, 225, 0.4);
+  color: rgb(203, 213, 225);
+  font-weight: 500;
 }
 
-/* ─── Verifica ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   VERIFICA
+   ═══════════════════════════════════════════════════════════════════════════ */
 .verificationText {
   color: var(--report-text);
   line-height: 1.7;
@@ -517,7 +589,9 @@
   margin-top: 0.1rem;
 }
 
-/* ─── Sponsor ────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPONSOR
+   ═══════════════════════════════════════════════════════════════════════════ */
 .sponsorsGrid {
   display: flex;
   gap: 1.25rem;
@@ -532,24 +606,29 @@
   padding: 1.25rem;
   border: 1px solid var(--report-border);
   border-radius: var(--report-radius);
+  background: var(--report-surface);
   min-width: 140px;
   gap: 0.5rem;
 }
 
+/* Logo: filter invert su dark per rendere leggibili loghi scuri su sfondo scuro */
 .sponsorLogo {
   max-height: 56px;
   max-width: 120px;
   object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
+/* Avatar testuale — fix bug: display:flex era mancante nell'originale */
 .sponsorLogoFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 56px;
   height: 56px;
   background: var(--report-accent-light);
   border: 2px solid var(--report-accent);
   border-radius: 50%;
-  align-items: center;
-  justify-content: center;
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--report-accent);
@@ -573,7 +652,9 @@
   text-decoration: underline;
 }
 
-/* ─── Metodologia ────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   NOTA METODOLOGICA
+   ═══════════════════════════════════════════════════════════════════════════ */
 .methodologyText {
   display: flex;
   flex-direction: column;
@@ -599,7 +680,9 @@
   color: var(--report-text-muted);
 }
 
-/* ─── Footer ─────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER DEL REPORT
+   ═══════════════════════════════════════════════════════════════════════════ */
 .reportFooter {
   display: flex;
   justify-content: space-between;
@@ -613,7 +696,9 @@
   color: var(--report-text-muted);
 }
 
-/* ─── Stati loading / error ──────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATI LOADING / ERROR
+   ═══════════════════════════════════════════════════════════════════════════ */
 .statusWrapper {
   display: flex;
   flex-direction: column;
@@ -638,21 +723,23 @@
   to { transform: rotate(360deg); }
 }
 
+/* Rosso leggibile su dark — coerente con chip-error di styles.css */
 .errorMessage {
-  color: #dc2626;
+  color: rgb(248, 113, 113);
   font-weight: 500;
   margin: 0;
 }
 
 .retryButton {
   padding: 0.5rem 1.25rem;
-  background: var(--report-accent);
+  background: linear-gradient(135deg, var(--report-accent), var(--report-accent-dark));
   color: #fff;
   border: none;
   border-radius: var(--report-radius);
   font-size: 0.9rem;
-  cursor: pointer;
   font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 
 .retryButton:hover {
@@ -661,111 +748,147 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    @media print
-   Sfondo bianco, testo scuro, layout ottimizzato A4.
-   Nessun box-shadow, colori brand mantenuti solo dove necessario.
+   TUTTO il tema chiaro vive qui — mai a schermo.
+   Sovrascrive le variabili locali con valori light, azzera glass e shadow.
+   Sfondo bianco puro, testo scuro, layout ottimizzato A4.
    ═══════════════════════════════════════════════════════════════════════════ */
 @media print {
-  /* Reset background globale */
-  .reportWrapper,
+
+  /* Sovrascrittura variabili: da dark a light */
+  .reportWrapper {
+    --report-surface:       #ffffff;
+    --report-border:        #e5e7eb;
+    --report-text:          #1a1a1a;
+    --report-text-muted:    #6b7280;
+    --report-accent-light:  rgba(16, 185, 129, 0.08);
+    --report-approved:      #16a34a;
+    --report-pending:       #d97706;
+    --report-rejected:      #6b7280;
+    --report-shadow:        none;
+
+    background: white;
+    color: #1a1a1a;
+  }
+
+  /* Reset background e glass su tutti i contenitori */
   .reportContainer,
   .section,
-  .reportFooter {
-    background: white !important;
-    color: #1a1a1a !important;
-    box-shadow: none !important;
-  }
-
-  /* Ogni sezione ha bordo leggero per separazione visiva */
-  .section {
-    border: 1px solid #e5e7eb !important;
-    break-inside: avoid;
-  }
-
-  /* Nascondi elementi non stampabili */
-  .printBar {
-    display: none !important;
-  }
-
-  /* Sfondo bianco su card KPI e statistiche */
+  .reportFooter,
   .kpiCard,
   .participantStat,
   .equivalenceCard,
   .verificationHighlight,
-  .submissionBadge {
-    background: white !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
+  .submissionBadge,
+  .sponsorCard {
+    background: white;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
-  /* Mantieni colore brand sui valori numerici principali */
+  /* Bordo leggero per separazione visiva su carta */
+  .section {
+    border: 1px solid #e5e7eb;
+    break-inside: avoid;
+  }
+
+  /* Nascondi la barra stampa */
+  .printBar {
+    display: none;
+  }
+
+  /* Valori numerici: verde scuro per contrasto su bianco */
   .kpiValue,
   .participantValue,
   .sectionTitle {
-    color: var(--report-accent, #2e7d32) !important;
+    color: #059669;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
-  /* Badge tipo documento */
+  /* Badge copertina su bianco */
   .coverBadge {
-    border: 1px solid #2e7d32 !important;
-    color: #2e7d32 !important;
-    background: white !important;
+    background: white;
+    border-color: #059669;
+    color: #059669;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
-  /* Barre grafiche — mantieni colore */
+  /* Loghi: rimuovi filter invert (i loghi funzionano su sfondo chiaro) */
+  .sponsorLogo,
+  .sponsorLogoMain {
+    filter: none;
+  }
+
+  /* Barre grafiche */
   .barFill {
-    background: #2e7d32 !important;
+    background: #059669;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
   .barTrack {
-    background: #e5e7eb !important;
+    background: #e5e7eb;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
-  /* Link sponsor: solo testo, non cliccabile visivamente */
+  /* Link sponsor: testo grigio, non clicabile su carta */
   .sponsorWebsite {
-    color: #6b7280 !important;
-    text-decoration: none !important;
+    color: #6b7280;
+    text-decoration: none;
   }
 
-  /* Interruzione di pagina prima delle sezioni lunghe */
+  /* Badge submission su bianco */
+  .submissionBadge.approved {
+    color: #16a34a;
+    border-color: #16a34a;
+    background: rgba(22, 163, 74, 0.08);
+  }
+
+  .submissionBadge.pending {
+    color: #d97706;
+    border-color: #d97706;
+    background: rgba(217, 119, 6, 0.08);
+  }
+
+  .submissionBadge.rejected {
+    color: #6b7280;
+    border-color: #6b7280;
+    background: transparent;
+  }
+
+  /* Colori stato tabella su bianco */
+  .approved { color: #16a34a; }
+  .pending  { color: #d97706; }
+  .rejected { color: #6b7280; }
+
+  /* Interruzione di pagina prima delle sezioni più lunghe */
   .challenges,
   .impact {
     break-before: always;
   }
 
-  /* Footer a piè di pagina */
+  /* Footer nel flusso normale — position:fixed causa problemi su alcuni driver PDF */
   .reportFooter {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    border-top: 1px solid #e5e7eb !important;
-    border-radius: 0 !important;
-    font-size: 0.7rem !important;
-    color: #9ca3af !important;
+    margin-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    border-radius: 0;
+    font-size: 0.7rem;
+    color: #9ca3af;
   }
 
-  /* Testo muted leggibile in stampa */
-  .coverMetaLabel,
-  .kpiLabel,
-  .participantLabel,
-  .methodologyMeta,
-  .barStats {
-    color: #6b7280 !important;
-  }
-
-  /* Rimpicciolisci il contenitore per A4 */
+  /* Contenitore: larghezza piena A4 */
   .reportContainer {
     max-width: 100%;
     margin: 0;
     padding: 1rem;
     gap: 1rem;
+  }
+
+  /* Messaggio di errore su bianco */
+  .errorMessage {
+    color: #dc2626;
   }
 }

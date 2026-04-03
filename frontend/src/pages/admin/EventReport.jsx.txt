@@ -599,20 +599,18 @@ export default function EventReport() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Accesso consentito ad admin e creatore dell'evento.
-// Il controllo sul creatore avviene dopo il fetch, quando abbiamo event.creator.
+    // Guard aggiuntivo lato componente: solo admin può vedere questo report
+    if (user?.role !== "admin") {
+      setError("Accesso riservato agli amministratori.");
+      setLoading(false);
+      return;
+    }
 
     const fetchReportData = async () => {
       try {
         // API_PATHS.eventDetail ritorna /v1/events/:id — usiamo un path dedicato
         // che segue lo stesso pattern: /v1/events/:id/report-data
         const res = await api.get(`/v1/events/${id}/report-data`);
-        // Guard: solo admin o creatore dell'evento
-        if (user?.role !== "admin" && res.data?.event?.creator?.email !== user?.email) {
-        setError("Non hai i permessi per visualizzare questo report.");
-        setLoading(false);
-       return;
-       }
         setData(res.data);
       } catch (err) {
         if (err.response?.status === 404) {

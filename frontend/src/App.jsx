@@ -273,7 +273,7 @@ export default function App() {
                <Route
                  path={routes.admin.eventReport()}
                  element={
-                 <ProtectedRoute role="admin">
+                 <ProtectedRoute>
                    <EventReport />
                  </ProtectedRoute>
                 }
