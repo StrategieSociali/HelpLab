@@ -73,7 +73,7 @@ npm install
 
 3. Create `.env` file:
 ```bash
-VITE_API_URL=https://dev-api.helplab.space/api
+VITE_API_URL= ask for detail
 ```
 
 4. Start development server:
@@ -151,8 +151,6 @@ Release v1.1.8 - CRITICAL UPDATE - XSS Vulnerability Patch
 
 ## Deployment
 
-### Staging (dev-api.helplab.space)
-Automatic deployment on push to `develop` branch.
 
 ### Production (api.helplab.space)
 Manual deployment from `main` branch after validation.
