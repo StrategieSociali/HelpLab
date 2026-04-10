@@ -45,13 +45,16 @@ import SponsorshipRequestForm from "./pages/sponsors/SponsorshipRequestForm";
 import MySponsorships from "./pages/sponsors/MySponsorships";
 import AdminSponsorships from "./pages/admin/AdminSponsorships";
 
-// ── 🎉 EVENTI (sprint events v1.1) ──────────────────────────────────────────
+// ──  EVENTI (sprint events v1.1) ──────────────────────────────────────────
 import EventsList from './pages/events/EventsList';
 import EventDetail from './pages/events/EventDetail';
 import EventLiveDashboard from './pages/events/EventLiveDashboard';
 import CreateEvent from './pages/events/CreateEvent';
 import EditEvent from './pages/events/EditEvent';
 import MyEvents from './pages/events/MyEvents';
+
+// ──  PRIVACY ──────────────────────────────────────────
+import Privacy from './pages/Privacy';
 
 // ── REPORT ──────────────────────────────────────────
 
@@ -79,6 +82,7 @@ export default function App() {
               <Route path={routes.leaderboard}   element={<Leaderboard />} />
               <Route path={routes.business.packages}      element={<BusinessPackages />} />
               <Route path={routes.roadmap}                element={<Roadmap />} />
+              <Route path={routes.privacy} element={<Privacy />} />
               <Route path={routes.dashboard.learningPaths} element={<LearningPaths />} />
 
               {/* ===== COMMUNITY / SPONSORS ===== */}

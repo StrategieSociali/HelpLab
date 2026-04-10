@@ -3,13 +3,16 @@
  * Scopo: permettere la registrazione degli utenti
  *
  * Attualmente supporta:
- * - Registrazione
+ * - Registrazione con consenso privacy obbligatorio
+ *
+ * Classi CSS usate da styles.css:
+ *   .registration-form, .form-group, .submit-button,
+ *   .checkbox-single, .form-message--error, .btn, .btn-outline
  */
 
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import TextBlock from "@/components/UI/TextBlock.jsx";
 import { useTranslation } from "react-i18next";
 
 export default function Register() {
@@ -25,13 +28,16 @@ export default function Register() {
     password: "",
     name: "",
     nickname: "",
+    privacy_consent: false,
   });
 
   const [busy, setBusy] = useState(false);
   const [errorCode, setErrorCode] = useState(null);
 
-  const onChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const onChange = (e) => {
+    const { name, type, value, checked } = e.target;
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+  };
 
   const validateNickname = (nickname) => {
     const nicknameRegex = /^[a-zA-Z0-9_-]{3,40}$/;
@@ -74,31 +80,14 @@ export default function Register() {
   return (
     <section className="registration-form">
       <div className="container">
-        <h1
-          className="page-title"
-          style={{
-            textAlign: "center",
-            color: "white",
-            fontSize: "2.5rem",
-            fontWeight: 700,
-            marginBottom: "2rem",
-          }}
-        >
+
+        <h1 className="page-title">
           {t("title")}
         </h1>
 
+        {/* Messaggio di errore — usa classe esistente in styles.css */}
         {errorCode && (
-          <div
-            className="callout error"
-            style={{
-              background: "rgba(250, 128, 114, 0.15)",
-              border: "1px solid rgba(250, 128, 114, 0.3)",
-              padding: "0.75rem 1rem",
-              borderRadius: "0.5rem",
-              marginBottom: "1.5rem",
-              color: "#fca5a5",
-            }}
-          >
+          <div className="registration-form form-message form-message--error">
             {t(`errors.${errorCode}`, {
               defaultValue: t("errors.generic"),
             })}
@@ -106,6 +95,7 @@ export default function Register() {
         )}
 
         <form onSubmit={onSubmit} className="registration-form">
+
           <div className="form-group">
             <label htmlFor="name">{t("name.label")}</label>
             <input
@@ -160,6 +150,35 @@ export default function Register() {
             />
           </div>
 
+          {/*
+            Consenso privacy — obbligatorio per procedere.
+            Usa .checkbox-single già definita in styles.css:
+            layout flex, checkbox a sinistra, testo a destra, sfondo glass.
+          */}
+          <div className="form-group">
+            <div className="checkbox-single">
+              <input
+                id="privacy_consent"
+                name="privacy_consent"
+                type="checkbox"
+                checked={form.privacy_consent}
+                onChange={onChange}
+                required
+              />
+              <label htmlFor="privacy_consent">
+                Ho letto e accetto la{" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Privacy Policy
+                </a>
+                {" "}e acconsento al trattamento dei miei dati personali.
+              </label>
+            </div>
+          </div>
+
           <button
             className="submit-button"
             type="submit"
@@ -169,27 +188,14 @@ export default function Register() {
             {busy ? t("actions.creating") : t("actions.submit")}
           </button>
 
-          <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-            <Link
-              className="btn btn-outline"
-              to="/login"
-              style={{
-                display: "inline-block",
-                color: "white",
-                textDecoration: "none",
-                padding: "0.75rem 1.5rem",
-                borderRadius: "0.5rem",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
-                background: "rgba(255, 255, 255, 0.05)",
-                transition: "all 0.3s ease",
-              }}
-            >
+          <div className="form-group" style={{ marginTop: "1rem", textAlign: "center" }}>
+            <Link className="btn btn-outline" to="/login">
               {t("actions.loginLink")}
             </Link>
           </div>
+
         </form>
       </div>
     </section>
   );
 }
-

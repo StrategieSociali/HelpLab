@@ -121,7 +121,7 @@ function PhotoUploadField({ index, url, onUploaded, onRemove, t }) {
           </div>
         </div>
       ) : (
-        <label className="photo-upload-btn" aria-busy={uploading}>
+        <label className="btn btn-outline photo-upload-btn" aria-busy={uploading}>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp,image/heic,.heic"
@@ -515,7 +515,7 @@ function DynamicField({
   onAddPhoto,
   t,
 }) {
-  const label = fieldLabel(field.name, t);
+  const label = fieldLabel(field, t);
 
   // ── Campo numerico ────────────────────────────────────────────────────────
   if (field.type === "number") {
@@ -535,11 +535,11 @@ function DynamicField({
           min={field.min ?? 0}
           step="0.1"
           required={field.required}
-          placeholder={fieldPlaceholder(field.name, t)}
+          placeholder={fieldPlaceholder(field, t)}
           aria-required={field.required}
         />
 
-        <div className="hint">{fieldHint(field.name, t)}</div>
+        {fieldHint(field, t) && <div className="hint">{fieldHint(field, t)}</div>}
       </div>
     );
   }
@@ -575,7 +575,7 @@ function DynamicField({
           </select>
         )}
 
-        <div className="hint">{fieldHint("vehicle_id", t)}</div>
+        {fieldHint(field, t) && <div className="hint">{fieldHint(field, t)}</div>}
       </div>
     );
   }
@@ -594,7 +594,7 @@ function DynamicField({
         </label>
 
         <div className="hint" style={{ marginBottom: 10 }}>
-          {fieldHint(field.name, t, minItems)}
+          {fieldHint(field, t, minItems)}
         </div>
 
         <div className="photo-upload-list">
@@ -664,16 +664,18 @@ function DynamicField({
 // `t` viene passato come parametro perché queste funzioni sono fuori
 // dai componenti React e non possono usare hook direttamente.
 
-function fieldLabel(name, t) {
-  const key = `fields.${name}.label`;
-  const result = t(key, { defaultValue: "" });
-  return result || name;
+function fieldLabel(field, t) {
+  if (field.label) return field.label;
+  const result = t(`fields.${field.name}.label`, { defaultValue: "" });
+  return result || field.name;
 }
 
-function fieldPlaceholder(name, t) {
-  return t(`fields.${name}.placeholder`, { defaultValue: "" });
+function fieldPlaceholder(field, t) {
+  if (field.placeholder) return field.placeholder;
+  return t(`fields.${field.name}.placeholder`, { defaultValue: "" });
 }
 
-function fieldHint(name, t, minItems) {
-  return t(`fields.${name}.hint`, { count: minItems, defaultValue: "" });
+function fieldHint(field, t, minItems) {
+  if (field.hint) return field.hint;
+  return t(`fields.${field.name}.hint`, { count: minItems, defaultValue: "" });
 }

@@ -1252,6 +1252,36 @@ select.control {
   border-color: rgba(255, 255, 255, 0.25);
 }
 
+/* Checkbox: dimensione fissa, non si restringe mai */
+.registration-form .checkbox-single input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.15rem; /* allineamento ottico con la prima riga di testo */
+  cursor: pointer;
+  accent-color: var(--accent-green-1);
+}
+
+/* Label: occupa tutto lo spazio rimanente, testo non sconfina */
+.registration-form .checkbox-single label {
+  flex: 1;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Link privacy — verde accent, coerente con gli altri link del sito */
+.registration-form .checkbox-single a {
+  color: var(--accent-green-1);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.registration-form .checkbox-single a:hover {
+  color: var(--accent-green-2);
+}
+
 /* Form Messages */
 .registration-form .form-message {
   padding: 0.875rem 1rem;

@@ -21,8 +21,8 @@ export const EMPTY_CHALLENGE = {
 export function canProceedBasic(draft) {
   const titleOk = (draft.title || "").trim().length >= 5;
   const descOk  = (draft.description || "").trim().length >= 50;
-  const targetOk = (draft.target?.amount || 0) > 0;
-  const tasksOk  = Array.isArray(draft.tasks) && draft.tasks.length >= 2 &&
+  const targetOk = true;
+  const tasksOk  = Array.isArray(draft.tasks) && draft.tasks.length >= 1 &&
                    draft.tasks.some(t => t.evidence_required);
   const modeCO2  = draft.co2e_estimate_kg != null && !draft.difficulty;
   const modeDiff = draft.difficulty && draft.co2e_estimate_kg == null;

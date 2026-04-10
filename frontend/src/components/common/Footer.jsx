@@ -36,6 +36,7 @@ export default function Footer() {
           <a className="footer-link" href="/">{t("links.home")}</a>
           <a className="footer-link" href="/challenges">{t("links.challenges")}</a>
           <a className="footer-link" href="/learning-paths">{t("links.learning")}</a>
+          <a className="footer-link" href="/privacy">{t("links.privacy")}</a>
           <a
             className="footer-link"
             href="https://github.com/StrategieSociali/HelpLab"
