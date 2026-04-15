@@ -347,13 +347,12 @@ function ReportParticipants({ impact }) {
     rejected_submissions,
   } = impact;
 
-  // Tasso di completamento: approvati / consensi * 100
-  const completionRate =
-    consent_count > 0
-      ? ((approved_submissions / consent_count) * 100).toFixed(1)
-      : null;
-
+  // Tasso_approvazione = approved_submissions / (approved_submissions + pending_submissions + rejected_submissions)
   const total = approved_submissions + pending_submissions + rejected_submissions;
+    const completionRate =
+      total > 0
+       ? ((approved_submissions / total) * 100).toFixed(1)
+    : null;
 
   return (
     <section
@@ -378,9 +377,9 @@ function ReportParticipants({ impact }) {
         {completionRate !== null && (
           <div className={styles.participantStat}>
             <span className={styles.participantValue}>{completionRate}%</span>
-            <span className={styles.participantLabel}>
-              Tasso di completamento (approvati / consensi)
-            </span>
+           <span className={styles.participantLabel}>
+            Tasso di approvazione (approvati / totale ricevuti)
+          </span>
           </div>
         )}
       </div>

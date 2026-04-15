@@ -16,6 +16,10 @@
  * - Chiavi i18n nuove: nav.participate, nav.events
  *   (da aggiungere ai file di traduzione — vedi nota in fondo)
  *
+ * AGGIORNAMENTO impact page:
+ * - Aggiunta voce "Impatto" nella nav principale (standalone, tra Corsi e Community)
+ * - Chiave i18n nuova: nav.impact → "Impatto" (IT) / "Impact" (EN)
+ *
  * FIX RC 1.0.7 (invariati):
  * - Admin menu ora controllato da stato (si chiude al click)
  * - Rimossa classe btn-pill (uniformità globale → border-radius: 10px)
@@ -44,7 +48,7 @@ export default function Header() {
   const [ready, setReady] = useState(false);
 
   // Sottomenu
-  const [partecipaOpen, setPartecipaOpen] = useState(false);   // ← era sfideOpen
+  const [partecipaOpen, setPartecipaOpen] = useState(false);
   const [communityOpen, setCommunityOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminDesktopOpen, setAdminDesktopOpen] = useState(false);
@@ -140,7 +144,7 @@ export default function Header() {
             </span>
             <div className="sfide-menu__list">
 
-              {/* NUOVO: Eventi */}
+              {/* Eventi */}
               <NavLink
                 to={routes.events.list}
                 className="btn"
@@ -202,6 +206,18 @@ export default function Header() {
             onClick={() => setMenuOpen(false)}
           >
             {t("nav.learningPaths")}
+          </NavLink>
+
+          {/* ── IMPATTO — voce standalone, pubblica ──────────────────── */}
+          {/* Pagina narrativa pubblica: funnel verso adozione alberi.
+              Visibile a tutti, autenticati e non. Posizionata tra Corsi
+              e Community per massima visibilità senza rompere il flusso. */}
+          <NavLink
+            to={routes.impact.page}
+            className="nav-link"
+            onClick={() => setMenuOpen(false)}
+          >
+            {t("nav.impact", "Impatto")}
           </NavLink>
 
           {/* Community dropdown */}
@@ -298,7 +314,7 @@ export default function Header() {
                         >
                           {t("auth.admin.assignJudges")}
                         </NavLink>
-                        {/* NUOVO: Gestione eventi */}
+                        {/* Gestione eventi */}
                         <NavLink
                           to={routes.admin.events}
                           className="btn btn-ghost"
@@ -306,7 +322,7 @@ export default function Header() {
                         >
                           {t("nav.title.adminEvents", "Gestione eventi")}
                         </NavLink>
-                        {/* NUOVO: Gestione corsi */}
+                        {/* Gestione corsi */}
                         <NavLink
                           to={routes.admin.learningPaths}
                           className="btn btn-ghost"
@@ -314,7 +330,7 @@ export default function Header() {
                         >
                           {t("auth.admin.learningPaths", "Gestione corsi")}
                         </NavLink>
-                        {/* NUOVO: Gestione sponsorizzazioni */}
+                        {/* Gestione sponsorizzazioni */}
                         <NavLink
                           to={routes.admin.sponsorships}
                           className="btn btn-ghost"
@@ -395,7 +411,7 @@ export default function Header() {
                       >
                         {t("auth.admin.assignJudges")}
                       </NavLink>
-                      {/* NUOVO: Gestione eventi */}
+                      {/* Gestione eventi */}
                       <NavLink
                         to={routes.admin.events}
                         className="btn btn-ghost"
@@ -403,7 +419,7 @@ export default function Header() {
                       >
                         {t("auth.admin.events", "Gestione eventi")}
                       </NavLink>
-                      {/* NUOVO: Gestione corsi */}
+                      {/* Gestione corsi */}
                       <NavLink
                         to={routes.admin.learningPaths}
                         className="btn btn-ghost"
@@ -411,7 +427,7 @@ export default function Header() {
                       >
                         {t("auth.admin.learningPaths", "Gestione corsi")}
                       </NavLink>
-                      {/* NUOVO: Gestione sponsorizzazioni */}
+                      {/* Gestione sponsorizzazioni */}
                       <NavLink
                         to={routes.admin.sponsorships}
                         className="btn btn-ghost"
@@ -460,16 +476,15 @@ export default function Header() {
  *
  * Chiavi NUOVE da aggiungere al namespace "components/common/header":
  *
- *   nav.participate        → "Partecipa"       (IT) / "Get involved"   (EN)
- *   nav.events             → "Eventi"           (IT) / "Events"         (EN)
- *   nav.title.adminEvents  → "Gestione eventi"  (IT) / "Manage events"  (EN)
- *   auth.admin.events      → "Gestione eventi"  (IT) / "Manage events"  (EN)
- *   auth.admin.learningPaths  → "Gestione corsi"           (IT) / "Manage courses"        (EN)
- *   auth.admin.sponsorships  → "Gestione sponsorizzazioni" (IT) / "Manage sponsorships" (EN)
+ *   nav.impact             → "Impatto"          (IT) / "Impact"         (EN)
  *
- * Chiavi MODIFICATE (solo label visiva, chiave invariata):
- *   nav.challenges  — il dropdown ora si chiama "Partecipa" ma la chiave
- *                     nav.challenges resta per le voci interne se necessario.
+ * Chiavi già presenti (invariate):
+ *   nav.participate        → "Partecipa"         (IT) / "Get involved"   (EN)
+ *   nav.events             → "Eventi"            (IT) / "Events"         (EN)
+ *   nav.title.adminEvents  → "Gestione eventi"   (IT) / "Manage events"  (EN)
+ *   auth.admin.events      → "Gestione eventi"   (IT) / "Manage events"  (EN)
+ *   auth.admin.learningPaths  → "Gestione corsi"            (IT) / "Manage courses"       (EN)
+ *   auth.admin.sponsorships   → "Gestione sponsorizzazioni" (IT) / "Manage sponsorships"  (EN)
  *
  * Le chiavi con fallback hardcodato (secondo parametro di t()) funzionano
  * già senza aggiornare i file di traduzione — l'aggiornamento è comunque

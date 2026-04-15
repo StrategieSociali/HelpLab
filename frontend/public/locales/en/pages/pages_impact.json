@@ -1,0 +1,60 @@
+{
+  "hero": {
+    "sectionLabel": "Platform cumulative impact",
+    "co2Label": "CO₂ saved by volunteers",
+    "volunteersLabel": "Active volunteers",
+    "submissionsLabel": "Completed actions"
+  },
+  "header": {
+    "title": "🌍 Our impact",
+    "subtitle": "Every bike ride, every sustainable action by our volunteers becomes measurable avoided CO₂. Here we track what we've done together — and how many trees we still need to offset it all.",
+    "refreshButton": "↻ Refresh statistics",
+    "refreshing": "↻ Refreshing…",
+    "lastUpdate": "Updated at"
+  },
+  "compensation": {
+    "sectionLabel": "CO₂ compensation",
+    "title": "Every kg of CO₂ saved gets offset by planting real trees",
+    "subtitle": "Reducing isn't enough — we also want to offset. For each event we calculate the trees needed and plant them for real. Here's where we stand.",
+    "treesPlanted": "Trees already planted",
+    "treesPending": "Trees still needed",
+    "progressAria": "{{pct}}% of trees already planted",
+    "progressLabel": "{{current}} of {{total}} total trees needed",
+    "progressCompleted": "completed",
+    "co2PendingAlert": "Still <strong>{{amount}} kg of CO₂</strong> to offset",
+    "ctaButton": "🌳 Adopt a tree",
+    "ctaMicrocopy": "Each tree you adopt offsets approximately {{amount}} kg of CO₂"
+  },
+  "events": {
+    "sectionLabel": "Event breakdown",
+    "title": "Compensation status by event",
+    "co2Saved": "CO₂ saved",
+    "treesRatio": "Trees planted / needed",
+    "badgeCompensated": "✓ Compensated",
+    "badgePending": "⏳ Pending",
+    "legendCompensated": "All required trees have been planted",
+    "legendPending": "Some trees are still missing",
+    "ariaCompensated": "Event compensated",
+    "ariaPending": "Compensation in progress",
+    "empty": "No events with compensation data available yet. Data will appear as soon as volunteers complete their first actions."
+  },
+  "chart": {
+    "sectionLabel": "Growth over time",
+    "title": "Impact grows with every event",
+    "comingSoonLabel": "📈 The growth chart will be available soon",
+    "comingSoonSub": "Historical data will be added with the next backend update"
+  },
+  "footerCta": {
+    "icon": "🌱",
+    "title": "Want to help us plant the missing trees?",
+    "subtitle": "No technical skills needed. A small contribution goes a long way toward real, measurable offsetting of all the CO₂ our volunteers have helped avoid.",
+    "button": "🌳 Adopt a tree"
+  },
+  "status": {
+    "loading": "Loading data…"
+  },
+  "errors": {
+    "load": "Unable to load data. Please try again in a moment.",
+    "retry": "Try again"
+  }
+}

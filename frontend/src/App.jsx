@@ -57,9 +57,13 @@ import MyEvents from './pages/events/MyEvents';
 import Privacy from './pages/Privacy';
 
 // ── REPORT ──────────────────────────────────────────
-
 import EventReport from "./pages/admin/EventReport";
 
+// ── PAGINE CALCOLO IMPATTO E ADOZIONE ALBERI───────────────────────────────────
+import ImpactPage    from './pages/ImpactPage';
+import AdoptTreePage from './pages/AdoptTreePage';
+
+// ── STYLES ──────────────────────────────────────────
 import '@/styles/styles.css';
 
 
@@ -90,6 +94,10 @@ export default function App() {
               <Route path={routes.community.sponsorProfile()}  element={<SponsorPublicProfile />} />
               {/* Guida sponsorizzazioni — pubblica, accessibile senza login */}
               <Route path={routes.community.sponsorGuide}        element={<SponsorGuide />} />
+              
+              {/* ===== IMPATTI / ADOTTA ===== */}              
+              <Route path={routes.impact.page}      element={<ImpactPage />} />
+              <Route path={routes.impact.adoptTree} element={<AdoptTreePage />} />
 
               {/* redirect legacy */}
               <Route
@@ -201,6 +209,7 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              
 
               {/* ===== EVENTI — CREAZIONE (admin) ===== */}
               {/* ⚠️  ATTENZIONE: routes.events.create è già definito sopra per tutti i ruoli.

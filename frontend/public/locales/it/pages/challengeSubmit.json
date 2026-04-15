@@ -64,19 +64,19 @@
 
   "fields": {
     "km_percorsi": {
-      "label": "Quanti km hai percorso in bicicletta?",
+      "label": "Quanti km hai percorso?",
       "placeholder": "Es. 12.5",
-      "hint": "Inserisci la distanza totale percorsa in bicicletta per raggiungere il luogo dell'evento."
+      "hint": "Inserisci la distanza totale percorsa per raggiungere il luogo dell'evento."
     },
     "vehicle_id": {
-      "label": "Con quale mezzo saresti venuto altrimenti?",
+      "label": "Con quale mezzo saresti/sei venuto?",
       "placeholder": "",
-      "hint": "Indica con quale mezzo saresti venuto se non avessi usato la bicicletta. Serve per calcolare le emissioni evitate."
+      "hint": "Indica con quale mezzo saresti venuto se non avessi usato la bicicletta o con quale mezzo sei venuto. Serve per calcolare le emissioni reali/evitate."
     },
     "evidences": {
       "label": "Foto del tuo percorso",
       "placeholder": "",
-      "hint": "Carica almeno {{count}} foto che dimostri la tua partecipazione. Puoi fotografare la bici con il paesaggio sullo sfondo o il punto di arrivo."
+      "hint": "Carica almeno {{count}} foto che dimostri la tua partecipazione. Puoi fotografare il punto di arrivo o il mezzo utilizzato (no targhe)."
     },
     "kg_rifiuti": {
       "label": "Quanti kg di rifiuti hai raccolto?",

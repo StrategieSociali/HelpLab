@@ -1,0 +1,60 @@
+{
+  "hero": {
+    "sectionLabel": "Impatto cumulativo della piattaforma",
+    "co2Label": "CO₂ risparmiata dai volontari",
+    "volunteersLabel": "Volontari attivi",
+    "submissionsLabel": "Azioni completate"
+  },
+  "header": {
+    "title": "🌍 Il nostro impatto",
+    "subtitle": "Ogni viaggio in bici, ogni azione sostenibile dei nostri volontari diventa CO₂ evitata misurabile. Qui teniamo traccia di quanto abbiamo fatto insieme — e di quanto manca per compensare tutto con alberi veri.",
+    "refreshButton": "↻ Aggiorna statistiche",
+    "refreshing": "↻ Aggiornamento…",
+    "lastUpdate": "Aggiornato alle"
+  },
+  "compensation": {
+    "sectionLabel": "Compensazione CO₂",
+    "title": "Ogni kg di CO₂ risparmiata, la compensiamo piantando alberi",
+    "subtitle": "Non basta ridurre: vogliamo anche compensare. Per ogni evento, calcoliamo gli alberi necessari e li piantiamo davvero. Ecco a che punto siamo.",
+    "treesPlanted": "Alberi già piantati",
+    "treesPending": "Alberi ancora necessari",
+    "progressAria": "{{pct}}% degli alberi già piantati",
+    "progressLabel": "{{current}} di {{total}} alberi totali necessari",
+    "progressCompleted": "completato",
+    "co2PendingAlert": "Ancora <strong>{{amount}} kg di CO₂</strong> da compensare",
+    "ctaButton": "🌳 Adotta un albero",
+    "ctaMicrocopy": "Ogni albero che adotti compensa circa {{amount}} kg di CO₂"
+  },
+  "events": {
+    "sectionLabel": "Dettaglio per evento",
+    "title": "Stato compensazione per evento",
+    "co2Saved": "CO₂ risparmiata",
+    "treesRatio": "Alberi piantati / necessari",
+    "badgeCompensated": "✓ Compensato",
+    "badgePending": "⏳ In attesa",
+    "legendCompensated": "Tutti gli alberi necessari sono stati piantati",
+    "legendPending": "Mancano ancora alcuni alberi",
+    "ariaCompensated": "Evento compensato",
+    "ariaPending": "Compensazione in corso",
+    "empty": "Nessun evento con dati di compensazione disponibili al momento. I dati compariranno non appena i volontari completeranno le prime azioni."
+  },
+  "chart": {
+    "sectionLabel": "Crescita nel tempo",
+    "title": "L'impatto cresce di evento in evento",
+    "comingSoonLabel": "📈 Il grafico della crescita nel tempo sarà disponibile presto",
+    "comingSoonSub": "I dati storici verranno aggiunti con il prossimo aggiornamento del backend"
+  },
+  "footerCta": {
+    "icon": "🌱",
+    "title": "Vuoi aiutarci a piantare gli alberi mancanti?",
+    "subtitle": "Non serve essere sviluppatori o esperti. Bastano pochi euro per contribuire alla compensazione reale e misurabile di tutta la CO₂ che i nostri volontari hanno evitato insieme.",
+    "button": "🌳 Adotta un albero"
+  },
+  "status": {
+    "loading": "Caricamento dei dati in corso…"
+  },
+  "errors": {
+    "load": "Impossibile caricare i dati. Riprova tra qualche istante.",
+    "retry": "Riprova"
+  }
+}

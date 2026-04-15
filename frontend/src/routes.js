@@ -32,6 +32,18 @@ export const routes = {
   },
 
   /* ======================
+   * IMPATTO GLOBALE & COMPENSAZIONE
+   *
+   * REGOLA: queste pagine sono pubbliche, nessun token richiesto.
+   * adoptTree è un placeholder: la rotta esiste ma la pagina
+   * mostra un messaggio "coming soon" fino all'implementazione.
+   * ====================== */
+  impact: {
+    page:      '/impact',
+    adoptTree: '/adotta-albero',
+  },
+
+  /* ======================
    * EVENTI
    *
    * REGOLA: le route usano sempre lo slug dalla response BE.
@@ -89,11 +101,11 @@ export const routes = {
     proposals:   '/dashboard/admin/proposals',
     assignJudge: '/dashboard/admin/assign-judge',
     events:      '/dashboard/admin/eventi',
-    learningPaths: '/dashboard/admin/corsi',   // ← aggiungi questa
+    learningPaths: '/dashboard/admin/corsi',
     sponsorships: '/dashboard/admin/sponsorships',
     // Report evento: percorso con ID dinamico
     eventReport:  (id = ':id') => `/dashboard/admin/events/${id}/report`,
-},
+  },
 
   /* ======================
    * MISC

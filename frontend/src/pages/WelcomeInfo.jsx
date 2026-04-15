@@ -36,6 +36,21 @@ export default function WelcomeInfo() {
           <h1 className="welcome-title">{t("hero.title")}</h1>
           <p className="welcome-subtitle">{t("hero.subtitle")}</p>
         </header>
+        
+         {/* CTA Aggiunta per SwimFit*/}
+        <div className="welcome-cta">
+          <h3 className="welcome-cta__title">{t("cta.title")}</h3>
+          <p className="welcome-cta__subtitle">{t("cta.subtitle")}</p>
+          <div className="welcome-cta__actions">
+            <Link to="/dashboard/profile" className="btn btn-outline">
+              {t("cta.profile")}
+            </Link>
+            <Link to="/challenges" className="btn btn-outline">
+              {t("cta.challenges")}
+            </Link>
+          </div>
+        </div>
+    
 
         {/* GRID OPPORTUNITÀ */}
         <div className="welcome-grid">
