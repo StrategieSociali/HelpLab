@@ -38,33 +38,35 @@ export default function EventsList() {
   const [query, setQuery]           = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  // ── Fetch pagina ──────────────────────────────────────────────────────────
-  const fetchPage = useCallback(async ({ append = false } = {}) => {
-    setLoading(true);
-    setError("");
-    try {
-      const result = await getEvents({
-        limit: PAGE_SIZE,
-        cursor: append ? nextCursor : undefined,
-      });
+// ── Fetch pagina ──────────────────────────────────────────────────────────
+const fetchPage = useCallback(async ({ append = false } = {}) => {
+  setLoading(true);
+  setError("");
+  try {
+    // Passa status=all per ricevere sia published che ended
+    const result = await getEvents({
+      limit: PAGE_SIZE,
+      cursor: append ? nextCursor : undefined,
+      status: "all",
+    });
 
-      const newItems = Array.isArray(result?.items) ? result.items : [];
-      setItems((prev) => (append ? [...prev, ...newItems] : newItems));
-      setNextCursor(result?.nextCursor ?? null);
-    } catch (err) {
-      setError(
-        err?.response?.data?.error ||
-        err?.message ||
-        "Errore nel caricamento degli eventi."
-      );
-      if (!append) {
-        setItems([]);
-        setNextCursor(null);
-      }
-    } finally {
-      setLoading(false);
+    const newItems = Array.isArray(result?.items) ? result.items : [];
+    setItems((prev) => (append ? [...prev, ...newItems] : newItems));
+    setNextCursor(result?.nextCursor ?? null);
+  } catch (err) {
+    setError(
+      err?.response?.data?.error ||
+      err?.message ||
+      "Errore nel caricamento degli eventi."
+    );
+    if (!append) {
+      setItems([]);
+      setNextCursor(null);
     }
-  }, [nextCursor]);
+  } finally {
+    setLoading(false);
+  }
+}, [nextCursor]);
 
   useEffect(() => {
     fetchPage({ append: false });

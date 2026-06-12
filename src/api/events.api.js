@@ -37,10 +37,11 @@ import { api } from "@/api/client";
  * @param {string} [params.cursor]   - ISO timestamp nextCursor dalla response precedente
  * @returns {Promise<{items: Array, nextCursor: string|null}>}
  */
-export async function getEvents({ limit = 12, cursor } = {}) {
+export async function getEvents({ limit = 12, cursor, status } = {}) {
   const q = new URLSearchParams();
   q.set("limit", String(limit));
   if (cursor) q.set("cursor", cursor);
+  if (status) q.set("status", status);
   const { data } = await api.get(`/v1/events?${q.toString()}`);
   return data;
 }

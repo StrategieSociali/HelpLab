@@ -1,37 +1,51 @@
-# Node dependencies
+# =====================
+# Node / JS
+# =====================
 node_modules/
-**/node_modules/
-
-# Build output
-dist/
-build/
-
-# Env files (qualsiasi cartella, qualsiasi nome che inizi con .env)
-.env
-.env.*
-**/.env
-**/.env.*
-
-# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# =====================
+# Build / dist
+# =====================
+dist/
+build/
+.vite/
+.cache/
+
+# =====================
+# Environment variables
+# =====================
+.env
+.env.local
+.env.*.local
+.env.production
+
+# =====================
+# OS / Editor
+# =====================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# =====================
+# Logs
+# =====================
+logs/
 *.log
 
-# Tooling & cache
-.vite/
-.cache/
-.eslintcache
+# =====================
+# Archives
+# =====================
+*.zip
+*.tar.gz
 
-# Prisma
-prisma/dev.db
-prisma/dev.db-journal
-
-# Misc
-.DS_Store
-.vite/
-.cache/
-.eslintcache
-
+# =====================
+# Optional: backend secrets
+# =====================
+**/config/secrets.*
 

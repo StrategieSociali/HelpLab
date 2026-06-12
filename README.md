@@ -73,7 +73,7 @@ npm install
 
 3. Create `.env` file:
 ```bash
-VITE_API_URL= ask for detail
+VITE_API_URL= # ask maintainers for the staging API URL
 ```
 
 4. Start development server:
@@ -151,9 +151,11 @@ Release v1.1.8 - CRITICAL UPDATE - XSS Vulnerability Patch
 
 ## Deployment
 
+### Staging
+Manual deployment of the production build (`npm run build`) after validation.
 
-### Production (api.helplab.space)
-Manual deployment from `main` branch after validation.
+### Production
+Manual deployment of the production build from `main` after validation on staging.
 
 **Deployment Steps:**
 1. Test locally with `npm run build && npm run preview`
