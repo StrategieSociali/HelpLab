@@ -15,7 +15,8 @@
  * Aggiunto pulsante "Rimuovi task" mancante.
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { api } from "@/api/client";
 
 // ─── Mappatura impact_type → payload_schema ───────────────────────────────────
 /**
@@ -83,6 +84,33 @@ export default function StepTargets({ value = {}, onChange }) {
   const set = (patch) => onChange(patch);
   const setTarget = (patch) => onChange({ target: { ...target, ...patch } });
 
+  // ── Catalogo calcolatori d'impatto (Impact Engine) ───────────────────────
+  // Caricato una volta sola e condiviso da tutte le TaskCard. Espone solo
+  // id+label (mai coefficienti): è il select "tipo di impatto" per task.
+  const [calculators, setCalculators] = useState([]);
+  const [calcLoading, setCalcLoading] = useState(true);
+  const [calcError, setCalcError] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setCalcLoading(true);
+    setCalcError(false);
+    api
+      .get("/v1/calculators")
+      .then(({ data }) => {
+        if (alive) setCalculators(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (alive) setCalcError(true);
+      })
+      .finally(() => {
+        if (alive) setCalcLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   // ── Aggiunta task con payload_schema automatico ──────────────────────────
   const addTask = () => {
     const schema = getPayloadSchema(impactType);
@@ -96,6 +124,7 @@ export default function StepTargets({ value = {}, onChange }) {
           evidence_types: ["photo"],
           verification: "judge",
           payload_schema: schema,
+          calculator_name: null, // Impact Engine: scelto dall'organizzatore (null = nessun calcolo)
         },
       ],
     });
@@ -209,6 +238,9 @@ export default function StepTargets({ value = {}, onChange }) {
               key={t.id}
               task={t}
               index={i}
+              calculators={calculators}
+              calcLoading={calcLoading}
+              calcError={calcError}
               onUpdate={(patch) => updTask(i, patch)}
               onRemove={() => removeTask(i)}
               onUpdateField={(fieldIndex, prop, val) =>
@@ -271,7 +303,16 @@ export default function StepTargets({ value = {}, onChange }) {
  * appesantire il wizard per chi non ne ha bisogno. Chi crea una
  * challenge generica non vede complessità aggiuntiva.
  */
-function TaskCard({ task, index, onUpdate, onRemove, onUpdateField }) {
+function TaskCard({
+  task,
+  index,
+  calculators = [],
+  calcLoading = false,
+  calcError = false,
+  onUpdate,
+  onRemove,
+  onUpdateField,
+}) {
   const [showCustomize, setShowCustomize] = useState(false);
 
   const labelOk = (task.label || "").trim().length >= 3;
@@ -339,6 +380,47 @@ function TaskCard({ task, index, onUpdate, onRemove, onUpdateField }) {
           <option value="judge">Giudice</option>
           <option value="auto">Auto</option>
         </select>
+      </div>
+
+      {/* Tipo di impatto (Impact Engine): plugin che calcola CO₂/valore del task.
+          Dal catalogo pubblico arrivano solo id+label — i coefficienti restano
+          lato server (know-how protetto). I tre stati: caricamento / errore / vuoto. */}
+      <div style={{ marginTop: 8 }}>
+        <label>
+          Tipo di impatto (calcolo)
+          {calcLoading ? (
+            <select className="control" disabled value="">
+              <option>Caricamento tipi d&rsquo;impatto…</option>
+            </select>
+          ) : calcError ? (
+            <div className="hint warn">
+              Impossibile caricare i tipi d&rsquo;impatto. Puoi proseguire: l&rsquo;impatto
+              resta non calcolato e potrà essere impostato in seguito.
+            </div>
+          ) : calculators.length === 0 ? (
+            <div className="hint">
+              Nessun calcolatore d&rsquo;impatto disponibile al momento.
+            </div>
+          ) : (
+            <select
+              className="control"
+              value={task.calculator_name || ""}
+              onChange={(e) => onUpdate({ calculator_name: e.target.value || null })}
+            >
+              <option value="">— Nessuno (nessun calcolo d&rsquo;impatto) —</option>
+              {calculators.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          )}
+          <div className="hint">
+            Determina come la piattaforma calcola l&rsquo;impatto del task (es. CO₂
+            evitata). Nel dubbio lascia &ldquo;Nessuno&rdquo;: potrà essere corretto in
+            fase di approvazione.
+          </div>
+        </label>
       </div>
 
       {/* Riepilogo dati raccolti — sola lettura */}

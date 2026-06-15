@@ -1,4 +1,4 @@
-// /src/pages/BusinessPackages.jsx
+// src/pages/BusinessPackages.jsx
 /**
  * Scopo: presentare le modalità di collaborazione con HelpLab
  *

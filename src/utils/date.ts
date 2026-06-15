@@ -1,7 +1,8 @@
-// src/utils/date.ts/**
- /** Scopo: normalizzare le date dal DB quando non ISO
+// src/utils/date.ts
+/**
+ * Scopo: normalizzare le date dal DB quando non sono ISO (es. datetime MySQL) e formattarle per la UI.
  */
- 
+
 export const formatDate = (value: unknown): string => {
   if (!value) return "—";
 

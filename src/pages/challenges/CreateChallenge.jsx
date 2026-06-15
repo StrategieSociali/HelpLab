@@ -304,6 +304,9 @@ function buildPayload(draft) {
       // payload_schema: salvato dal backend, letto da ChallengeSubmitPage
       // Non rimuovere — romperebbe il form dinamico dei volontari
       ...(t.payload_schema ? { payload_schema: t.payload_schema } : {}),
+      // calculator_name: plugin Impact Engine del task. Omesso se non scelto
+      // (il backend tratta l'assenza come noop / nessun calcolo).
+      ...(t.calculator_name ? { calculator_name: t.calculator_name } : {}),
     }));
   }
 

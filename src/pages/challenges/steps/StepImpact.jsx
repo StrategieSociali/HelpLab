@@ -1,3 +1,9 @@
+// src/pages/challenges/steps/StepImpact.jsx
+/**
+ * Scopo: step "Impatto" del form multi-step di creazione sfida (CreateChallenge).
+ * Permette di dichiarare l'impatto in due modalità: stima CO₂ ("co2") o livello di difficoltà ("difficulty").
+ * Nota: nessun calcolo di business lato FE — invia i dati al BE, mostra solo il pointsPreview ricevuto.
+ */
 import React, { useState } from "react";
 
 export default function StepImpact({ value, onChange, pointsPreview }) {

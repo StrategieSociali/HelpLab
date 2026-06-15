@@ -1,3 +1,9 @@
+// src/pages/challenges/schema.js
+/**
+ * Scopo: stato iniziale e helper del form multi-step di creazione sfida.
+ * Espone EMPTY_CHALLENGE (draft vuoto) e canProceedBasic (completezza dello step base).
+ * Nota: da refactorare → canProceedBasic → isFormComplete senza soglie hardcoded (solo completezza formale, niente regole di business).
+ */
 export const EMPTY_CHALLENGE = {
   title: "",
   description: "",

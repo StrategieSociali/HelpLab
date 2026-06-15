@@ -1,3 +1,8 @@
+// src/pages/challenges/steps/StepSponsor.jsx
+/**
+ * Scopo: step "Sponsor" del form multi-step di creazione sfida (CreateChallenge).
+ * Gestisce sponsor associato e opzioni di visibilità (visibility_options) della sfida.
+ */
 import React from "react";
 
 export default function StepSponsor({ value = {}, onChange, pointsPreview }) {

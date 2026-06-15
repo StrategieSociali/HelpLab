@@ -1,4 +1,4 @@
- // src/pages/sponsors/SponsorsList.jsx
+// src/pages/sponsors/SponsorsList.jsx
 /**
  * Scopo: mostra l’elenco pubblico degli sponsor di HelpLab
  *
