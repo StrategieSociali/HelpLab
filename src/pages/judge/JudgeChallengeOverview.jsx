@@ -458,8 +458,8 @@ const vehicleLabels = {
 function PayloadDisplay({ payload }) {
   if (!payload || typeof payload !== "object") return null;
 
-  const { km_percorsi, vehicle_id, evidences, kg_rifiuti, num_alberi } = payload;
-  const hasData = km_percorsi != null || vehicle_id || kg_rifiuti != null || num_alberi != null;
+  const { km_percorsi, vehicle_id, evidences, kg_rifiuti, num_alberi, n_capi } = payload;
+  const hasData = km_percorsi != null || vehicle_id || kg_rifiuti != null || num_alberi != null || n_capi != null;
   const photos  = Array.isArray(evidences) ? evidences.filter(Boolean) : [];
 
   return (
@@ -503,6 +503,12 @@ function PayloadDisplay({ payload }) {
             <>
               <dt className="muted small">Alberi piantati</dt>
               <dd style={{ margin: 0, fontWeight: 600 }}>{num_alberi}</dd>
+            </>
+          )}
+          {n_capi != null && (
+            <>
+              <dt className="muted small">Capi riusati</dt>
+              <dd style={{ margin: 0, fontWeight: 600 }}>{n_capi}</dd>
             </>
           )}
         </dl>

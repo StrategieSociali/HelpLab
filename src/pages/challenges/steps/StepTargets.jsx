@@ -44,6 +44,12 @@ const IMPACT_SCHEMA_MAP = {
       { name: "evidences",  type: "url_array", minItems: 2, required: true },
     ],
   },
+  reuse: {
+    fields: [
+      { name: "n_capi",    type: "number",    min: 1, required: true },
+      { name: "evidences", type: "url_array", minItems: 1, required: true },
+    ],
+  },
   tree_planting: {
     fields: [
       { name: "num_alberi", type: "number",    min: 1,   required: true },
@@ -72,6 +78,7 @@ const FIELD_LABELS = {
   evidences:   "Foto evidenza",
   kg_rifiuti:  "Kg rifiuti raccolti",
   num_alberi:  "Numero alberi piantati",
+  n_capi:      "Numero capi riusati",
 };
 
 // ─── Componente principale ────────────────────────────────────────────────────

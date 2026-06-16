@@ -82,6 +82,11 @@
       "label": "How many kg of waste did you collect?",
       "placeholder": "E.g. 3.2",
       "hint": "Indicate the approximate weight of waste collected and properly disposed of."
+    },
+    "n_capi": {
+      "label": "How many items did you reuse?",
+      "placeholder": "E.g. 5",
+      "hint": "Indicate the number of garments you swapped or took at the swap party instead of buying new ones."
     }
   }
 }

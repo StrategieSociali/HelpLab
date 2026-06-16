@@ -82,6 +82,11 @@
       "label": "Quanti kg di rifiuti hai raccolto?",
       "placeholder": "Es. 3.2",
       "hint": "Indica il peso approssimativo dei rifiuti raccolti e correttamente smaltiti."
+    },
+    "n_capi": {
+      "label": "Quanti capi hai riusato?",
+      "placeholder": "Es. 5",
+      "hint": "Indica il numero di capi che hai scambiato o preso allo swap party invece di comprarli nuovi."
     }
   }
 }

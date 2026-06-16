@@ -95,6 +95,7 @@ export default function StepDetails({ value = {}, onChange }) {
             <option value="">Seleziona…</option>
             <option value="tree_planting">Piantumazione alberi</option>
             <option value="no_waste">Riduzione rifiuti</option>
+            <option value="reuse">Riuso tessile</option>
             <option value="mobility">Mobilità sostenibile</option>
             <option value="green_area">Riqualificazione aree verdi</option>
             <option value="social">Attività sociale</option>
