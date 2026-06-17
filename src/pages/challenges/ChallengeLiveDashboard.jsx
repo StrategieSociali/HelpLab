@@ -230,16 +230,18 @@ export default function ChallengeLiveDashboard() {
                 non va messa in evidenza: il valore è sociale (ore + € + persone). */}
             {hasSocial && (
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 32 }}>
-                <BigCounter
-                  label={t("counters.volunteerHours")}
-                  value={fmt(social?.total_volunteer_hours)}
-                  unit="h"
-                  accent
-                />
+                {/* Valore sociale (sROI) a sinistra e in evidenza: è la metrica
+                    fondamentale del report sociale, accanto alla CO₂. */}
                 <BigCounter
                   label={t("counters.socialValue")}
                   value={fmt(social?.total_social_value_eur, 0)}
                   unit="€"
+                  accent
+                />
+                <BigCounter
+                  label={t("counters.volunteerHours")}
+                  value={fmt(social?.total_volunteer_hours)}
+                  unit="h"
                 />
                 <BigCounter
                   label={t("counters.peopleReached")}

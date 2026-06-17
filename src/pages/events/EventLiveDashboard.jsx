@@ -296,16 +296,18 @@ export default function EventLiveDashboard() {
                 evidenza: il valore è sociale (ore + € + persone). */}
             {hasSocial && (
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 28 }}>
-                <BigCounter
-                  label="Ore di volontariato"
-                  value={fmt(social?.total_volunteer_hours)}
-                  unit="h"
-                  accent
-                />
+                {/* Valore sociale (sROI) a sinistra e in evidenza: metrica
+                    fondamentale del report sociale, accanto alla CO₂. */}
                 <BigCounter
                   label="Valore sociale"
                   value={fmt(social?.total_social_value_eur, 0)}
                   unit="€"
+                  accent
+                />
+                <BigCounter
+                  label="Ore di volontariato"
+                  value={fmt(social?.total_volunteer_hours)}
+                  unit="h"
                 />
                 <BigCounter
                   label="Persone raggiunte"
