@@ -87,6 +87,16 @@
       "label": "Quanti capi hai riusato?",
       "placeholder": "Es. 5",
       "hint": "Indica il numero di capi che hai scambiato o preso allo swap party invece di comprarli nuovi."
+    },
+    "volunteer_hours": {
+      "label": "Quante ore di volontariato hai dedicato?",
+      "placeholder": "Es. 3.5",
+      "hint": "Indica le ore che hai dedicato a questa attività. Servono a valorizzare il tuo contributo sociale."
+    },
+    "people_reached": {
+      "label": "Quante persone hai coinvolto o raggiunto?",
+      "placeholder": "Es. 20",
+      "hint": "Facoltativo. Indica quante persone hai coinvolto o raggiunto con la tua attività (partecipanti, pubblico)."
     }
   }
 }

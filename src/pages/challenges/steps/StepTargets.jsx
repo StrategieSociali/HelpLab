@@ -50,6 +50,15 @@ const IMPACT_SCHEMA_MAP = {
       { name: "evidences", type: "url_array", minItems: 1, required: true },
     ],
   },
+  social: {
+    // volunteer_hours = driver del valore sociale (proxy_value_eur); obbligatorio.
+    // people_reached = conteggio opzionale (può sovrapporsi tra volontari).
+    fields: [
+      { name: "volunteer_hours", type: "number",    min: 0.5, required: true },
+      { name: "people_reached",  type: "number",    min: 0,   required: false },
+      { name: "evidences",       type: "url_array", minItems: 1, required: true },
+    ],
+  },
   tree_planting: {
     fields: [
       { name: "num_alberi", type: "number",    min: 1,   required: true },
@@ -79,6 +88,8 @@ const FIELD_LABELS = {
   kg_rifiuti:  "Kg rifiuti raccolti",
   num_alberi:  "Numero alberi piantati",
   n_capi:      "Numero capi riusati",
+  volunteer_hours: "Ore di volontariato",
+  people_reached:  "Persone raggiunte",
 };
 
 // ─── Componente principale ────────────────────────────────────────────────────

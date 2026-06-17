@@ -148,8 +148,14 @@ export default function ChallengeLiveDashboard() {
   const ch     = summary?.challenge;
   const stats  = summary?.submissions_stats;
   const impact = summary?.impact;
+  const social = summary?.impact?.social;
   const tasks  = summary?.tasks_stats || [];
   const top5   = summary?.leaderboard_top || [];
+
+  // Blocco sociale mostrato solo se la sfida ha impatto social (ore o persone > 0).
+  const hasSocial =
+    (social?.total_volunteer_hours ?? 0) > 0 ||
+    (social?.total_people_reached ?? 0) > 0;
 
   return (
     <section className="page-section page-text">
@@ -218,6 +224,29 @@ export default function ChallengeLiveDashboard() {
                 value={stats?.pending ?? "—"}
               />
             </div>
+
+            {/* ── Blocco sociale (plugin social.v1) ───────────────────────────
+                Mostrato solo per sfide con impatto sociale. La CO₂ qui è 0 e
+                non va messa in evidenza: il valore è sociale (ore + € + persone). */}
+            {hasSocial && (
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 32 }}>
+                <BigCounter
+                  label={t("counters.volunteerHours")}
+                  value={fmt(social?.total_volunteer_hours)}
+                  unit="h"
+                  accent
+                />
+                <BigCounter
+                  label={t("counters.socialValue")}
+                  value={fmt(social?.total_social_value_eur, 0)}
+                  unit="€"
+                />
+                <BigCounter
+                  label={t("counters.peopleReached")}
+                  value={social?.total_people_reached ?? "—"}
+                />
+              </div>
+            )}
 
             {/* ── Dettaglio per task (collassabile) ───────────────────────── */}
             {tasks.length > 0 && (

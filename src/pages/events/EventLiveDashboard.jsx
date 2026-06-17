@@ -75,16 +75,26 @@ function ChallengeProgressBar({ challenge }) {
           {approved} approvate · {pending} in attesa
         </span>
       </div>
-      {/* CO2 e km se disponibili */}
+      {/* CO2/km (ambientale) e ore/€ (sociale) se disponibili */}
       <div style={{ display: "flex", gap: 16, marginBottom: 8, flexWrap: "wrap" }}>
-        {challenge.co2_saved_kg != null && (
+        {challenge.co2_saved_kg > 0 && (
           <span style={{ fontSize: "0.9rem", color: "rgb(74,222,128)" }}>
             🌱 {fmt(challenge.co2_saved_kg)} kg CO₂
           </span>
         )}
-        {challenge.total_km != null && (
+        {challenge.total_km > 0 && (
           <span style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.7)" }}>
             🚲 {fmt(challenge.total_km, 0)} km
+          </span>
+        )}
+        {challenge.volunteer_hours > 0 && (
+          <span style={{ fontSize: "0.9rem", color: "rgb(96,165,250)" }}>
+            ⏱ {fmt(challenge.volunteer_hours)} h · {fmt(challenge.social_value_eur, 0)} €
+          </span>
+        )}
+        {challenge.people_reached > 0 && (
+          <span style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.7)" }}>
+            👥 {challenge.people_reached} persone
           </span>
         )}
       </div>
@@ -162,8 +172,14 @@ export default function EventLiveDashboard() {
 
   // ── Dati estratti dal summary ───────────────────────────────────────────
   const impact     = summary?.impact ?? {};
+  const social     = summary?.impact?.social;
   const challenges = summary?.challenges ?? [];
   const sponsors   = summary?.sponsors ?? [];
+
+  // Blocco sociale mostrato solo se l'evento ha impatto social (ore o persone > 0).
+  const hasSocial =
+    (social?.total_volunteer_hours ?? 0) > 0 ||
+    (social?.total_people_reached ?? 0) > 0;
 
   // ── Render errore evento ────────────────────────────────────────────────
   if (eventError) {
@@ -274,6 +290,29 @@ export default function EventLiveDashboard() {
                 />
               )}
             </div>
+
+            {/* ── Blocco sociale (plugin social.v1) ───────────────────────
+                Solo per eventi con impatto sociale. CO₂ qui è 0 e non va in
+                evidenza: il valore è sociale (ore + € + persone). */}
+            {hasSocial && (
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 28 }}>
+                <BigCounter
+                  label="Ore di volontariato"
+                  value={fmt(social?.total_volunteer_hours)}
+                  unit="h"
+                  accent
+                />
+                <BigCounter
+                  label="Valore sociale"
+                  value={fmt(social?.total_social_value_eur, 0)}
+                  unit="€"
+                />
+                <BigCounter
+                  label="Persone raggiunte"
+                  value={social?.total_people_reached ?? "—"}
+                />
+              </div>
+            )}
 
             {/* ── Dettaglio per sfida ─────────────────────────────────── */}
             {challenges.length > 0 && (

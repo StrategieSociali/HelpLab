@@ -87,6 +87,16 @@
       "label": "How many items did you reuse?",
       "placeholder": "E.g. 5",
       "hint": "Indicate the number of garments you swapped or took at the swap party instead of buying new ones."
+    },
+    "volunteer_hours": {
+      "label": "How many volunteer hours did you contribute?",
+      "placeholder": "E.g. 3.5",
+      "hint": "Enter the hours you dedicated to this activity. They are used to value your social contribution."
+    },
+    "people_reached": {
+      "label": "How many people did you involve or reach?",
+      "placeholder": "E.g. 20",
+      "hint": "Optional. Indicate how many people you involved or reached with your activity (participants, audience)."
     }
   }
 }

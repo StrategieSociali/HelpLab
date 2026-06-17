@@ -25,7 +25,10 @@
     "co2": "CO₂ avoided",
     "km": "Km travelled",
     "participants": "Active participants",
-    "pending": "Awaiting validation"
+    "pending": "Awaiting validation",
+    "volunteerHours": "Volunteer hours",
+    "socialValue": "Social value",
+    "peopleReached": "People reached"
   },
 
   "tasks": {
