@@ -39,6 +39,11 @@
     "placeholder": "Select an option…"
   },
 
+  "comune": {
+    "loading": "Loading municipalities…",
+    "placeholder": "Start typing your municipality…"
+  },
+
   "photo": {
     "altText": "Evidence {{index}}",
     "uploaded": "✓ Photo uploaded",
@@ -63,6 +68,11 @@
   },
 
   "fields": {
+    "comune_origine": {
+      "label": "Which municipality are you travelling from?",
+      "placeholder": "E.g. Modena (MO)",
+      "hint": "Choose the municipality you travel from to reach the event. The distance is estimated automatically."
+    },
     "km_percorsi": {
       "label": "How many km did you cycle?",
       "placeholder": "E.g. 12.5",

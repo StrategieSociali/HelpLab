@@ -162,6 +162,8 @@ export default function ChallengeSubmitPage() {
   const [tasksError, setTasksError] = useState("");
   const [mobilityOptions, setMobilityOptions] = useState([]);
   const [mobilityLoading, setMobilityLoading] = useState(false);
+  const [comuniOptions, setComuniOptions] = useState([]);
+  const [comuniLoading, setComuniLoading] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState("");
   const [activityDescription, setActivityDescription] = useState("");
   const [payloadFields, setPayloadFields] = useState({});
@@ -207,6 +209,22 @@ export default function ChallengeSubmitPage() {
     }
   }, [mobilityOptions.length]);
 
+  // ── Caricamento elenco comuni (condizionale, mobility) ────────────────────
+  // Lista { id (codice ISTAT), label } per il campo comune d'origine. Le
+  // coordinate restano server-side: il FE usa solo id+label (come per i mezzi).
+  const loadComuni = useCallback(async () => {
+    if (comuniOptions.length > 0) return;
+    setComuniLoading(true);
+    try {
+      const { data } = await api.get("/v1/comuni");
+      setComuniOptions(data?.items || []);
+    } catch (err) {
+      console.error("Errore caricamento comuni:", err);
+    } finally {
+      setComuniLoading(false);
+    }
+  }, [comuniOptions.length]);
+
   // ── Cambio task ───────────────────────────────────────────────────────────
   const handleTaskChange = (taskId) => {
     setSelectedTaskId(taskId);
@@ -234,6 +252,10 @@ export default function ChallengeSubmitPage() {
     const needsMobility = fields.some((f) => f.name === "vehicle_id");
     if (needsMobility) {
       loadMobilityOptions();
+    }
+    const needsComuni = fields.some((f) => f.name === "comune_origine");
+    if (needsComuni) {
+      loadComuni();
     }
   };
 
@@ -441,6 +463,8 @@ export default function ChallengeSubmitPage() {
                     value={payloadFields[field.name]}
                     mobilityOptions={mobilityOptions}
                     mobilityLoading={mobilityLoading}
+                    comuniOptions={comuniOptions}
+                    comuniLoading={comuniLoading}
                     onFieldChange={handleFieldChange}
                     onPhotoUploaded={handlePhotoUploaded}
                     onPhotoRemove={handlePhotoRemove}
@@ -509,6 +533,8 @@ function DynamicField({
   value,
   mobilityOptions,
   mobilityLoading,
+  comuniOptions,
+  comuniLoading,
   onFieldChange,
   onPhotoUploaded,
   onPhotoRemove,
@@ -516,6 +542,53 @@ function DynamicField({
   t,
 }) {
   const label = fieldLabel(field, t);
+
+  // ── Comune d'origine (mobility) — input con datalist (typeahead) ──────────
+  // L'utente digita e seleziona dalla lista; al backend va il codice ISTAT (id).
+  // Datalist anziché select per gestire bene ~8.000 voci con ricerca incrementale.
+  if (field.type === "string" && field.name === "comune_origine") {
+    // Mappa label→id per risolvere la scelta dell'utente nel codice ISTAT.
+    const byLabel = new Map(comuniOptions.map((o) => [o.label, o.id]));
+    const selectedLabel =
+      comuniOptions.find((o) => o.id === value)?.label ?? "";
+    return (
+      <div className="form-group">
+        <label htmlFor="field-comune_origine">
+          {label}
+          {field.required && <span aria-hidden="true"> *</span>}
+        </label>
+
+        {comuniLoading ? (
+          <div className="callout neutral">{t("comune.loading")}</div>
+        ) : (
+          <>
+            <input
+              id="field-comune_origine"
+              className="control"
+              list="comuni-list"
+              defaultValue={selectedLabel}
+              placeholder={t("comune.placeholder")}
+              required={field.required}
+              aria-required={field.required}
+              onChange={(e) => {
+                // Salva il codice ISTAT corrispondente alla label scelta;
+                // stringa vuota se il testo non corrisponde a nessun comune.
+                const id = byLabel.get(e.target.value) || "";
+                onFieldChange(field.name, id);
+              }}
+            />
+            <datalist id="comuni-list">
+              {comuniOptions.map((opt) => (
+                <option key={opt.id} value={opt.label} />
+              ))}
+            </datalist>
+          </>
+        )}
+
+        {fieldHint(field, t) && <div className="hint">{fieldHint(field, t)}</div>}
+      </div>
+    );
+  }
 
   // ── Campo numerico ────────────────────────────────────────────────────────
   if (field.type === "number") {

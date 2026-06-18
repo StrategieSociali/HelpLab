@@ -33,6 +33,7 @@ import { useParams } from "react-router-dom";
 import TextBlock from "@/components/UI/TextBlock";
 import { useAuth } from "@/context/AuthContext";
 import { getJudgeChallengeOverview } from "@/api/judge.api";
+import { api } from "@/api/client";
 import "../../styles/dynamic-pages.css";
 
 const API_BASE = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, "");
@@ -93,6 +94,23 @@ export default function JudgeChallengeOverview() {
 
   // form state per ogni submission: solo points e note (task_id non serve più)
   const [forms, setForms] = useState({}); // { [subId]: { points, note, busy, err } }
+
+  // Mappa codice ISTAT → label comune, per mostrare il comune di partenza dei
+  // task mobility in chiaro (il payload contiene solo il codice). Caricata una volta.
+  const [comuniById, setComuniById] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    api
+      .get("/v1/comuni")
+      .then(({ data }) => {
+        if (!alive) return;
+        setComuniById(new Map((data?.items || []).map((o) => [o.id, o.label])));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const tasks = overview?.tasks || [];
 
@@ -339,7 +357,7 @@ export default function JudgeChallengeOverview() {
                       {/* ── Dati dichiarati dal volontario (payload) ──────────
                           Sola lettura per il giudice. vehicleLabels è solo
                           display — nessun calcolo avviene qui (backend). */}
-                      {s.payload && <PayloadDisplay payload={s.payload} />}
+                      {s.payload && <PayloadDisplay payload={s.payload} comuniById={comuniById} />}
 
                       <div style={{ display: "grid", gap: 10 }}>
                         <div className="form-group" style={{ marginBottom: 0 }}>
@@ -455,11 +473,14 @@ const vehicleLabels = {
   none:           "Nessun mezzo alternativo",
 };
 
-function PayloadDisplay({ payload }) {
+function PayloadDisplay({ payload, comuniById }) {
   if (!payload || typeof payload !== "object") return null;
 
-  const { km_percorsi, vehicle_id, evidences, kg_rifiuti, num_alberi, n_capi, volunteer_hours, people_reached } = payload;
-  const hasData = km_percorsi != null || vehicle_id || kg_rifiuti != null || num_alberi != null || n_capi != null || volunteer_hours != null || people_reached != null;
+  const { comune_origine, km_percorsi, vehicle_id, evidences, kg_rifiuti, num_alberi, n_capi, volunteer_hours, people_reached } = payload;
+  const comuneLabel = comune_origine
+    ? (comuniById?.get(comune_origine) || comune_origine)
+    : null;
+  const hasData = comune_origine || km_percorsi != null || vehicle_id || kg_rifiuti != null || num_alberi != null || n_capi != null || volunteer_hours != null || people_reached != null;
   const photos  = Array.isArray(evidences) ? evidences.filter(Boolean) : [];
 
   return (
@@ -479,6 +500,12 @@ function PayloadDisplay({ payload }) {
       {/* Dati numerici e testuali */}
       {hasData && (
         <dl style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "4px 16px", margin: 0 }}>
+          {comune_origine && (
+            <>
+              <dt className="muted small">Comune di partenza</dt>
+              <dd style={{ margin: 0, fontWeight: 600 }}>{comuneLabel}</dd>
+            </>
+          )}
           {km_percorsi != null && (
             <>
               <dt className="muted small">Km percorsi in bici</dt>

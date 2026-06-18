@@ -39,6 +39,11 @@
     "placeholder": "Seleziona un'opzione…"
   },
 
+  "comune": {
+    "loading": "Caricamento comuni…",
+    "placeholder": "Inizia a digitare il tuo comune…"
+  },
+
   "photo": {
     "altText": "Evidenza {{index}}",
     "uploaded": "✓ Foto caricata",
@@ -63,6 +68,11 @@
   },
 
   "fields": {
+    "comune_origine": {
+      "label": "Da quale comune parti?",
+      "placeholder": "Es. Modena (MO)",
+      "hint": "Scegli il comune da cui ti sposti per raggiungere l'evento. La distanza viene stimata automaticamente."
+    },
     "km_percorsi": {
       "label": "Quanti km hai percorso?",
       "placeholder": "Es. 12.5",

@@ -32,10 +32,12 @@ import { api } from "@/api/client";
  */
 const IMPACT_SCHEMA_MAP = {
   mobility: {
+    // comune_origine (codice ISTAT) sostituisce il vecchio km autodichiarato:
+    // la distanza alla sede è calcolata dal backend (mobility.v1).
     fields: [
-      { name: "km_percorsi", type: "number",    min: 0.1, required: true },
-      { name: "vehicle_id",  type: "string",              required: true },
-      { name: "evidences",   type: "url_array", minItems: 1, required: true },
+      { name: "comune_origine", type: "string",              required: true },
+      { name: "vehicle_id",     type: "string",              required: true },
+      { name: "evidences",      type: "url_array", minItems: 1, required: true },
     ],
   },
   no_waste: {
@@ -82,6 +84,7 @@ function getPayloadSchema(impactType) {
  * Speculare a fieldLabel() in ChallengeSubmitPage.jsx.
  */
 const FIELD_LABELS = {
+  comune_origine: "Comune di partenza",
   km_percorsi: "Km percorsi",
   vehicle_id:  "Mezzo alternativo",
   evidences:   "Foto evidenza",
@@ -123,6 +126,30 @@ export default function StepTargets({ value = {}, onChange }) {
       })
       .finally(() => {
         if (alive) setCalcLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // ── Elenco comuni (per il select comune-sede dei task mobility) ───────────
+  // Caricato una volta sola; { id (codice ISTAT), label }. Le coordinate restano
+  // server-side: qui serve solo a far scegliere la sede dell'evento.
+  const [comuni, setComuni] = useState([]);
+  const [comuniLoading, setComuniLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .get("/v1/comuni")
+      .then(({ data }) => {
+        if (alive) setComuni(Array.isArray(data?.items) ? data.items : []);
+      })
+      .catch(() => {
+        if (alive) setComuni([]);
+      })
+      .finally(() => {
+        if (alive) setComuniLoading(false);
       });
     return () => {
       alive = false;
@@ -259,6 +286,8 @@ export default function StepTargets({ value = {}, onChange }) {
               calculators={calculators}
               calcLoading={calcLoading}
               calcError={calcError}
+              comuni={comuni}
+              comuniLoading={comuniLoading}
               onUpdate={(patch) => updTask(i, patch)}
               onRemove={() => removeTask(i)}
               onUpdateField={(fieldIndex, prop, val) =>
@@ -327,6 +356,8 @@ function TaskCard({
   calculators = [],
   calcLoading = false,
   calcError = false,
+  comuni = [],
+  comuniLoading = false,
   onUpdate,
   onRemove,
   onUpdateField,
@@ -335,6 +366,23 @@ function TaskCard({
 
   const labelOk = (task.label || "").trim().length >= 3;
   const fields = task.payload_schema?.fields || [];
+
+  // Task di mobilità: lo riconosciamo dal campo canonico comune_origine.
+  // Per questi task l'organizzatore configura modo (avoids/emits) e comune-sede,
+  // salvati in payload_schema.mobility_config (letti dal plugin mobility.v1).
+  const isMobility = fields.some((f) => f.name === "comune_origine");
+  const mobilityConfig = task.payload_schema?.mobility_config || {};
+  const setMobilityConfig = (patch) => {
+    onUpdate({
+      payload_schema: {
+        ...task.payload_schema,
+        mobility_config: { ...mobilityConfig, ...patch },
+      },
+    });
+  };
+  const sedeLabel =
+    comuni.find((c) => c.id === mobilityConfig.sede_istat)?.label ?? "";
+  const sedeById = new Map(comuni.map((c) => [c.label, c.id]));
 
   return (
     <div className="card" style={{ padding: 12, marginBottom: 8 }}>
@@ -440,6 +488,66 @@ function TaskCard({
           </div>
         </label>
       </div>
+
+      {/* Configurazione mobilità — solo per i task mobility (campo comune_origine).
+          Modo (avoids/emits) e comune-sede: scelte dell'organizzatore (non gameable),
+          salvate in payload_schema.mobility_config e lette dal plugin all'approvazione. */}
+      {isMobility && (
+        <div className="callout neutral" style={{ marginTop: 8, padding: "10px 12px" }}>
+          <div className="hint" style={{ marginBottom: 8, fontWeight: 600 }}>
+            Configurazione mobilità
+          </div>
+
+          <label>
+            Tipo di spostamento
+            <select
+              className="control"
+              value={mobilityConfig.mode || ""}
+              onChange={(e) => setMobilityConfig({ mode: e.target.value || undefined })}
+            >
+              <option value="">— Scegli il modo —</option>
+              <option value="avoids">Mobilità virtuosa (CO₂ evitata)</option>
+              <option value="emits">Trasferta da compensare (CO₂ emessa)</option>
+            </select>
+            <div className={`hint ${mobilityConfig.mode ? "ok" : "warn"}`}>
+              {mobilityConfig.mode
+                ? "OK"
+                : "Scegli se lo spostamento evita emissioni (mezzo alternativo) o le produce (trasferta da compensare)."}
+            </div>
+          </label>
+
+          <label style={{ marginTop: 8, display: "block" }}>
+            Comune sede dell&rsquo;evento
+            {comuniLoading ? (
+              <div className="hint">Caricamento comuni…</div>
+            ) : (
+              <>
+                <input
+                  className="control"
+                  list={`sede-comuni-${task.id}`}
+                  defaultValue={sedeLabel}
+                  placeholder="Es. Ravenna (RA)"
+                  onChange={(e) =>
+                    setMobilityConfig({
+                      sede_istat: sedeById.get(e.target.value) || undefined,
+                    })
+                  }
+                />
+                <datalist id={`sede-comuni-${task.id}`}>
+                  {comuni.map((c) => (
+                    <option key={c.id} value={c.label} />
+                  ))}
+                </datalist>
+              </>
+            )}
+            <div className={`hint ${mobilityConfig.sede_istat ? "ok" : "warn"}`}>
+              {mobilityConfig.sede_istat
+                ? "OK"
+                : "La distanza dei volontari verrà stimata verso questo comune."}
+            </div>
+          </label>
+        </div>
+      )}
 
       {/* Riepilogo dati raccolti — sola lettura */}
       {fields.length > 0 && (
