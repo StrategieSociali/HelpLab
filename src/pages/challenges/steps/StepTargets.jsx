@@ -493,8 +493,8 @@ function TaskCard({
           Modo (avoids/emits) e comune-sede: scelte dell'organizzatore (non gameable),
           salvate in payload_schema.mobility_config e lette dal plugin all'approvazione. */}
       {isMobility && (
-        <div className="callout neutral" style={{ marginTop: 8, padding: "10px 12px" }}>
-          <div className="hint" style={{ marginBottom: 8, fontWeight: 600 }}>
+        <div style={{ marginTop: 8 }}>
+          <div style={{ marginBottom: 6, fontWeight: 600 }}>
             Configurazione mobilità
           </div>
 
