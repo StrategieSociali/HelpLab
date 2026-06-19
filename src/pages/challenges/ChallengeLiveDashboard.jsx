@@ -217,6 +217,10 @@ export default function ChallengeLiveDashboard() {
               />
               <BigCounter
                 label={t("counters.participants")}
+                value={stats?.active_participants ?? "—"}
+              />
+              <BigCounter
+                label={t("counters.contributions")}
                 value={stats?.approved ?? "—"}
               />
               <BigCounter
