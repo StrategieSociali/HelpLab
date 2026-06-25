@@ -1,0 +1,7 @@
+{
+  "_comment": "/src/components/points/CalibrationBadge.jsx",
+  "label": "Scores in calibration",
+  "beta": "beta",
+  "tooltip": "Scores are computed by an impact engine still being calibrated: during the beta the values are indicative.",
+  "caption": "Scores come from HelpLab's impact engine, still being calibrated: during the beta they are indicative and may be refined."
+}

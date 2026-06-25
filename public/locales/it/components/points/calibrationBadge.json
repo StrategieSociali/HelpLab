@@ -1,0 +1,7 @@
+{
+  "_comment": "/src/components/points/CalibrationBadge.jsx",
+  "label": "Punteggi in calibrazione",
+  "beta": "beta",
+  "tooltip": "I punti sono calcolati da un motore d'impatto in taratura: durante la beta i valori sono indicativi.",
+  "caption": "I punteggi provengono dal motore d'impatto di HelpLab, ancora in taratura: durante la beta sono indicativi e possono essere affinati."
+}

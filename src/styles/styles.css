@@ -753,6 +753,88 @@ button.chip:active {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   CALIBRATION BADGE (Motore Punti — beta)
+   Segnala in modo trasparente che i punteggi vengono dal motore d'impatto
+   ancora in taratura. Palette indigo di brand → "feature del motore HelpLab",
+   distinta dal verde dei punti e dal giallo dei warning (che griderebbe errore).
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.calibration {
+  display: block;
+  margin: 2px 0 12px;
+}
+
+.calibration-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius-pill);
+  background: rgba(99,102,241,0.14);      /* indigo-500 @ 14% */
+  border: 1px solid rgba(129,140,248,0.35);
+  color: #c7d2fe;                         /* indigo-200 */
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.calibration-badge__beta {
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  padding: 0.14rem 0.36rem;
+  border-radius: var(--radius-sm);
+  background: rgba(129,140,248,0.22);
+  color: #e0e7ff;                         /* indigo-100 */
+}
+
+/* Glifo "livello/taratura": tre barrette di altezza diversa, come un indicatore
+   di misura di uno strumento che si sta tarando. È la firma del badge. */
+.calibration-badge__meter {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 0.9em;
+}
+.calibration-badge__meter i {
+  display: block;
+  width: 2px;
+  background: currentColor;
+  border-radius: 1px;
+  transform-origin: bottom;
+  opacity: 0.85;
+}
+.calibration-badge__meter i:nth-child(1) { height: 40%; }
+.calibration-badge__meter i:nth-child(2) { height: 100%; }
+.calibration-badge__meter i:nth-child(3) { height: 65%; }
+
+/* L'unica animazione della pagina: le barre "respirano" — taratura in corso.
+   Spenta del tutto se l'utente preferisce meno movimento (e su proiezione resta
+   discreta). Spendiamo qui, e solo qui, l'audacia. */
+@media (prefers-reduced-motion: no-preference) {
+  .calibration-badge__meter i {
+    animation: calib-pulse 1.6s ease-in-out infinite;
+  }
+  .calibration-badge__meter i:nth-child(2) { animation-delay: 0.2s; }
+  .calibration-badge__meter i:nth-child(3) { animation-delay: 0.4s; }
+}
+@keyframes calib-pulse {
+  0%, 100% { opacity: 0.35; transform: scaleY(0.7); }
+  50%      { opacity: 1;    transform: scaleY(1); }
+}
+
+/* Riga esplicativa sotto il badge: su uno schermo da proiezione nessuno passa
+   il mouse, quindi la spiegazione è in chiaro, non in un tooltip. */
+.calibration-caption {
+  display: block;
+  margin-top: 6px;
+  max-width: 52ch;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    CALLOUTS (Info/Error boxes)
    ───────────────────────────────────────────────────────────────────────────── */
 
