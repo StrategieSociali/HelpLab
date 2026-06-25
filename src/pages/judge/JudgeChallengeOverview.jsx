@@ -26,6 +26,8 @@
  *   POST /api/v1/submissions/:id/review
  *   Body: { decision, points?, note? }
  *   (task_id non serve: arriva dalla submission)
+ *   Su 409 (lock coda giudici: già revisionata da un'altra sessione)
+ *   la lista viene ricaricata automaticamente.
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -71,9 +73,13 @@ async function reviewSubmission(token, submissionId, body) {
     let msg = "Errore durante la revisione";
     try {
       const data = await res.json();
-      msg = data?.error || data?.message || msg;
+      // Gli errori strutturati del BE mettono il messaggio leggibile in `message`
+      // (es. 409 lock coda giudici), gli altri in `error`.
+      msg = data?.message || data?.error || msg;
     } catch {}
-    throw new Error(msg);
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
   }
 
   return res.json();
@@ -203,7 +209,15 @@ export default function JudgeChallengeOverview() {
       const ov = await getJudgeChallengeOverview(token, id);
       setOverview(ov);
     } catch (e) {
-      setForm(sub.id, { err: e.message || "Errore approvazione" });
+      if (e.status === 409) {
+        // Lock coda giudici: un'altra sessione l'ha già revisionata. Ricarico.
+        setForm(sub.id, { err: "Questa submission è già stata revisionata. Aggiorno la lista…" });
+        await loadSubmissions({ reset: true });
+        const ov = await getJudgeChallengeOverview(token, id);
+        setOverview(ov);
+      } else {
+        setForm(sub.id, { err: e.message || "Errore approvazione" });
+      }
     } finally {
       setForm(sub.id, { busy: false });
     }
@@ -223,7 +237,15 @@ export default function JudgeChallengeOverview() {
       const ov = await getJudgeChallengeOverview(token, id);
       setOverview(ov);
     } catch (e) {
-      setForm(sub.id, { err: e.message || "Errore rifiuto" });
+      if (e.status === 409) {
+        // Lock coda giudici: un'altra sessione l'ha già revisionata. Ricarico.
+        setForm(sub.id, { err: "Questa submission è già stata revisionata. Aggiorno la lista…" });
+        await loadSubmissions({ reset: true });
+        const ov = await getJudgeChallengeOverview(token, id);
+        setOverview(ov);
+      } else {
+        setForm(sub.id, { err: e.message || "Errore rifiuto" });
+      }
     } finally {
       setForm(sub.id, { busy: false });
     }
