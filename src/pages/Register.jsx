@@ -15,6 +15,10 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 
+// Versione della privacy policy accettata alla registrazione (formato YYYY-MM).
+// AGGIORNARE a ogni revisione sostanziale della policy (coerente con Privacy.jsx).
+const PRIVACY_POLICY_VERSION = "2026-04";
+
 export default function Register() {
   const { t } = useTranslation("pages/register", {
     useSuspense: false, // OBBLIGATORIO: pagina raggiunta da click
@@ -60,6 +64,9 @@ export default function Register() {
         password: form.password,
         name: form.name,
         nickname: form.nickname,
+        // Il checkbox è required nel form: se si arriva qui il consenso è dato
+        privacy_consent: true,
+        privacy_policy_version: PRIVACY_POLICY_VERSION,
       });
       navigate("/benvenuto");
     } catch (error) {
