@@ -6,6 +6,7 @@
  * - dashboard giudice
  * - overview operativa challenge
  * - moderazione submission (approve / reject)
+ * - disponibilità settimanale del giudice (multi-giudice §5)
  *
  * Allineato a BE v1.0 (no legacy)
  */
@@ -91,6 +92,53 @@ export async function reviewSubmission(
   const { data } = await axios.post(
     `${API_BASE}/submissions/${submissionId}/review`,
     payload,
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/* =========================
+ * Disponibilità settimanale (multi-giudice §5)
+ * ========================= */
+
+export interface AvailabilityWeek {
+  weekStart: string; // 'YYYY-MM-DD', lunedì della settimana (normalizzato lato BE)
+  available: boolean;
+}
+
+export interface JudgeAvailabilityResponse {
+  horizonWeeks: number;
+  hasAnyAvailability: boolean; // alimenta il nudge: false = nessuna settimana pianificata
+  weeks: AvailabilityWeek[];
+}
+
+/**
+ * GET /api/v1/judge/availability
+ * Disponibilità del giudice sull'orizzonte mobile (settimane mancanti = false).
+ */
+export async function getJudgeAvailability(
+  token: string
+): Promise<JudgeAvailabilityResponse> {
+  const { data } = await axios.get<JudgeAvailabilityResponse>(
+    `${API_BASE}/judge/availability`,
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/**
+ * PUT /api/v1/judge/availability
+ * Imposta la disponibilità di una settimana (il BE normalizza al lunedì e
+ * valida l'orizzonte → 400 se fuori). Ritorna lo stato salvato.
+ */
+export async function setJudgeAvailability(
+  token: string,
+  weekStart: string,
+  available: boolean
+): Promise<AvailabilityWeek> {
+  const { data } = await axios.put<AvailabilityWeek>(
+    `${API_BASE}/judge/availability`,
+    { weekStart, available },
     { headers: authHeaders(token) }
   );
   return data;

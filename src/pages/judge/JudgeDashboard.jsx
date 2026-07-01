@@ -30,6 +30,7 @@ import TextBlock from "@/components/UI/TextBlock";
 import { useAuth } from "@/context/AuthContext";
 import { getJudgeChallenges } from "@/api/judge.api";
 import JudgeChallengeCard from "@/components/judge/JudgeChallengeCard";
+import AvailabilityPanel from "@/components/judge/AvailabilityPanel";
 import "../../styles/dynamic-pages.css";
 
 export default function JudgeDashboard() {
@@ -39,10 +40,11 @@ export default function JudgeDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const reloadChallenges = () => {
     if (!token) return;
 
     setLoading(true);
+    setError(null);
     getJudgeChallenges(token)
       .then((res) => {
         setItems(res.challenges || []);
@@ -52,10 +54,12 @@ export default function JudgeDashboard() {
         setError("Errore nel caricamento delle challenge assegnate.");
       })
       .finally(() => setLoading(false));
-  }, [token]);
+  };
 
-  if (loading) return <TextBlock>Caricamento dashboard giudice…</TextBlock>;
-  if (error) return <TextBlock>{error}</TextBlock>;
+  useEffect(() => {
+    reloadChallenges();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   return (
     <section className="page-section page-text">
@@ -65,7 +69,23 @@ export default function JudgeDashboard() {
           Qui trovi le challenge assegnate a te e le submission in attesa di revisione.
         </p>
 
-        {items.length === 0 ? (
+        {/* Disponibilità settimanale (§5): gate del push, indicatore di stato */}
+        <AvailabilityPanel />
+
+        <h2 className="dynamic-title" style={{ marginTop: 8 }}>
+          Le tue challenge
+        </h2>
+
+        {loading ? (
+          <TextBlock>Caricamento challenge assegnate…</TextBlock>
+        ) : error ? (
+          <div className="callout error" style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+            <span>{error}</span>
+            <button className="btn btn-ghost" onClick={reloadChallenges}>
+              Riprova
+            </button>
+          </div>
+        ) : items.length === 0 ? (
           <TextBlock>Nessuna challenge assegnata al momento.</TextBlock>
         ) : (
           <div className="grid-cards">
