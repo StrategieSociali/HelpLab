@@ -22,6 +22,12 @@
  * - Lista paginata delle submission della challenge
  *   GET /api/v1/challenges/:id/submissions
  *
+ * - Presa in carico esplicita (claim-first, multi-giudice §3)
+ *   POST /api/v1/submissions/:id/claim   → prenota la submission (409 se già di altri)
+ *   POST /api/v1/submissions/:id/release → rilascia (giudice: la propria; admin: qualsiasi)
+ *   La lista submission espone claimedBy / claimedByName (claim attivo).
+ *   Il giudice deve DETENERE il claim per decidere; l'admin è esente.
+ *
  * - Revisione submission (approvazione / rifiuto)
  *   POST /api/v1/submissions/:id/review
  *   Body: { decision, points?, note? }
@@ -85,9 +91,49 @@ async function reviewSubmission(token, submissionId, body) {
   return res.json();
 }
 
+// Presa in carico / rilascio (§3). Stessa gestione di reviewSubmission: catturo
+// lo status per distinguere il 409 (claim di altri / già revisionata) dagli errori generici.
+async function claimSubmission(token, submissionId) {
+  const res = await fetch(`${API_BASE}/v1/submissions/${submissionId}/claim`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    let msg = "Errore nella presa in carico";
+    try {
+      const data = await res.json();
+      msg = data?.message || data?.error || msg;
+    } catch {}
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+async function releaseSubmission(token, submissionId) {
+  const res = await fetch(`${API_BASE}/v1/submissions/${submissionId}/release`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    let msg = "Errore nel rilascio";
+    try {
+      const data = await res.json();
+      msg = data?.message || data?.error || msg;
+    } catch {}
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
 export default function JudgeChallengeOverview() {
   const { id } = useParams();
-  const { token } = useAuth();
+  const { token, user, role } = useAuth();
+  const meId = user?.id;
+  const isAdmin = role === "admin";
 
   const [overview, setOverview] = useState(null);
   const [oLoading, setOLoading] = useState(true);
@@ -251,6 +297,39 @@ export default function JudgeChallengeOverview() {
     }
   };
 
+  // Prende in carico la submission (claim-first §3). 409/404 = qualcun altro
+  // l'ha presa o l'ha già revisionata → messaggio + refresh (stato reale dal BE).
+  const onClaim = async (sub) => {
+    setForm(sub.id, { busy: true, err: "" });
+    try {
+      await claimSubmission(token, sub.id);
+      await loadSubmissions({ reset: true });
+    } catch (e) {
+      if (e.status === 409 || e.status === 404) {
+        setForm(sub.id, { err: e.message || "Non è stato possibile prenderla in carico. Aggiorno la lista…" });
+        await loadSubmissions({ reset: true });
+      } else {
+        setForm(sub.id, { err: e.message || "Errore nella presa in carico" });
+      }
+    } finally {
+      setForm(sub.id, { busy: false });
+    }
+  };
+
+  // Rilascia la presa in carico (giudice: la propria; admin: force-release).
+  const onRelease = async (sub) => {
+    setForm(sub.id, { busy: true, err: "" });
+    try {
+      await releaseSubmission(token, sub.id);
+      await loadSubmissions({ reset: true });
+    } catch (e) {
+      setForm(sub.id, { err: e.message || "Errore nel rilascio" });
+      await loadSubmissions({ reset: true });
+    } finally {
+      setForm(sub.id, { busy: false });
+    }
+  };
+
   if (oLoading) {
     return (
       <section className="page-section page-text">
@@ -348,6 +427,14 @@ export default function JudgeChallengeOverview() {
                   const f = forms[s.id] || {};
                   const taskLabel = s.taskTitle || getTaskLabel(s.taskId) || "—";
 
+                  // Stato presa in carico (§3). claimedBy/claimedByName arrivano
+                  // dal BE solo per claim ATTIVI (non scaduti).
+                  const claimedByMe = s.claimedBy != null && String(s.claimedBy) === String(meId);
+                  const claimedByOther = s.claimedBy != null && !claimedByMe;
+                  const isFree = s.claimedBy == null;
+                  // Claim-first: per decidere devi detenere il claim; l'admin è esente.
+                  const canDecide = isAdmin || claimedByMe;
+
                   return (
                     <div key={s.id} className="card-info neutral">
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
@@ -381,47 +468,101 @@ export default function JudgeChallengeOverview() {
                           display — nessun calcolo avviene qui (backend). */}
                       {s.payload && <PayloadDisplay payload={s.payload} comuniById={comuniById} />}
 
-                      <div style={{ display: "grid", gap: 10 }}>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                          <label>Punti (solo se approvi)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={f.points}
-                            onChange={(e) => setForm(s.id, { points: e.target.value })}
-                            placeholder="Es. 30"
-                          />
-                        </div>
+                      {/* Stato presa in carico (§3) */}
+                      <ClaimStatus sub={s} claimedByMe={claimedByMe} />
 
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                          <label>Nota (facoltativa)</label>
-                          <textarea
-                            rows={3}
-                            value={f.note}
-                            onChange={(e) => setForm(s.id, { note: e.target.value })}
-                            placeholder="Scrivi una breve nota…"
-                          />
+                      {claimedByOther && !isAdmin ? (
+                        /* In carico ad altri: nessun form, il giudice salta */
+                        <div className="muted small" style={{ marginTop: 10 }}>
+                          In carico a {s.claimedByName || "un altro giudice"}. Attendi il
+                          rilascio o passa a un'altra submission.
+                          {f.err && <div className="callout error" style={{ marginTop: 8 }}>{f.err}</div>}
                         </div>
+                      ) : (
+                        <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+                          {/* Controlli di presa in carico / rilascio */}
+                          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                            {isFree && !isAdmin && (
+                              <button
+                                className="btn btn-primary"
+                                disabled={f.busy}
+                                onClick={() => onClaim(s)}
+                              >
+                                {f.busy ? "…" : "Prendi in carico"}
+                              </button>
+                            )}
+                            {claimedByMe && (
+                              <button
+                                className="btn btn-ghost"
+                                disabled={f.busy}
+                                onClick={() => onRelease(s)}
+                              >
+                                {f.busy ? "…" : "Rilascia"}
+                              </button>
+                            )}
+                            {isAdmin && claimedByOther && (
+                              <button
+                                className="btn btn-outline"
+                                disabled={f.busy}
+                                onClick={() => onRelease(s)}
+                              >
+                                {f.busy ? "…" : "Forza rilascio"}
+                              </button>
+                            )}
+                          </div>
 
-                        {f.err && <div className="callout error">{f.err}</div>}
+                          {/* Form decisione: solo se detieni il claim (o sei admin) */}
+                          {canDecide && (
+                            <>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label>Punti (solo se approvi)</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={f.points}
+                                  onChange={(e) => setForm(s.id, { points: e.target.value })}
+                                  placeholder="Es. 30"
+                                />
+                              </div>
 
-                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                          <button
-                            className="btn btn-primary"
-                            disabled={f.busy}
-                            onClick={() => onApprove(s)}
-                          >
-                            {f.busy ? "…" : "Approva"}
-                          </button>
-                          <button
-                            className="btn btn-outline"
-                            disabled={f.busy}
-                            onClick={() => onReject(s)}
-                          >
-                            {f.busy ? "…" : "Rifiuta"}
-                          </button>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label>Nota (facoltativa)</label>
+                                <textarea
+                                  rows={3}
+                                  value={f.note}
+                                  onChange={(e) => setForm(s.id, { note: e.target.value })}
+                                  placeholder="Scrivi una breve nota…"
+                                />
+                              </div>
+
+                              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                                <button
+                                  className="btn btn-primary"
+                                  disabled={f.busy}
+                                  onClick={() => onApprove(s)}
+                                >
+                                  {f.busy ? "…" : "Approva"}
+                                </button>
+                                <button
+                                  className="btn btn-outline"
+                                  disabled={f.busy}
+                                  onClick={() => onReject(s)}
+                                >
+                                  {f.busy ? "…" : "Rifiuta"}
+                                </button>
+                              </div>
+                            </>
+                          )}
+
+                          {!canDecide && (
+                            <div className="muted small">
+                              Prendi in carico la submission per poterla valutare.
+                            </div>
+                          )}
+
+                          {f.err && <div className="callout error">{f.err}</div>}
                         </div>
-                      </div>
+                      )}
                     </div>
                   );
                 })}
@@ -486,6 +627,33 @@ export default function JudgeChallengeOverview() {
  * vehicleLabels è solo per display: non usare per logica o calcoli.
  * La mappa è qui perché è informazione di presentazione, non di business.
  */
+// ─── Componente: stato della presa in carico (§3) ────────────────────────────
+// Riga compatta con pallino colorato: libera / in carico a te (verde) / in
+// carico a un altro giudice (ambra). claimedBy è valorizzato solo per claim
+// attivi (il BE filtra quelli scaduti).
+function ClaimStatus({ sub, claimedByMe }) {
+  if (sub.claimedBy == null) {
+    return (
+      <div className="muted small" style={{ marginTop: 8 }}>
+        Libera — non ancora presa in carico
+      </div>
+    );
+  }
+  const color = claimedByMe ? "#3fb950" : "#d29922";
+  const label = claimedByMe
+    ? "In carico a te"
+    : `In carico a ${sub.claimedByName || "un altro giudice"}`;
+  return (
+    <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6, color }}>
+      <span
+        aria-hidden="true"
+        style={{ width: 8, height: 8, borderRadius: "50%", background: color, display: "inline-block" }}
+      />
+      <span className="small" style={{ fontWeight: 600 }}>{label}</span>
+    </div>
+  );
+}
+
 const vehicleLabels = {
   car_petrol_old: "Auto Benzina (Pre-Euro 5)",
   car_petrol_new: "Auto Benzina (Euro 6d/7)",
