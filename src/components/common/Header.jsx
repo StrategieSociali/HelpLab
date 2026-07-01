@@ -277,13 +277,22 @@ export default function Header() {
 
           {/* Menu giudice (solo se ruolo judge) */}
           {user?.role === "judge" && (
-            <NavLink
-              to="/judge"
-              className="nav-link"
-              onClick={() => setMenuOpen(false)}
-            >
-              {t("nav.judge")}
-            </NavLink>
+            <>
+              <NavLink
+                to="/judge"
+                className="nav-link"
+                onClick={() => setMenuOpen(false)}
+              >
+                {t("nav.judge")}
+              </NavLink>
+              <NavLink
+                to={routes.judge.marketplace}
+                className="nav-link"
+                onClick={() => setMenuOpen(false)}
+              >
+                Marketplace
+              </NavLink>
+            </>
           )}
 
           {/* ── Auth actions MOBILE ──────────────────────────────────── */}

@@ -91,6 +91,7 @@ export const routes = {
    * ====================== */
   judge: {
     dashboard:        '/judge',
+    marketplace:      '/judge/marketplace',
     challengeOverview: (id = ':id') => `/judge/challenges/${id}`,
   },
 

@@ -35,6 +35,7 @@ import StepAssignJudge from './pages/admin/steps/StepAssignJudge';
 import AdminEvents from './pages/admin/AdminEvents';
 
 import JudgeDashboard from './pages/judge/JudgeDashboard';
+import JudgeMarketplace from './pages/judge/JudgeMarketplace';
 import JudgeChallengeOverview from './pages/judge/JudgeChallengeOverview';
 
 import SponsorPublicProfile from './pages/sponsors/SponsorPublicProfile';
@@ -230,6 +231,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['judge', 'admin']}>
                     <JudgeDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={routes.judge.marketplace}
+                element={
+                  <ProtectedRoute allowedRoles={['judge', 'admin']}>
+                    <JudgeMarketplace />
                   </ProtectedRoute>
                 }
               />
