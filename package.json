@@ -1,6 +1,6 @@
 {
   "name": "helplab-frontend",
-  "version": "1.15.6",
+  "version": "1.15.7",
   "private": true,
   "scripts": {
     "dev": "vite",

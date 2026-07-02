@@ -34,6 +34,11 @@
  *   (task_id non serve: arriva dalla submission)
  *   Su 409 (lock coda giudici: già revisionata da un'altra sessione)
  *   la lista viene ricaricata automaticamente.
+ *
+ * - Override admin (§7.4): SOLO admin, sulle submission già decise
+ *   POST /api/v1/submissions/:id/override  Body: { decision, points?, note? }
+ *   Ribalta approved↔rejected (loggato). La revoca punti su approved→rejected
+ *   resta MANUALE (clawback admin, §3-bis): la UI lo ricorda.
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -118,6 +123,29 @@ async function releaseSubmission(token, submissionId) {
   });
   if (!res.ok) {
     let msg = "Errore nel rilascio";
+    try {
+      const data = await res.json();
+      msg = data?.message || data?.error || msg;
+    } catch {}
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+// Override admin (§7.4): ribalta una decisione già presa. Solo admin lato BE.
+async function overrideSubmission(token, submissionId, body) {
+  const res = await fetch(`${API_BASE}/v1/submissions/${submissionId}/override`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let msg = "Errore durante l'override";
     try {
       const data = await res.json();
       msg = data?.message || data?.error || msg;
@@ -325,6 +353,31 @@ export default function JudgeChallengeOverview() {
     } catch (e) {
       setForm(sub.id, { err: e.message || "Errore nel rilascio" });
       await loadSubmissions({ reset: true });
+    } finally {
+      setForm(sub.id, { busy: false });
+    }
+  };
+
+  // Override admin (§7.4): ribalta una submission già decisa. Approvando serve
+  // il punteggio; ribaltando a rifiutata i punti vanno tolti a mano (clawback).
+  const onOverride = async (sub, decision) => {
+    const f = forms[sub.id] || {};
+    if (decision === "approved" && (f.points === "" || f.points == null || Number.isNaN(Number(f.points)))) {
+      setForm(sub.id, { err: "Inserisci i punti per forzare l'approvazione." });
+      return;
+    }
+    setForm(sub.id, { busy: true, err: "" });
+    try {
+      await overrideSubmission(token, sub.id, {
+        decision,
+        points: decision === "approved" ? Number(f.points) : undefined,
+        note: f.note?.trim() || undefined,
+      });
+      await loadSubmissions({ reset: true });
+      const ov = await getJudgeChallengeOverview(token, id);
+      setOverview(ov);
+    } catch (e) {
+      setForm(sub.id, { err: e.message || "Errore durante l'override" });
     } finally {
       setForm(sub.id, { busy: false });
     }
@@ -582,6 +635,7 @@ export default function JudgeChallengeOverview() {
               <div style={{ display: "grid", gap: 10 }}>
                 {reviewedSubs.map((s) => {
                   const taskLabel = s.taskTitle || getTaskLabel(s.taskId) || "—";
+                  const f = forms[s.id] || {};
 
                   return (
                     <div key={s.id} className="card-info neutral" style={{ opacity: 0.9 }}>
@@ -594,6 +648,73 @@ export default function JudgeChallengeOverview() {
                         </div>
                         <div className="muted small">status: <strong>{s.status}</strong></div>
                       </div>
+
+                      {/* Override admin (§7.4): ribalta la decisione già presa */}
+                      {isAdmin && (
+                        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+                          {!f.overrideOpen ? (
+                            <button
+                              className="btn btn-ghost"
+                              onClick={() => setForm(s.id, { overrideOpen: true, err: "" })}
+                            >
+                              Override (admin)
+                            </button>
+                          ) : (
+                            <div style={{ display: "grid", gap: 8 }}>
+                              <div className="muted small" style={{ fontWeight: 600 }}>
+                                Override admin — ribalta l'esito
+                              </div>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label>Punti (se forzi l'approvazione)</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={f.points ?? ""}
+                                  onChange={(e) => setForm(s.id, { points: e.target.value })}
+                                  placeholder="Es. 30"
+                                />
+                              </div>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label>Nota (facoltativa)</label>
+                                <textarea
+                                  rows={2}
+                                  value={f.note ?? ""}
+                                  onChange={(e) => setForm(s.id, { note: e.target.value })}
+                                  placeholder="Motivo dell'override…"
+                                />
+                              </div>
+                              <div className="muted small">
+                                Ribaltare un'approvazione a rifiutata non revoca i punti in automatico:
+                                vanno tolti a mano (clawback §3-bis).
+                              </div>
+                              {f.err && <div className="callout error">{f.err}</div>}
+                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                <button
+                                  className="btn btn-outline"
+                                  disabled={f.busy}
+                                  onClick={() => onOverride(s, "approved")}
+                                >
+                                  {f.busy ? "…" : "Forza approvata"}
+                                </button>
+                                <button
+                                  className="btn btn-outline"
+                                  disabled={f.busy}
+                                  onClick={() => onOverride(s, "rejected")}
+                                >
+                                  {f.busy ? "…" : "Forza rifiutata"}
+                                </button>
+                                <button
+                                  className="btn btn-ghost"
+                                  disabled={f.busy}
+                                  onClick={() => setForm(s.id, { overrideOpen: false, err: "" })}
+                                >
+                                  Annulla
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
