@@ -35,6 +35,7 @@ import {
   runJudgeOffersSweep,
   assignChallengeJudge,
   assignEventJudge,
+  getOpenChallenges,
 } from "@/api/judge.api";
 import { routes } from "@/routes";
 import "../../styles/dynamic-pages.css";
@@ -50,6 +51,10 @@ export default function AdminCoverage() {
 
   const [sweeping, setSweeping] = useState(false);
   const [sweepMsg, setSweepMsg] = useState("");
+
+  // Tutte le sfide aperte: ingresso admin per aprire QUALSIASI overview
+  // (override/force-release), indipendente dai buchi di copertura.
+  const [openChallenges, setOpenChallenges] = useState([]);
 
   // stato per riga: { [`c:id`|`e:id`]: { userId, busy, msg, err } }
   const [rowState, setRowState] = useState({});
@@ -72,11 +77,15 @@ export default function AdminCoverage() {
 
   useEffect(() => {
     loadCoverage();
-    // giudici caricati una volta per popolare i selettori di assegnazione
+    // giudici + sfide aperte caricati una volta (selettori di assegnazione e
+    // ingresso "apri qualsiasi sfida")
     if (token) {
       getAdminJudges(token)
         .then(setJudges)
         .catch(() => setJudges([]));
+      getOpenChallenges(token)
+        .then(setOpenChallenges)
+        .catch(() => setOpenChallenges([]));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -257,6 +266,35 @@ export default function AdminCoverage() {
               </div>
             )}
           </>
+        )}
+
+        {/* Ingresso admin a QUALSIASI sfida aperta: override (§7.4) e force-release
+            (§3) vivono nell'overview, non solo sui buchi di copertura. */}
+        {!loading && !error && openChallenges.length > 0 && (
+          <div className="card" style={{ padding: 16, marginTop: 20 }}>
+            <h2 className="dynamic-title">Apri una sfida (revisione / override)</h2>
+            <p className="muted small" style={{ marginTop: 4 }}>
+              Tutte le sfide aperte. Apri l'overview per revisionare, forzare il
+              rilascio di un claim o ribaltare una decisione.
+            </p>
+            <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
+              {openChallenges.map((c) => (
+                <div
+                  key={c.id}
+                  className="card-info neutral"
+                  style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}
+                >
+                  <strong>{c.title || `Sfida #${c.id}`}</strong>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => navigate(routes.judge.challengeOverview(c.id))}
+                  >
+                    Apri
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </section>

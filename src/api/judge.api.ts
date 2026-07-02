@@ -413,3 +413,25 @@ export async function assignEventJudge(
   );
   return data;
 }
+
+export interface OpenChallengeLite {
+  id: number;
+  title: string | null;
+  slug: string | null;
+  status: string | null;
+}
+
+/**
+ * GET /api/v1/challenges?status=open — sfide aperte (prima pagina, max 50).
+ * Serve all'admin per aprire QUALSIASI sfida (override/force-release), non solo
+ * quelle sotto-coperte.
+ */
+export async function getOpenChallenges(
+  token: string
+): Promise<OpenChallengeLite[]> {
+  const { data } = await axios.get<{ items: OpenChallengeLite[] }>(
+    `${API_BASE}/challenges?status=open&limit=50`,
+    { headers: authHeaders(token) }
+  );
+  return data.items || [];
+}
