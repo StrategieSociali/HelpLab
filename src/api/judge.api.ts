@@ -10,6 +10,7 @@
  * - marketplace Fase 1: sfide/eventi scoperti + opt-in (§4.1)
  * - offerte round-robin Fase 2: accept/decline (§4.2)
  * - punteggio-attività del giudice (§6)
+ * - admin: vista copertura, sweep, assegnazione giudice (§7.2)
  *
  * Allineato a BE v1.0 (no legacy)
  */
@@ -302,6 +303,112 @@ export async function getJudgeScore(
 ): Promise<JudgeScoreResponse> {
   const { data } = await axios.get<JudgeScoreResponse>(
     `${API_BASE}/judge/score`,
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/* =========================
+ * Admin — copertura, sweep, assegnazione (§7.2)
+ * ========================= */
+
+export interface CoverageChallenge {
+  id: number;
+  title: string | null;
+  slug: string | null;
+  coverage: number;
+  coverageCap: number;
+  missing: number;
+  pendingOffers: number;
+}
+
+export interface CoverageEvent {
+  id: number;
+  name: string | null;
+  slug: string | null;
+  coverage: number;
+  coverageCap: number;
+  missing: number;
+  pendingOffers: number;
+}
+
+export interface AdminCoverageResponse {
+  challenges: CoverageChallenge[];
+  events: CoverageEvent[];
+}
+
+export interface AdminJudge {
+  id: number;
+  username: string;
+  email: string | null;
+  role: string;
+}
+
+export interface SweepResult {
+  expired: number;
+  offersCreated: number;
+  uncovered: { challenges: number; events: number };
+}
+
+/** GET /api/v1/admin/coverage — sfide/eventi sotto-coperti (§7.2). */
+export async function getAdminCoverage(
+  token: string
+): Promise<AdminCoverageResponse> {
+  const { data } = await axios.get<AdminCoverageResponse>(
+    `${API_BASE}/admin/coverage`,
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/** GET /api/v1/admin/judges — elenco giudici per l'assegnazione (prima pagina). */
+export async function getAdminJudges(
+  token: string,
+  q = ""
+): Promise<AdminJudge[]> {
+  const { data } = await axios.get<{ items: AdminJudge[] }>(
+    `${API_BASE}/admin/judges${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+    { headers: authHeaders(token) }
+  );
+  return data.items || [];
+}
+
+/** POST /api/v1/admin/judge-offers/sweep — avanza il round-robin. */
+export async function runJudgeOffersSweep(token: string): Promise<SweepResult> {
+  const { data } = await axios.post<SweepResult>(
+    `${API_BASE}/admin/judge-offers/sweep`,
+    {},
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/**
+ * POST /api/v1/challenges/:id/assign-judge — grant admin diretto.
+ * 409 se la sfida ha già un giudice (judge_user_id) o non è aperta.
+ */
+export async function assignChallengeJudge(
+  token: string,
+  challengeId: number,
+  userId: number
+) {
+  const { data } = await axios.post(
+    `${API_BASE}/challenges/${challengeId}/assign-judge`,
+    { userId },
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/** POST /api/v1/events/:id/assign-judge — grant admin sull'evento (upsert). */
+export async function assignEventJudge(
+  token: string,
+  eventId: number,
+  userId: number
+) {
+  const { data } = await axios.post(
+    `${API_BASE}/events/${eventId}/assign-judge`,
+    { userId },
     { headers: authHeaders(token) }
   );
   return data;

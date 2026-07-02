@@ -49,8 +49,6 @@ export const API_PATHS = {
 
   // admin – judges (v1)
   adminJudges: (q = "") => `/v1/admin/judges${q}`,
-  unassigned:  (q = "") => `/v1/challenges/unassigned${q}`,
-  assignJudge: (id) => `/v1/challenges/${id}/assign-judge`,
 
   // challenge submissions & review
   challengeSubmissions: (id) => `/v1/challenges/${id}/submissions`,

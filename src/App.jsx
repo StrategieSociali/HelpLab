@@ -31,7 +31,7 @@ import BusinessPackages from './pages/BusinessPackages';
 import Roadmap from './pages/Roadmap';
 
 import { AdminProposals } from './pages/admin/AdminProposals';
-import StepAssignJudge from './pages/admin/steps/StepAssignJudge';
+import AdminCoverage from './pages/admin/AdminCoverage';
 import AdminEvents from './pages/admin/AdminEvents';
 
 import JudgeDashboard from './pages/judge/JudgeDashboard';
@@ -261,10 +261,10 @@ export default function App() {
                 }
               />
               <Route
-                path={routes.admin.assignJudge}
+                path={routes.admin.coverage}
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <StepAssignJudge />
+                    <AdminCoverage />
                   </ProtectedRoute>
                 }
               />

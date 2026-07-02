@@ -317,11 +317,11 @@ export default function Header() {
                           {t("auth.admin.proposals")}
                         </NavLink>
                         <NavLink
-                          to={routes.admin.assignJudge}
+                          to={routes.admin.coverage}
                           className="btn btn-ghost"
                           onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
                         >
-                          {t("auth.admin.assignJudges")}
+                          Copertura giudici
                         </NavLink>
                         {/* Gestione eventi */}
                         <NavLink
@@ -414,11 +414,11 @@ export default function Header() {
                         {t("auth.admin.proposals")}
                       </NavLink>
                       <NavLink
-                        to={routes.admin.assignJudge}
+                        to={routes.admin.coverage}
                         className="btn btn-ghost"
                         onClick={() => setAdminDesktopOpen(false)}
                       >
-                        {t("auth.admin.assignJudges")}
+                        Copertura giudici
                       </NavLink>
                       {/* Gestione eventi */}
                       <NavLink

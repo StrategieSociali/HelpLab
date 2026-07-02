@@ -100,7 +100,7 @@ export const routes = {
    * ====================== */
   admin: {
     proposals:   '/dashboard/admin/proposals',
-    assignJudge: '/dashboard/admin/assign-judge',
+    coverage:    '/dashboard/admin/coverage',
     events:      '/dashboard/admin/eventi',
     learningPaths: '/dashboard/admin/corsi',
     sponsorships: '/dashboard/admin/sponsorships',
