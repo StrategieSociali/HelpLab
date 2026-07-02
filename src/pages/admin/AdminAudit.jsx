@@ -243,7 +243,7 @@ export default function AdminAudit() {
             <div className="card" style={{ padding: 16 }}>
               <h2 className="dynamic-title">Clawback da revertire ({clawbacks.length})</h2>
               <p className="muted small" style={{ marginTop: 4 }}>
-                "Clawback" = recupero dei punti. Quando un giudice <strong>invalida</strong>
+                "Clawback" = recupero dei punti. Quando un giudice <strong>invalida</strong>{" "}
                 un caso, i punti già assegnati alla persona vanno <strong>tolti a mano</strong>
                 {" "}(per ora non è automatico): revocali nel sistema punti, poi premi
                 <strong> "Segna risolto"</strong> per toglierlo da questa lista.
