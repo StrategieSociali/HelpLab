@@ -32,6 +32,7 @@ import { getJudgeChallenges } from "@/api/judge.api";
 import JudgeChallengeCard from "@/components/judge/JudgeChallengeCard";
 import AvailabilityPanel from "@/components/judge/AvailabilityPanel";
 import OffersPanel from "@/components/judge/OffersPanel";
+import JudgeScoreCard from "@/components/judge/JudgeScoreCard";
 import "../../styles/dynamic-pages.css";
 
 export default function JudgeDashboard() {
@@ -69,6 +70,9 @@ export default function JudgeDashboard() {
         <p className="page-subtitle">
           Qui trovi le challenge assegnate a te e le submission in attesa di revisione.
         </p>
+
+        {/* Punteggio-attività del giudice (§6) */}
+        <JudgeScoreCard />
 
         {/* Disponibilità settimanale (§5): gate del push, indicatore di stato */}
         <AvailabilityPanel />

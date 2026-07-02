@@ -9,6 +9,7 @@
  * - disponibilità settimanale del giudice (multi-giudice §5)
  * - marketplace Fase 1: sfide/eventi scoperti + opt-in (§4.1)
  * - offerte round-robin Fase 2: accept/decline (§4.2)
+ * - punteggio-attività del giudice (§6)
  *
  * Allineato a BE v1.0 (no legacy)
  */
@@ -278,6 +279,29 @@ export async function declineJudgeOffer(token: string, offerId: number) {
   const { data } = await axios.post(
     `${API_BASE}/judge/offers/${offerId}/decline`,
     {},
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/* =========================
+ * Punteggio-attività del giudice (§6)
+ * ========================= */
+
+export interface JudgeScoreResponse {
+  score: number;
+}
+
+/**
+ * GET /api/v1/judge/score
+ * Punteggio-attività (asse "quanto lavori", +10 per submission approvata).
+ * 0 se il giudice non ha ancora una riga.
+ */
+export async function getJudgeScore(
+  token: string
+): Promise<JudgeScoreResponse> {
+  const { data } = await axios.get<JudgeScoreResponse>(
+    `${API_BASE}/judge/score`,
     { headers: authHeaders(token) }
   );
   return data;
