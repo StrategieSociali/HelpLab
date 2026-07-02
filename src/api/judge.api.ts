@@ -11,6 +11,7 @@
  * - offerte round-robin Fase 2: accept/decline (§4.2)
  * - punteggio-attività del giudice (§6)
  * - admin: vista copertura, sweep, assegnazione giudice (§7.2)
+ * - audit adattivo §3-bis: coda giudice (claim/decide) + admin (open/evaluate/state/clawback)
  *
  * Allineato a BE v1.0 (no legacy)
  */
@@ -434,4 +435,137 @@ export async function getOpenChallenges(
     { headers: authHeaders(token) }
   );
   return data.items || [];
+}
+
+/* =========================
+ * Audit adattivo §3-bis — coda giudice
+ * ========================= */
+
+export interface AuditCase {
+  id: number;
+  submissionId: number;
+  eventId: number | null;
+  verificationMode: string; // 'user' | 'auto'
+  sampleRound: number | null;
+  note: string | null;
+  reviewedAt: string | null;
+  createdAt: string | null;
+  submission: {
+    userId: number | null;
+    challengeId: number | null;
+    activityDescription: string | null;
+    pointsAwarded: number | null;
+  };
+}
+
+/** GET /api/v1/judge/audit/queue — casi da ri-revisionare (esclude i propri). */
+export async function getJudgeAuditQueue(token: string): Promise<AuditCase[]> {
+  const { data } = await axios.get<{ items: AuditCase[] }>(
+    `${API_BASE}/judge/audit/queue`,
+    { headers: authHeaders(token) }
+  );
+  return data.items || [];
+}
+
+/** POST /api/v1/judge/audit/cases/:id/claim — presa in carico morbida (409 se già preso). */
+export async function claimAuditCase(token: string, caseId: number) {
+  const { data } = await axios.post(
+    `${API_BASE}/judge/audit/cases/${caseId}/claim`,
+    {},
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/** POST /api/v1/judge/audit/cases/:id/decide — esito re-review (409 se già deciso). */
+export async function decideAuditCase(
+  token: string,
+  caseId: number,
+  outcome: "validated" | "invalidated",
+  note?: string
+) {
+  const { data } = await axios.post(
+    `${API_BASE}/judge/audit/cases/${caseId}/decide`,
+    { outcome, note },
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/* =========================
+ * Audit adattivo §3-bis — admin (open/evaluate/state/clawback)
+ * ========================= */
+
+export interface AuditStateCounts {
+  poolSize: number;
+  audited: number;
+  valid: number;
+  invalid: number;
+  open: number;
+  round: number;
+}
+
+export interface AuditStateResponse {
+  state: AuditStateCounts;
+  quality: number | null; // 0..1, null se nulla di chiuso
+  policy?: unknown;
+  gate?: { action: string; [k: string]: unknown };
+}
+
+/** POST /api/v1/admin/events/:id/audit/open — apre l'audit (campione iniziale). */
+export async function openEventAudit(token: string, eventId: number) {
+  const { data } = await axios.post(
+    `${API_BASE}/admin/events/${eventId}/audit/open`,
+    {},
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/** POST /api/v1/admin/events/:id/audit/evaluate — valuta il cancello / approfondisce. */
+export async function evaluateEventAudit(token: string, eventId: number) {
+  const { data } = await axios.post(
+    `${API_BASE}/admin/events/${eventId}/audit/evaluate`,
+    {},
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/** GET /api/v1/admin/events/:id/audit/state — conteggi + qualità + cancello. */
+export async function getEventAuditState(
+  token: string,
+  eventId: number
+): Promise<AuditStateResponse> {
+  const { data } = await axios.get<AuditStateResponse>(
+    `${API_BASE}/admin/events/${eventId}/audit/state`,
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/** GET /api/v1/admin/audit/clawbacks — casi da revertire a mano (filtro evento). */
+export async function getAuditClawbacks(
+  token: string,
+  eventId?: number
+): Promise<AuditCase[]> {
+  const { data } = await axios.get<{ items: AuditCase[] }>(
+    `${API_BASE}/admin/audit/clawbacks${eventId ? `?eventId=${eventId}` : ""}`,
+    { headers: authHeaders(token) }
+  );
+  return data.items || [];
+}
+
+/** POST /api/v1/admin/audit/cases/:id/clawback/resolve — punti revertiti a mano. */
+export async function resolveAuditClawback(
+  token: string,
+  caseId: number,
+  note?: string
+) {
+  const { data } = await axios.post(
+    `${API_BASE}/admin/audit/cases/${caseId}/clawback/resolve`,
+    { note },
+    { headers: authHeaders(token) }
+  );
+  return data;
 }

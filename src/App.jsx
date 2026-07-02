@@ -32,6 +32,7 @@ import Roadmap from './pages/Roadmap';
 
 import { AdminProposals } from './pages/admin/AdminProposals';
 import AdminCoverage from './pages/admin/AdminCoverage';
+import AdminAudit from './pages/admin/AdminAudit';
 import AdminEvents from './pages/admin/AdminEvents';
 
 import JudgeDashboard from './pages/judge/JudgeDashboard';
@@ -265,6 +266,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminCoverage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={routes.admin.audit}
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminAudit />
                   </ProtectedRoute>
                 }
               />

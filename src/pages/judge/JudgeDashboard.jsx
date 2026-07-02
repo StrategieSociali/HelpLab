@@ -32,6 +32,7 @@ import { getJudgeChallenges } from "@/api/judge.api";
 import JudgeChallengeCard from "@/components/judge/JudgeChallengeCard";
 import AvailabilityPanel from "@/components/judge/AvailabilityPanel";
 import OffersPanel from "@/components/judge/OffersPanel";
+import AuditQueuePanel from "@/components/judge/AuditQueuePanel";
 import JudgeScoreCard from "@/components/judge/JudgeScoreCard";
 import "../../styles/dynamic-pages.css";
 
@@ -79,6 +80,9 @@ export default function JudgeDashboard() {
 
         {/* Offerte round-robin Fase 2 (§4.2): visibili solo se ce ne sono */}
         <OffersPanel onChange={reloadChallenges} />
+
+        {/* Coda d'audit §3-bis: casi campionati da ri-controllare (nascosta se vuota) */}
+        <AuditQueuePanel />
 
         <h2 className="dynamic-title" style={{ marginTop: 8 }}>
           Le tue challenge

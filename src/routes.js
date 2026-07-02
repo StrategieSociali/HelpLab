@@ -101,6 +101,7 @@ export const routes = {
   admin: {
     proposals:   '/dashboard/admin/proposals',
     coverage:    '/dashboard/admin/coverage',
+    audit:       '/dashboard/admin/audit',
     events:      '/dashboard/admin/eventi',
     learningPaths: '/dashboard/admin/corsi',
     sponsorships: '/dashboard/admin/sponsorships',

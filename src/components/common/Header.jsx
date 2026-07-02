@@ -323,6 +323,13 @@ export default function Header() {
                         >
                           Copertura giudici
                         </NavLink>
+                        <NavLink
+                          to={routes.admin.audit}
+                          className="btn btn-ghost"
+                          onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
+                        >
+                          Audit qualità
+                        </NavLink>
                         {/* Gestione eventi */}
                         <NavLink
                           to={routes.admin.events}
@@ -419,6 +426,13 @@ export default function Header() {
                         onClick={() => setAdminDesktopOpen(false)}
                       >
                         Copertura giudici
+                      </NavLink>
+                      <NavLink
+                        to={routes.admin.audit}
+                        className="btn btn-ghost"
+                        onClick={() => setAdminDesktopOpen(false)}
+                      >
+                        Audit qualità
                       </NavLink>
                       {/* Gestione eventi */}
                       <NavLink
