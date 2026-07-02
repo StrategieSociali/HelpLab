@@ -31,6 +31,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getJudgeChallenges } from "@/api/judge.api";
 import JudgeChallengeCard from "@/components/judge/JudgeChallengeCard";
 import AvailabilityPanel from "@/components/judge/AvailabilityPanel";
+import OffersPanel from "@/components/judge/OffersPanel";
 import "../../styles/dynamic-pages.css";
 
 export default function JudgeDashboard() {
@@ -71,6 +72,9 @@ export default function JudgeDashboard() {
 
         {/* Disponibilità settimanale (§5): gate del push, indicatore di stato */}
         <AvailabilityPanel />
+
+        {/* Offerte round-robin Fase 2 (§4.2): visibili solo se ce ne sono */}
+        <OffersPanel onChange={reloadChallenges} />
 
         <h2 className="dynamic-title" style={{ marginTop: 8 }}>
           Le tue challenge

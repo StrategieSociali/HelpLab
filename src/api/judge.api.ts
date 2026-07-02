@@ -8,6 +8,7 @@
  * - moderazione submission (approve / reject)
  * - disponibilità settimanale del giudice (multi-giudice §5)
  * - marketplace Fase 1: sfide/eventi scoperti + opt-in (§4.1)
+ * - offerte round-robin Fase 2: accept/decline (§4.2)
  *
  * Allineato a BE v1.0 (no legacy)
  */
@@ -215,6 +216,67 @@ export async function optInChallenge(token: string, challengeId: number) {
 export async function optInEvent(token: string, eventId: number) {
   const { data } = await axios.post(
     `${API_BASE}/events/${eventId}/opt-in`,
+    {},
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/* =========================
+ * Offerte round-robin Fase 2 push (§4.2)
+ * ========================= */
+
+export interface JudgeOffer {
+  id: number;
+  kind: "challenge" | "event";
+  challengeId: number | null;
+  eventId: number | null;
+  title: string | null;
+  slug: string | null;
+  offeredAt: string | null;
+  expiresAt: string | null;
+}
+
+export interface JudgeOffersResponse {
+  responseWindowHours: number;
+  offers: JudgeOffer[];
+}
+
+/**
+ * GET /api/v1/judge/offers
+ * Offerte round-robin PENDING per il giudice (il BE scade quelle vecchie in lettura).
+ */
+export async function getJudgeOffers(
+  token: string
+): Promise<JudgeOffersResponse> {
+  const { data } = await axios.get<JudgeOffersResponse>(
+    `${API_BASE}/judge/offers`,
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/**
+ * POST /api/v1/judge/offers/:id/accept
+ * Accetta l'offerta → grant round_robin (rispetta il tetto). 409 se scaduta,
+ * partecipante o tetto pieno nel frattempo.
+ */
+export async function acceptJudgeOffer(token: string, offerId: number) {
+  const { data } = await axios.post(
+    `${API_BASE}/judge/offers/${offerId}/accept`,
+    {},
+    { headers: authHeaders(token) }
+  );
+  return data;
+}
+
+/**
+ * POST /api/v1/judge/offers/:id/decline
+ * Rifiuta l'offerta → penalità (§6, 0 per agosto) e rotazione al successivo.
+ */
+export async function declineJudgeOffer(token: string, offerId: number) {
+  const { data } = await axios.post(
+    `${API_BASE}/judge/offers/${offerId}/decline`,
     {},
     { headers: authHeaders(token) }
   );
