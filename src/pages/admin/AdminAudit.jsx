@@ -137,9 +137,36 @@ export default function AdminAudit() {
       <div className="container">
         <h1 className="page-title">Audit qualità</h1>
         <p className="page-subtitle">
-          Ricontrollo a campione delle approvazioni automatiche di un evento. Apri
-          l'audit, valuta il cancello di qualità, gestisci i clawback.
+          Alcune submission vengono approvate <strong>automaticamente</strong> (per
+          fiducia o tramite controllo software), senza il giudizio di una persona.
+          L'audit ne <strong>ri-controlla un campione a sorpresa</strong>: serve a
+          scoraggiare abusi e collusione senza dover rivedere tutto a mano.
         </p>
+
+        <div className="card" style={{ padding: 16, marginBottom: 20 }}>
+          <h2 className="dynamic-title">Come funziona</h2>
+          <ol className="muted small" style={{ margin: "8px 0 0", paddingLeft: 18, lineHeight: 1.9 }}>
+            <li>
+              <strong>Apri audit</strong>: estrai un primo campione casuale di
+              approvazioni automatiche dell'evento, da far ri-controllare ai giudici.
+            </li>
+            <li>
+              I <strong>giudici</strong> ri-controllano ogni caso dalla loro coda e lo
+              <strong> validano</strong> (l'approvazione era corretta) o lo
+              <strong> invalidano</strong> (era sbagliata).
+            </li>
+            <li>
+              <strong>Valuta cancello</strong>: se la quota di casi confermati è sopra la
+              soglia, l'audit <strong>si chiude</strong>; se troppi sono sbagliati,
+              il campione <strong>si allarga da solo</strong> (approfondimento), finché la
+              qualità non rientra o si è controllato tutto il pool.
+            </li>
+            <li>
+              Ogni caso <strong>invalidato</strong> finisce nei <strong>clawback</strong>:
+              i punti già assegnati vanno tolti a mano (vedi sotto).
+            </li>
+          </ol>
+        </div>
 
         <div className="card" style={{ padding: 16, marginBottom: 20 }}>
           <div className="form-group" style={{ marginBottom: 10 }}>
@@ -155,14 +182,21 @@ export default function AdminAudit() {
           </div>
 
           {eventId && (
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button className="btn btn-primary" disabled={busy} onClick={doOpen}>
-                {busy ? "…" : "Apri audit"}
-              </button>
-              <button className="btn btn-outline" disabled={busy} onClick={doEvaluate}>
-                {busy ? "…" : "Valuta cancello"}
-              </button>
-            </div>
+            <>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button className="btn btn-primary" disabled={busy} onClick={doOpen}>
+                  {busy ? "…" : "Apri audit"}
+                </button>
+                <button className="btn btn-outline" disabled={busy} onClick={doEvaluate}>
+                  {busy ? "…" : "Valuta cancello"}
+                </button>
+              </div>
+              <p className="muted small" style={{ marginTop: 8 }}>
+                Prima <strong>Apri audit</strong> (una volta). Poi, dopo che i giudici
+                hanno ri-controllato i casi, usa <strong>Valuta cancello</strong> per
+                decidere se chiudere o allargare il campione.
+              </p>
+            </>
           )}
           {actionMsg && <div className="callout neutral" style={{ marginTop: 10 }}>{actionMsg}</div>}
         </div>
@@ -193,16 +227,26 @@ export default function AdminAudit() {
               </div>
               {state.gate?.action && (
                 <div className="callout neutral" style={{ marginTop: 10 }}>
-                  {GATE_LABEL[state.gate.action] || state.gate.action}
+                  <strong>Cancello di qualità:</strong> {GATE_LABEL[state.gate.action] || state.gate.action}
                 </div>
               )}
+              <ul className="muted small" style={{ margin: "12px 0 0", paddingLeft: 18, lineHeight: 1.7 }}>
+                <li><strong>Pool auditabile</strong>: totale delle approvazioni automatiche dell'evento (il massimo controllabile).</li>
+                <li><strong>Ri-revisionati</strong>: casi già chiusi dai giudici — <strong>validi</strong> (confermati) o <strong>invalidi</strong> (respinti).</li>
+                <li><strong>Aperti</strong>: casi campionati ma non ancora ri-controllati dai giudici.</li>
+                <li><strong>Giro</strong>: quante volte il campione è stato allargato (1 = solo il campione iniziale).</li>
+                <li><strong>Qualità</strong>: quota di casi confermati sul totale ri-revisionati; alta = le auto-approvazioni sono affidabili.</li>
+              </ul>
             </div>
 
             {/* Clawback da revertire */}
             <div className="card" style={{ padding: 16 }}>
               <h2 className="dynamic-title">Clawback da revertire ({clawbacks.length})</h2>
               <p className="muted small" style={{ marginTop: 4 }}>
-                Casi invalidati: revoca i punti a mano (points.v1), poi segna risolto.
+                "Clawback" = recupero dei punti. Quando un giudice <strong>invalida</strong>
+                un caso, i punti già assegnati alla persona vanno <strong>tolti a mano</strong>
+                {" "}(per ora non è automatico): revocali nel sistema punti, poi premi
+                <strong> "Segna risolto"</strong> per toglierlo da questa lista.
               </p>
               {clawbacks.length === 0 ? (
                 <div className="card-info neutral" style={{ marginTop: 10 }}>Nessun clawback in sospeso.</div>

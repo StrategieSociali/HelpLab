@@ -106,8 +106,10 @@ export default function AuditQueuePanel() {
         Casi da ri-controllare (audit)
       </h2>
       <p className="muted small" style={{ marginTop: 6 }}>
-        Approvazioni automatiche estratte a campione. Confermale se coerenti
-        (Valida) o segnalale se non lo sono (Invalida).
+        Queste submission sono state approvate <strong>automaticamente</strong>, senza
+        un giudice. Ti chiediamo di ricontrollarne alcune a campione: prendile in
+        carico e <strong>valida</strong> se l'approvazione era corretta, oppure
+        <strong> invalida</strong> se non lo era.
       </p>
 
       {error && (
