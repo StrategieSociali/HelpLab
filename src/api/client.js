@@ -59,6 +59,7 @@ export const API_PATHS = {
   // auth
   login:    `/v1/auth/login`,
   refresh:  `/v1/auth/refresh`,
+  logout:   `/v1/auth/logout`,
   me:       `/v1/auth/me`,
   register: `/v1/auth/register`,
   

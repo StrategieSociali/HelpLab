@@ -42,8 +42,14 @@ export function AuthProvider({ children }) {
         // 2) tenta il refresh SOLO se abilitato (in prod). In dev normalmente è false.
         if (USE_REFRESH) {
           try {
-            // NB: il refresh rinnova il cookie httpOnly; non ritorna accessToken nel body
-            await api.post(API_PATHS.refresh); // POST /auth/refresh
+            // Il refresh legge il cookie httpOnly e ritorna un access token NUOVO:
+            // va salvato, altrimenti si prosegue con quello vecchio (TTL 15 min) e
+            // dopo la scadenza ogni F5 o deep-link finisce in 401 su /me (bug #7).
+            const { data } = await api.post(API_PATHS.refresh); // POST /auth/refresh
+            if (data?.accessToken) {
+              restored = data.accessToken;
+              saveToken(data.accessToken);
+            }
           } catch {
             // ok ignorare 401/429 qui: continueremo con eventuale token ripristinato
           }
