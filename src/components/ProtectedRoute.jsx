@@ -42,14 +42,29 @@ function ProtectedRoute({ children, allowedRoles, role }) {
   // un redirect silenzioso qui farebbe sembrare l'app rotta.
   if (required && roleIsKnown && !required.includes(userRole)) {
     return (
-      <div style={{ padding: '2rem', maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
+      // `color` esplicito: senza, il testo eredita un colore scuro e su queste
+      // pagine a fondo scuro risultava illeggibile (segnalato dal PM il 5/8).
+      <div
+        className="page-section page-text"
+        style={{
+          padding: '2rem',
+          maxWidth: 640,
+          margin: '0 auto',
+          textAlign: 'center',
+          color: '#ffffff',
+        }}
+      >
         <h2>Questa pagina non è disponibile per il tuo profilo</h2>
         <p>
           Per accedervi serve un profilo diverso da quello con cui hai effettuato
           l'accesso. Se pensi che si tratti di un errore, contatta l'organizzazione.
         </p>
-        <p>
-          <Link to="/">Torna alla home</Link>
+        <p style={{ marginTop: 16 }}>
+          {/* Pulsante e non link testuale: su fondo scuro il colore dei link
+              visitati diventa illeggibile (stesso motivo del pulsante risultati). */}
+          <Link to="/" className="btn btn-outline">
+            Torna alla home
+          </Link>
         </p>
       </div>
     );

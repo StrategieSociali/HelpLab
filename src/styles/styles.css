@@ -568,12 +568,16 @@ main {
   color: #ffffff;
 }
 
-/* Un <Link> con classe .btn è un PULSANTE, non un link di testo: il colore
-   "visitato" del browser non deve mai entrare in gioco. Stessa precauzione già
-   presa per .nav-link:visited. (4/8/2026: su sfondo scuro un link visitato senza
-   classe risultava viola e illeggibile.) */
-.btn-outline:visited,
-.btn:visited {
+/* Un <Link> con classe .btn-outline è un PULSANTE su fondo scuro: il colore
+   "visitato" del browser non deve entrare in gioco. Stessa precauzione già presa
+   per .nav-link:visited. (4/8/2026: su sfondo scuro un link visitato senza classe
+   risultava viola e illeggibile.)
+   ATTENZIONE — la regola è volutamente ristretta a .btn-outline: un `.btn:visited`
+   generico ha la stessa specificità di `.admin-menu__list .btn` (che impone testo
+   SCURO su dropdown bianco) ma viene dopo nel file, quindi vincerebbe, rendendo
+   bianche su bianco tutte le voci di menu già visitate. Errore commesso e
+   corretto lo stesso giorno: non riallargare questo selettore. */
+.btn-outline:visited {
   color: #ffffff;
 }
 

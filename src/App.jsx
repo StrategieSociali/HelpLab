@@ -213,7 +213,17 @@ export default function App() {
               <Route
                 path={routes.dashboard.challengeCreate}
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'sponsor']}>
+                  /* Aperta a TUTTI i profili autenticati (decisione PM 5/8/2026):
+                      chiunque deve poter avviare una sfida. Era `['admin','sponsor']`
+                      da quando la prop non veniva letta da nessuno, quindi il limite
+                      non era mai stato applicato né verificato — e il menu la offre
+                      anche ai giudici.
+                      REGOLA DA IMPLEMENTARE DOPO IL 30/8: un giudice non può
+                      giudicare una sfida creata da lui, né una in cui è volontario.
+                      Il secondo caso è già coperto lato BE (§7.1, `canReview`
+                      esclude i partecipanti); il primo — "creata da lui" — NON è
+                      ancora coperto e va aggiunto. Vedi bug-e-todo.md. */
+                  <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
                     <CreateChallenge />
                   </ProtectedRoute>
                 }
