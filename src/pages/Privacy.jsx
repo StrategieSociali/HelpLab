@@ -74,12 +74,15 @@ export default function Privacy() {
 
           <SubSection title="3.1 Registrazione account">
             <p>
-              Al momento della registrazione raccogliamo: nome (o nome di
-              fantasia), nickname, indirizzo email e password (cifrata).
+              Al momento della registrazione raccogliamo: nickname, indirizzo
+              email e password (cifrata). Non chiediamo il nome reale: ti verrà
+              richiesto solo se e quando deciderai di usufruire di programmi che
+              prevedono rimborsi, premi o incentivi economici, per i quali è
+              necessaria l'identificazione.
             </p>
             <p>
               <strong>Registrazione anonima:</strong> è possibile registrarsi
-              utilizzando dati di fantasia (nome, nickname, email temporanea)
+              utilizzando dati di fantasia (nickname, email temporanea)
               senza fornire alcuna informazione identificativa reale. La
               registrazione anonima consente la piena partecipazione alla
               piattaforma, ad eccezione dei programmi che prevedono rimborsi

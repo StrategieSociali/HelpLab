@@ -148,7 +148,14 @@ export default function App() {
               <Route
                 path={routes.dashboard.challengeSubmit}
                 element={
-                  <ProtectedRoute allowedRoles={['user']}>
+                  /* Allineato al BE (§7.1): non è il RUOLO a decidere chi può
+                     contribuire, ma l'idoneità sulla singola sfida — un giudice
+                     non idoneo a questa sfida può parteciparvi, e l'admin è
+                     esente per contratto. Restava `['user']` da quando la prop
+                     non veniva letta da nessuno; con il controllo ruoli attivo
+                     (1.15.14) avrebbe chiuso fuori giudici e admin. Stessa terna
+                     della rotta sorella `me.contributions`. */
+                  <ProtectedRoute allowedRoles={['user', 'judge', 'admin']}>
                     <ChallengeSubmitPage />
                   </ProtectedRoute>
                 }

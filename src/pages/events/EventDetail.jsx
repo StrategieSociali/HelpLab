@@ -273,13 +273,18 @@ export default function EventDetail() {
               </div>
             )}
 
-            {/* Link dashboard live — visibile a tutti */}
-            {isActive && (
+            {/* Link dashboard impatto — visibile a tutti.
+                Mostrato anche a evento CONCLUSO: il riquadro qui sopra promette
+                «puoi ancora consultare i risultati», ma fino al 4/8/2026 il link
+                era condizionato al solo `isActive` e a evento chiuso spariva →
+                promessa senza porta. I dati restano disponibili (`/events/:id/summary`
+                risponde regolarmente per gli eventi `ended`). */}
+            {(isActive || status === "ended") && (
               <Link
                 to={routes.events.live(slug)}
                 className="btn btn-outline"
               >
-                📊 Segui l'impatto live
+                {isActive ? "📊 Segui l'impatto live" : "📊 Guarda i risultati"}
               </Link>
             )}
           </div>

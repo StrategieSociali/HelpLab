@@ -2,48 +2,43 @@
   "_comment": "/src/pages/challenges/ChallengeSubmitPage.jsx",
   "title": "Invia il tuo contributo",
   "subtitle": "Scegli il task a cui si riferisce la tua attività, raccontaci cosa hai fatto e carica le evidenze richieste. Il contributo sarà validato da un giudice per garantire correttezza e trasparenza.",
-
   "status": {
-    "loadingTasks": "Caricamento task della challenge…"
+    "loadingTasks": "Caricamento task della challenge…",
+    "challengeClosed": "Questa sfida non accetta più contributi: è stata chiusa dall'organizzazione.",
+    "challengeClosedLink": "Guarda i risultati della sfida"
   },
-
   "errors": {
     "noTasks": "Questa challenge non ha ancora task definiti.",
     "loadTasks": "Impossibile caricare i task della challenge.",
     "notAuthenticated": "Devi essere autenticato per inviare un contributo.",
     "noTaskSelected": "Seleziona il task a cui si riferisce il tuo contributo.",
-    "submitFailed": "Invio non riuscito. Riprova tra qualche istante."
+    "submitFailed": "Invio non riuscito. Riprova tra qualche istante.",
+    "challengeClosed": "Questa sfida è stata chiusa mentre stavi compilando: il contributo non è stato inviato."
   },
-
   "validation": {
     "minPhotos": "Carica almeno {{count}} foto come evidenza.",
     "required": "Il campo \"{{label}}\" è obbligatorio.",
     "minValue": "Inserisci un valore valido per \"{{label}}\" (minimo: {{min}})."
   },
-
   "taskSelect": {
     "label": "A quale obiettivo si riferisce il tuo contributo?",
     "placeholder": "Seleziona un task…",
     "hint": "Ogni contributo deve essere collegato a uno degli obiettivi della challenge."
   },
-
   "activityDescription": {
     "label": "Descrizione attività",
     "optional": "opzionale",
     "placeholder": "Aggiungi dettagli su cosa hai fatto, se vuoi",
     "hint": "Non è obbligatoria, ma aiuta il giudice a capire meglio il tuo contributo."
   },
-
   "mobility": {
     "loading": "Caricamento opzioni…",
     "placeholder": "Seleziona un'opzione…"
   },
-
   "comune": {
     "loading": "Caricamento comuni…",
     "placeholder": "Inizia a digitare il tuo comune…"
   },
-
   "photo": {
     "altText": "Evidenza {{index}}",
     "uploaded": "✓ Foto caricata",
@@ -61,12 +56,10 @@
       "upload": "Errore durante il caricamento. Riprova."
     }
   },
-
   "cta": {
     "submit": "Invia contributo",
     "submitting": "Invio in corso…"
   },
-
   "fields": {
     "comune_origine": {
       "label": "Da quale comune parti?",

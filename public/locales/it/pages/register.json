@@ -1,39 +1,32 @@
 {
   "_comment": "/src/pages/Register.jsx",
-
   "title": "Registrati",
-
-  "name": {
-    "label": "Nome",
-    "placeholder": "Il tuo nome"
-  },
-
   "nickname": {
     "label": "Nickname",
     "placeholder": "Scegli un nickname pubblico"
   },
-
   "email": {
     "label": "Email",
     "placeholder": "nome@esempio.it"
   },
-
   "password": {
     "label": "Password",
     "placeholder": "Minimo 8 caratteri"
   },
-
   "actions": {
     "submit": "Crea account",
     "creating": "Creazione in corso…",
     "loginLink": "Hai già un account?"
   },
-
   "errors": {
     "invalid_nickname": "Il nickname deve contenere solo lettere, numeri, _ o - (3–40 caratteri).",
     "conflict": "Email o nickname già registrati.",
+    "conflict_email": "Questa email è già registrata. Se l'account è tuo, accedi invece di registrarti.",
+    "conflict_nickname": "Questo nickname è già stato preso. Scegline un altro: gli altri campi restano come li hai scritti.",
     "invalid_data": "Dati non validi. Controlla i campi e riprova.",
+    "network": "Non riesco a contattare il server. Controlla la connessione e riprova: i dati che hai inserito non sono il problema.",
+    "rate_limit": "Troppi tentativi in poco tempo. Aspetta un minuto e riprova.",
+    "server": "Problema temporaneo del server. Riprova tra poco: non è colpa dei dati che hai inserito.",
     "generic": "Registrazione non riuscita. Controlla i dati e riprova."
   }
 }
-

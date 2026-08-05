@@ -30,7 +30,6 @@ export default function Register() {
   const [form, setForm] = useState({
     email: "",
     password: "",
-    name: "",
     nickname: "",
     privacy_consent: false,
   });
@@ -62,7 +61,6 @@ export default function Register() {
       await register({
         email: form.email,
         password: form.password,
-        name: form.name,
         nickname: form.nickname,
         // Il checkbox è required nel form: se si arriva qui il consenso è dato
         privacy_consent: true,
@@ -72,10 +70,26 @@ export default function Register() {
     } catch (error) {
       console.error(error);
 
-      if (error?.response?.status === 409) {
-        setErrorCode("conflict");
-      } else if (error?.response?.status === 400) {
+      const status = error?.response?.status;
+      // Il BE distingue i due conflitti ("email already in use" / "nickname
+      // already in use"): dirlo all'utente, altrimenti deve indovinare quale
+      // dei due campi cambiare.
+      const beError = String(error?.response?.data?.error || "");
+
+      if (!error?.response) {
+        // Nessuna risposta HTTP: server irraggiungibile, rete caduta o CORS.
+        // NON dire "controlla i dati": i dati possono essere perfetti.
+        setErrorCode("network");
+      } else if (status === 409) {
+        if (beError.includes("nickname")) setErrorCode("conflict_nickname");
+        else if (beError.includes("email")) setErrorCode("conflict_email");
+        else setErrorCode("conflict");
+      } else if (status === 400) {
         setErrorCode("invalid_data");
+      } else if (status === 429) {
+        setErrorCode("rate_limit");
+      } else if (status >= 500) {
+        setErrorCode("server");
       } else {
         setErrorCode("generic");
       }
@@ -103,18 +117,13 @@ export default function Register() {
 
         <form onSubmit={onSubmit} className="registration-form">
 
-          <div className="form-group">
-            <label htmlFor="name">{t("name.label")}</label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              placeholder={t("name.placeholder")}
-              value={form.name}
-              onChange={onChange}
-              required
-            />
-          </div>
+          {/* Campo "Nome" rimosso il 4/8/2026 (decisione PM). Era raccolto e poi
+              scartato in silenzio: `registerSchema` lato BE non prevede `name`, e
+              lo `username` veniva derivato dal prefisso dell'email. Il nome reale
+              servirà solo quando ci sarà il redeem dei punti (verifica incrociata
+              con l'esercente); finché non serve, non si chiede — meno frizione in
+              registrazione e minimizzazione dei dati (GDPR art. 5.1.c).
+              Per la personalizzazione delle newsletter si usa il nickname. */}
 
           <div className="form-group">
             <label htmlFor="nickname">{t("nickname.label")}</label>

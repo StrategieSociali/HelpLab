@@ -25,7 +25,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/api/client";
@@ -169,6 +169,23 @@ export default function ChallengeSubmitPage() {
   const [payloadFields, setPayloadFields] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Stato della sfida: se non è `open` non si contribuisce (regola lato BE dal
+  // 4/8/2026). Lo leggiamo PRIMA di mostrare il form: far compilare campi e
+  // caricare foto per poi rifiutare l'invio sarebbe la frizione peggiore.
+  const [challengeStatus, setChallengeStatus] = useState(null);
+
+  useEffect(() => {
+    if (!challengeId) return;
+    let alive = true;
+    api
+      .get(`/v1/challenges/${challengeId}`)
+      .then(({ data }) => { if (alive) setChallengeStatus(data?.status ?? null); })
+      .catch(() => { /* non blocchiamo il form: decide comunque il BE all'invio */ });
+    return () => { alive = false; };
+  }, [challengeId]);
+
+  const challengeIsOpen = challengeStatus === null || challengeStatus === "open";
 
   // ── Caricamento task della challenge ──────────────────────────────────────
   useEffect(() => {
@@ -370,7 +387,12 @@ export default function ChallengeSubmitPage() {
       console.error("Errore invio submission:", err);
 
       const backendErrors = err?.response?.data?.errors;
-      if (Array.isArray(backendErrors) && backendErrors.length > 0) {
+      // Rete di sicurezza: la sfida può essere stata chiusa mentre l'utente
+      // compilava. Senza questo ramo mostreremmo il codice grezzo del BE.
+      if (err?.response?.status === 409 && err?.response?.data?.error === "challenge_not_open") {
+        setChallengeStatus(err?.response?.data?.status ?? "closed");
+        setError(t("errors.challengeClosed"));
+      } else if (Array.isArray(backendErrors) && backendErrors.length > 0) {
         setError(backendErrors.join(" — "));
       } else {
         setError(
@@ -405,17 +427,30 @@ export default function ChallengeSubmitPage() {
           </div>
         )}
 
-        {tasksLoading && (
+        {/* Sfida non più aperta: si spiega e ci si ferma qui, senza mostrare il
+            form. Il BE rifiuterebbe comunque l'invio (409 challenge_not_open). */}
+        {!challengeIsOpen && (
+          <div className="callout neutral">
+            <p>{t("status.challengeClosed")}</p>
+            <p>
+              <Link to={routes.dashboard.challengeLive(challengeId)}>
+                {t("status.challengeClosedLink")}
+              </Link>
+            </p>
+          </div>
+        )}
+
+        {challengeIsOpen && tasksLoading && (
           <div className="callout neutral">
             {t("status.loadingTasks")}
           </div>
         )}
 
-        {tasksError && !tasksLoading && (
+        {challengeIsOpen && tasksError && !tasksLoading && (
           <div className="callout error">{tasksError}</div>
         )}
 
-        {!tasksLoading && tasks.length > 0 && (
+        {challengeIsOpen && !tasksLoading && tasks.length > 0 && (
           <form onSubmit={handleSubmit} noValidate>
             <div className="card">
               <div className="form-grid">

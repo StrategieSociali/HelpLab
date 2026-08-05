@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api, attachToken, API_PATHS } from "@/api/client";
 
 const LS_TOKEN_KEY = "hl_access_token";
@@ -12,10 +12,17 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);      // accessToken (solo login)
   const [loading, setLoading] = useState(true);  // init app/auth in corso
 
-  // Intercetta tutte le richieste axios e attacca il Bearer se presente
+  // Il token va tenuto anche in un ref, non solo nello state: lo state React si
+  // aggiorna al render successivo, mentre una richiesta axios partita subito dopo
+  // saveToken() legge il token PRIMA di quel render e si porterebbe dietro quello
+  // vecchio. È il motivo per cui il refresh sembrava non funzionare (bug #7):
+  // il token nuovo arrivava, ma /auth/me partiva ancora con quello scaduto → 401.
+  const tokenRef = useRef(null);
+
+  // Registrato UNA volta sola: legge sempre il valore corrente dal ref.
   useEffect(() => {
-    attachToken(() => token);
-  }, [token]);
+    attachToken(() => tokenRef.current);
+  }, []);
 
   // Legge profilo/ruolo corrente (richiede Bearer)
   const fetchMe = async () => {
@@ -24,8 +31,12 @@ export function AuthProvider({ children }) {
     return data?.user;
   };
 
-  // Helper: salva/azzera token nello state
-  const saveToken = (t) => setToken(t || null);
+  // Helper: salva/azzera il token. Il ref si aggiorna SUBITO (lo usa l'interceptor),
+  // lo state al render successivo (lo usa la UI).
+  const saveToken = (t) => {
+    tokenRef.current = t || null;
+    setToken(t || null);
+  };
 
   // Init: ripristino token da localStorage, refresh (solo se abilitato), e /me SOLO se c’è un token valido
   useEffect(() => {
@@ -56,7 +67,7 @@ export function AuthProvider({ children }) {
         }
 
         // 3) chiama /me SOLO se abbiamo *un* token (dal login precedente o ripristinato)
-        const hasAnyToken = !!(restored || token);
+        const hasAnyToken = !!(restored || tokenRef.current);
         if (hasAnyToken) {
           await fetchMe();
         } else {

@@ -1,39 +1,32 @@
 {
   "_comment": "/src/pages/Register.jsx",
-
   "title": "Create an account",
-
-  "name": {
-    "label": "Name",
-    "placeholder": "Your name"
-  },
-
   "nickname": {
     "label": "Nickname",
     "placeholder": "Choose a public nickname"
   },
-
   "email": {
     "label": "Email",
     "placeholder": "name@example.com"
   },
-
   "password": {
     "label": "Password",
     "placeholder": "Minimum 8 characters"
   },
-
   "actions": {
     "submit": "Create account",
     "creating": "Creating account…",
     "loginLink": "Already have an account?"
   },
-
   "errors": {
     "invalid_nickname": "Nickname may contain only letters, numbers, _ or - (3–40 characters).",
     "conflict": "Email or nickname already registered.",
+    "conflict_email": "This email is already registered. If the account is yours, sign in instead.",
+    "conflict_nickname": "That nickname is already taken. Pick another one: your other details are kept.",
     "invalid_data": "Invalid data. Please check the fields and try again.",
+    "network": "Can't reach the server. Check your connection and try again — the details you entered are not the problem.",
+    "rate_limit": "Too many attempts in a short time. Please wait a minute and try again.",
+    "server": "Temporary server problem. Please try again shortly — it's not caused by the details you entered.",
     "generic": "Registration failed. Please try again."
   }
 }
-
