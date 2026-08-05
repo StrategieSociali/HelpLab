@@ -14,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api, API_PATHS } from "@/api/client";
 import { useNavigate } from "react-router-dom";
 import { isJudge } from "@/utils/roles";
+import { getJudgeScore } from "@/api/judge.api";
 import { useTranslation } from "react-i18next";
 import LogoutButton from "@/components/common/LogoutButton";
 import "../styles/dynamic-pages.css";
@@ -32,6 +33,13 @@ export default function UserProfile() {
 
   const [dashboard, setDashboard] = useState(null);
 
+  // Punteggio come giudice: vive su un endpoint suo (`GET /judge/score`), non in
+  // /auth/dashboard che espone solo le metriche da partecipante. Lo carichiamo
+  // qui perché il profilo è il posto in cui l'utente si aspetta di vedere TUTTI
+  // i propri numeri: trovarne solo metà, a zero, faceva sembrare l'app rotta.
+  const [judgeScore, setJudgeScore] = useState(null);
+  const [judgeScoreError, setJudgeScoreError] = useState(false);
+
   // Carica dati da /v1/dashboard
   const [errorCode, setErrorCode] = useState(null);
 useEffect(() => {
@@ -47,6 +55,19 @@ useEffect(() => {
       setErrorCode("profile_load_error");
     });
 }, [token]);
+
+useEffect(() => {
+  if (!token || !isJudgeUser) return;
+  let alive = true;
+  // `getJudgeScore` NON passa dal client axios condiviso: usa axios diretto e
+  // vuole il token esplicito. Ometterlo dà 401 (e uno 0 fasullo, vedi sotto).
+  getJudgeScore(token)
+    .then((res) => { if (alive) { setJudgeScore(res?.score ?? 0); setJudgeScoreError(false); } })
+    // 0 è un valore LEGITTIMO (giudice senza riga): non va confuso con un errore,
+    // altrimenti un guasto si traveste da dato vero e diventa invisibile.
+    .catch(() => { if (alive) setJudgeScoreError(true); });
+  return () => { alive = false; };
+}, [token, isJudgeUser]);
 
 
   const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : "—");
@@ -104,12 +125,24 @@ useEffect(() => {
 
             <div><strong>{t("fields.id")}:</strong> {dashboardUser?.id ?? user.id}</div>
 
+            {/* Punteggi: due grandezze DISTINTE, mai sommate (decisione 4/8/2026,
+                vedi decisioni.md). Quello da partecipante nasce dall'impatto
+                misurato; quello da giudice conta l'attività di revisione. Per un
+                giudice "0 come partecipante" è normale, non un guasto: da qui
+                l'etichetta esplicita. */}
             {dashboard?.totalPoints != null && (
               <div><strong>{t("fields.totalPoints")}:</strong> {dashboard.totalPoints}</div>
             )}
 
             {dashboard?.totalVerified != null && (
               <div><strong>{t("fields.totalVerified")}:</strong> {dashboard.totalVerified}</div>
+            )}
+
+            {isJudgeUser && (
+              <div>
+                <strong>{t("fields.judgeScore")}:</strong>{" "}
+                {judgeScoreError ? "—" : judgeScore === null ? "…" : judgeScore}
+              </div>
             )}
           </div>
 

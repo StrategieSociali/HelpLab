@@ -71,7 +71,10 @@ export default function JudgeScoreCard() {
         {loading ? "…" : error ? "—" : score}
       </div>
       <div>
-        <div style={{ fontWeight: 600 }}>Punteggio attività</div>
+        {/* "come giudice" è esplicito di proposito: lo stesso utente ha anche un
+            punteggio come partecipante, mostrato nel profilo. Due grandezze
+            diverse, mai sommate — vedi decisioni.md (4/8/2026). */}
+        <div style={{ fontWeight: 600 }}>Punteggio attività come giudice</div>
         <div className="muted small">
           {error
             ? "Punteggio non disponibile al momento."

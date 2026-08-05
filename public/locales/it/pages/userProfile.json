@@ -1,23 +1,20 @@
 {
   "_comment": "/src/pages/UserProfile.jsx",
-
   "title": "Profilo",
-
   "states": {
     "loading": "Caricamento…",
     "notAuthenticated": "Non sei loggato."
   },
-
   "fields": {
     "username": "Username",
     "nickname": "Nickname",
     "email": "Email",
     "role": "Ruolo",
     "id": "ID",
-    "totalPoints": "Punti totali",
-    "totalVerified": "Task verificati"
+    "totalPoints": "Punteggio come partecipante",
+    "totalVerified": "Tuoi contributi approvati",
+    "judgeScore": "Punteggio attività come giudice"
   },
-
   "submissions": {
     "title": "I tuoi contributi",
     "challenge": "Sfide",
@@ -27,7 +24,6 @@
     "submittedAt": "Inviata",
     "reviewedAt": "Verificata"
   },
-
   "judge": {
     "title": "Le mie sfide da giudicare",
     "refresh": "Aggiorna",
@@ -43,10 +39,9 @@
       "moderate": "Modera il contributo"
     },
     "errors": {
-    "load_error": "Errore nel caricamento della coda",
-    "generic": "Si è verificato un errore"
+      "load_error": "Errore nel caricamento della coda",
+      "generic": "Si è verificato un errore"
     },
     "loadMore": "Carica altri"
   }
 }
-
