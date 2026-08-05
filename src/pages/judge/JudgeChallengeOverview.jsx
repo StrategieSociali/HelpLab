@@ -134,6 +134,31 @@ async function releaseSubmission(token, submissionId) {
   return res.json();
 }
 
+// Cambio stato della sfida (solo admin lato BE). È la leva che ferma i nuovi
+// contributi: `POST /challenges/:id/submissions` accetta solo se lo stato è
+// `open`. Prima del 4/8/2026 nessuna rotta modificava questo campo.
+async function setChallengeStatus(token, challengeId, status) {
+  const res = await fetch(`${API_BASE}/v1/challenges/${challengeId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    let msg = "Errore nel cambio di stato della sfida";
+    try {
+      const data = await res.json();
+      msg = data?.message || data?.error || msg;
+    } catch {}
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
 // Override admin (§7.4): ribalta una decisione già presa. Solo admin lato BE.
 async function overrideSubmission(token, submissionId, body) {
   const res = await fetch(`${API_BASE}/v1/submissions/${submissionId}/override`, {
@@ -166,6 +191,11 @@ export default function JudgeChallengeOverview() {
   const [overview, setOverview] = useState(null);
   const [oLoading, setOLoading] = useState(true);
   const [oError, setOError] = useState("");
+
+  // Cambio stato sfida (admin): busy + errore dedicati, per non confonderli con
+  // gli stati della revisione.
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [statusError, setStatusError] = useState("");
 
   const [subs, setSubs] = useState([]);
   const [nextCursor, setNextCursor] = useState(null);
@@ -407,6 +437,27 @@ export default function JudgeChallengeOverview() {
   }
 
   const ch = overview?.challenge;
+  const chStatus = ch?.status ?? null;
+  const chIsOpen = chStatus === "open";
+
+  // Chiude o riapre la sfida. Chiudere ferma i nuovi contributi; riaprire li
+  // riammette. Nessuna conferma modale: l'azione è reversibile con un clic e
+  // lo stato è scritto qui sopra, quindi un passaggio in più sarebbe attrito.
+  const onToggleChallengeStatus = async () => {
+    const next = chIsOpen ? "closed" : "open";
+    setStatusBusy(true);
+    setStatusError("");
+    try {
+      await setChallengeStatus(token, id, next);
+      setOverview((prev) =>
+        prev ? { ...prev, challenge: { ...prev.challenge, status: next } } : prev
+      );
+    } catch (e) {
+      setStatusError(e?.message || "Errore nel cambio di stato della sfida");
+    } finally {
+      setStatusBusy(false);
+    }
+  };
 
   return (
     <section className="page-section page-text">
@@ -418,7 +469,49 @@ export default function JudgeChallengeOverview() {
           CO₂ approvata: <strong>{ch?.approved_co2 ?? "—"}</strong>
           {" · "}
           Punti max: <strong>{ch?.max_points ?? "—"}</strong>
+          {chStatus && (
+            <>
+              {" · "}
+              Stato:{" "}
+              <strong>
+                {chIsOpen ? "aperta" : chStatus === "closed" ? "chiusa" : "in valutazione"}
+              </strong>
+            </>
+          )}
         </p>
+
+        {/* Chiusura/riapertura sfida — solo admin. Vive qui perché questa è la
+            pagina operativa della singola sfida, dove l'admin già interviene
+            (force-release, override). */}
+        {isAdmin && chStatus && (
+          <div className="card" style={{ padding: 16, marginTop: 16 }}>
+            <h2 className="dynamic-title">Stato della sfida</h2>
+            <TextBlock>
+              {chIsOpen
+                ? "La sfida è aperta: i partecipanti possono inviare nuovi contributi. Chiudendola gli invii si fermano subito, mentre i contributi già ricevuti restano da revisionare e i risultati restano consultabili."
+                : "La sfida è chiusa: non accetta nuovi contributi. Riaprendola i partecipanti potranno inviarne di nuovi."}
+            </TextBlock>
+
+            {statusError && (
+              <div className="callout error" role="alert" style={{ marginTop: 8 }}>
+                {statusError}
+              </div>
+            )}
+
+            <button
+              className="btn btn-outline"
+              onClick={onToggleChallengeStatus}
+              disabled={statusBusy}
+              style={{ marginTop: 10 }}
+            >
+              {statusBusy
+                ? "Aggiornamento…"
+                : chIsOpen
+                ? "Chiudi la sfida"
+                : "Riapri la sfida"}
+            </button>
+          </div>
+        )}
 
         {/* TASKS */}
         <div className="card" style={{ padding: 16, marginTop: 16 }}>
