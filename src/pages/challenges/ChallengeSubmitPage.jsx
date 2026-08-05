@@ -429,11 +429,21 @@ export default function ChallengeSubmitPage() {
 
         {/* Sfida non più aperta: si spiega e ci si ferma qui, senza mostrare il
             form. Il BE rifiuterebbe comunque l'invio (409 challenge_not_open). */}
+        {/* `card-info` e non `callout`: la CSS documenta che `.callout` ha sfondo
+            CHIARO (pensato per pagine chiare) mentre `.card-info` è il vetro scuro
+            delle pagine come questa. Stesso inciampo già corretto il 18/6 sul
+            blocco "Configurazione mobilità". */}
         {!challengeIsOpen && (
-          <div className="callout neutral">
+          <div className="card-info neutral">
             <p>{t("status.challengeClosed")}</p>
-            <p>
-              <Link to={routes.dashboard.challengeLive(challengeId)}>
+            {/* Pulsante e non link testuale: su sfondo scuro il colore di default
+                dei link visitati diventa illeggibile. `btn btn-outline` è già lo
+                stile usato per le azioni sulle card scure (es. EventDetail). */}
+            <p style={{ marginTop: 10 }}>
+              <Link
+                to={routes.dashboard.challengeLive(challengeId)}
+                className="btn btn-outline"
+              >
                 {t("status.challengeClosedLink")}
               </Link>
             </p>
@@ -441,7 +451,7 @@ export default function ChallengeSubmitPage() {
         )}
 
         {challengeIsOpen && tasksLoading && (
-          <div className="callout neutral">
+          <div className="card-info neutral">
             {t("status.loadingTasks")}
           </div>
         )}

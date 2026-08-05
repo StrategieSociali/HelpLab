@@ -568,6 +568,15 @@ main {
   color: #ffffff;
 }
 
+/* Un <Link> con classe .btn è un PULSANTE, non un link di testo: il colore
+   "visitato" del browser non deve mai entrare in gioco. Stessa precauzione già
+   presa per .nav-link:visited. (4/8/2026: su sfondo scuro un link visitato senza
+   classe risultava viola e illeggibile.) */
+.btn-outline:visited,
+.btn:visited {
+  color: #ffffff;
+}
+
 .btn-outline:hover {
   background: rgba(255,255,255,.12);   /* fill bianco sottilissimo */
   border-color: rgba(255,255,255,.85);

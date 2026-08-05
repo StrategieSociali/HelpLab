@@ -151,10 +151,11 @@ export default function AdminCoverage() {
   return (
     <section className="page-section page-text">
       <div className="container">
-        <h1 className="page-title">Copertura giudici</h1>
+        <h1 className="page-title">Sfide, eventi e copertura giudici</h1>
         <p className="page-subtitle">
-          Sfide ed eventi che non hanno abbastanza giudici. Tappa i buchi: avanza il
-          round-robin o assegna a mano.
+          Da qui tappi i buchi di copertura — avanzando il round-robin o assegnando
+          a mano — e raggiungi qualsiasi sfida per revisionarla, chiuderla o
+          riaprirla.
         </p>
 
         {/* Sweep round-robin */}
@@ -272,10 +273,11 @@ export default function AdminCoverage() {
             (§3) vivono nell'overview, non solo sui buchi di copertura. */}
         {!loading && !error && openChallenges.length > 0 && (
           <div className="card" style={{ padding: 16, marginTop: 20 }}>
-            <h2 className="dynamic-title">Apri una sfida (revisione / override)</h2>
+            <h2 className="dynamic-title">Tutte le sfide</h2>
             <p className="muted small" style={{ marginTop: 4 }}>
-              Tutte le sfide aperte. Apri l'overview per revisionare, forzare il
-              rilascio di un claim o ribaltare una decisione.
+              Aperte e chiuse. Apri una sfida per revisionare i contributi, forzare
+              il rilascio di una presa in carico, ribaltare una decisione oppure
+              chiuderla e riaprirla.
             </p>
             <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
               {openChallenges.map((c) => (
@@ -284,7 +286,14 @@ export default function AdminCoverage() {
                   className="card-info neutral"
                   style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}
                 >
-                  <strong>{c.title || `Sfida #${c.id}`}</strong>
+                  <strong>
+                    {c.title || `Sfida #${c.id}`}
+                    {c.status && c.status !== "open" && (
+                      <span className="muted small" style={{ fontWeight: 400, marginLeft: 8 }}>
+                        · {c.status === "closed" ? "chiusa" : "in valutazione"}
+                      </span>
+                    )}
+                  </strong>
                   <button
                     className="btn btn-ghost"
                     onClick={() => navigate(routes.judge.challengeOverview(c.id))}

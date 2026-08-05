@@ -431,7 +431,10 @@ export async function getOpenChallenges(
   token: string
 ): Promise<OpenChallengeLite[]> {
   const { data } = await axios.get<{ items: OpenChallengeLite[] }>(
-    `${API_BASE}/challenges?status=open&limit=50`,
+    // NON si filtra su status=open: dal 4/8/2026 l'admin può chiudere una sfida,
+    // e filtrando le aperte una sfida chiusa spariva dall'unico punto da cui la
+    // si può riaprire — porta a senso unico. Lo stato si mostra nella riga.
+    `${API_BASE}/challenges?limit=50`,
     { headers: authHeaders(token) }
   );
   return data.items || [];

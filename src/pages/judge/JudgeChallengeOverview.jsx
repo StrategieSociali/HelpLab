@@ -483,14 +483,26 @@ export default function JudgeChallengeOverview() {
         {/* Chiusura/riapertura sfida — solo admin. Vive qui perché questa è la
             pagina operativa della singola sfida, dove l'admin già interviene
             (force-release, override). */}
-        {isAdmin && chStatus && (
+        {isAdmin && (
           <div className="card" style={{ padding: 16, marginTop: 16 }}>
             <h2 className="dynamic-title">Stato della sfida</h2>
-            <TextBlock>
-              {chIsOpen
-                ? "La sfida è aperta: i partecipanti possono inviare nuovi contributi. Chiudendola gli invii si fermano subito, mentre i contributi già ricevuti restano da revisionare e i risultati restano consultabili."
-                : "La sfida è chiusa: non accetta nuovi contributi. Riaprendola i partecipanti potranno inviarne di nuovi."}
-            </TextBlock>
+
+            {/* Se lo stato non arriva, si DICE — non si nasconde il riquadro:
+                un comando che sparisce senza spiegazione manda l'admin a cercare
+                un percorso sbagliato invece del vero motivo. */}
+            {!chStatus ? (
+              <TextBlock>
+                Stato non disponibile: questa versione dell'API non lo espone
+                ancora. Il comando di chiusura richiede il backend 0.17.4 o
+                successivo sull'ambiente a cui sei collegato.
+              </TextBlock>
+            ) : (
+              <TextBlock>
+                {chIsOpen
+                  ? "La sfida è aperta: i partecipanti possono inviare nuovi contributi. Chiudendola gli invii si fermano subito, mentre i contributi già ricevuti restano da revisionare e i risultati restano consultabili."
+                  : "La sfida è chiusa: non accetta nuovi contributi. Riaprendola i partecipanti potranno inviarne di nuovi."}
+              </TextBlock>
+            )}
 
             {statusError && (
               <div className="callout error" role="alert" style={{ marginTop: 8 }}>
@@ -501,11 +513,13 @@ export default function JudgeChallengeOverview() {
             <button
               className="btn btn-outline"
               onClick={onToggleChallengeStatus}
-              disabled={statusBusy}
+              disabled={statusBusy || !chStatus}
               style={{ marginTop: 10 }}
             >
               {statusBusy
                 ? "Aggiornamento…"
+                : !chStatus
+                ? "Non disponibile"
                 : chIsOpen
                 ? "Chiudi la sfida"
                 : "Riapri la sfida"}
