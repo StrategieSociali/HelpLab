@@ -34,11 +34,15 @@
  *   (task_id non serve: arriva dalla submission)
  *   Su 409 (lock coda giudici: già revisionata da un'altra sessione)
  *   la lista viene ricaricata automaticamente.
+ *   Se la risposta porta `points_pending: true` la decisione è registrata ma i
+ *   punti NON sono stati assegnati (motore in avaria): si dichiara a schermo.
  *
  * - Override admin (§7.4): SOLO admin, sulle submission già decise
  *   POST /api/v1/submissions/:id/override  Body: { decision, points?, note? }
- *   Ribalta approved↔rejected (loggato). La revoca punti su approved→rejected
- *   resta MANUALE (clawback admin, §3-bis): la UI lo ricorda.
+ *   Ribalta approved↔rejected (loggato). Su una submission GIÀ approvata i punti
+ *   vengono ora rettificati davvero anche in classifica (bug #9, BE 0.17.6).
+ *   La revoca punti su approved→rejected resta MANUALE (clawback admin, §3-bis):
+ *   la UI lo ricorda.
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -205,6 +209,14 @@ export default function JudgeChallengeOverview() {
   // form state per ogni submission: solo points e note (task_id non serve più)
   const [forms, setForms] = useState({}); // { [subId]: { points, note, busy, err } }
 
+  // Motore punti in avaria (bug #10): il BE risponde `points_pending: true` quando
+  // la decisione è registrata ma i punti NON sono stati assegnati. Prima questo caso
+  // era invisibile — la revisione diceva "approvato, N punti" e il partecipante non
+  // riceveva nulla. Sta a livello di pagina e non nel form della singola submission
+  // perché dopo l'approvazione la lista si ricarica e la card sparisce dai pending:
+  // un messaggio agganciato al form se ne andrebbe con lei, senza essere letto.
+  const [pointsAlert, setPointsAlert] = useState(null); // { subId }
+
   // Mappa codice ISTAT → label comune, per mostrare il comune di partenza dei
   // task mobility in chiaro (il payload contiene solo il codice). Caricata una volta.
   const [comuniById, setComuniById] = useState(null);
@@ -302,12 +314,17 @@ export default function JudgeChallengeOverview() {
     }
 
     setForm(sub.id, { busy: true, err: "" });
+    setPointsAlert(null);
     try {
-      await reviewSubmission(token, sub.id, {
+      const res = await reviewSubmission(token, sub.id, {
         decision: "approved",
         points: Number(f.points),
         note: f.note?.trim() || undefined,
       });
+
+      // L'approvazione è valida (non si blocca la coda durante l'evento), ma se il
+      // motore non ha assegnato i punti va detto: il silenzio era il bug.
+      if (res?.points_pending) setPointsAlert({ subId: sub.id });
 
       await loadSubmissions({ reset: true });
       const ov = await getJudgeChallengeOverview(token, id);
@@ -397,12 +414,14 @@ export default function JudgeChallengeOverview() {
       return;
     }
     setForm(sub.id, { busy: true, err: "" });
+    setPointsAlert(null);
     try {
-      await overrideSubmission(token, sub.id, {
+      const res = await overrideSubmission(token, sub.id, {
         decision,
         points: decision === "approved" ? Number(f.points) : undefined,
         note: f.note?.trim() || undefined,
       });
+      if (res?.points_pending) setPointsAlert({ subId: sub.id });
       await loadSubmissions({ reset: true });
       const ov = await getJudgeChallengeOverview(token, id);
       setOverview(ov);
@@ -572,6 +591,28 @@ export default function JudgeChallengeOverview() {
 
           {sError && <div className="callout error">{sError}</div>}
           {sLoading && subs.length === 0 && <div className="callout neutral">Caricamento…</div>}
+
+          {/* Motore punti in avaria (#10): la decisione è registrata, i punti no.
+              Non si dice "errore" perché la revisione è andata a buon fine: si dice
+              esattamente cosa manca e chi se ne occupa. */}
+          {pointsAlert && (
+            <div className="callout error" style={{ marginTop: 10 }}>
+              <strong>Contributo #{pointsAlert.subId}: approvato, ma i punti non sono
+              stati assegnati.</strong>
+              <div style={{ marginTop: 6 }}>
+                La tua decisione è registrata e non va rifatta. Il calcolo dei punti è
+                però fallito, quindi in classifica non risulta ancora nulla: segnala il
+                numero del contributo all'organizzatore, che può assegnarli a mano.
+              </div>
+              <button
+                className="btn btn-outline"
+                style={{ marginTop: 10 }}
+                onClick={() => setPointsAlert(null)}
+              >
+                Ho capito
+              </button>
+            </div>
+          )}
 
           {/* PENDING */}
           <div style={{ marginTop: 10 }}>
