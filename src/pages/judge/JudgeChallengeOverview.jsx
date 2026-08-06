@@ -40,9 +40,10 @@
  * - Override admin (§7.4): SOLO admin, sulle submission già decise
  *   POST /api/v1/submissions/:id/override  Body: { decision, points?, note? }
  *   Ribalta approved↔rejected (loggato). Su una submission GIÀ approvata i punti
- *   vengono ora rettificati davvero anche in classifica (bug #9, BE 0.17.6).
- *   La revoca punti su approved→rejected resta MANUALE (clawback admin, §3-bis):
- *   la UI lo ricorda.
+ *   vengono ora rettificati davvero anche in classifica (bug #9, BE 0.17.6), e il
+ *   rifiuto di un contributo approvato ne toglie i punti e lo scala dai verificati
+ *   (clawback automatico, BE 0.17.7). La CO2 dell'impatto resta invece nei totali:
+ *   è il passo successivo, deciso il 6/8 e in coda.
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -215,7 +216,7 @@ export default function JudgeChallengeOverview() {
   // riceveva nulla. Sta a livello di pagina e non nel form della singola submission
   // perché dopo l'approvazione la lista si ricarica e la card sparisce dai pending:
   // un messaggio agganciato al form se ne andrebbe con lei, senza essere letto.
-  const [pointsAlert, setPointsAlert] = useState(null); // { subId }
+  const [pointsAlert, setPointsAlert] = useState(null); // { subId, kind }
 
   // Mappa codice ISTAT → label comune, per mostrare il comune di partenza dei
   // task mobility in chiaro (il payload contiene solo il codice). Caricata una volta.
@@ -324,7 +325,7 @@ export default function JudgeChallengeOverview() {
 
       // L'approvazione è valida (non si blocca la coda durante l'evento), ma se il
       // motore non ha assegnato i punti va detto: il silenzio era il bug.
-      if (res?.points_pending) setPointsAlert({ subId: sub.id });
+      if (res?.points_pending) setPointsAlert({ subId: sub.id, kind: "not_awarded" });
 
       await loadSubmissions({ reset: true });
       const ov = await getJudgeChallengeOverview(token, id);
@@ -406,7 +407,8 @@ export default function JudgeChallengeOverview() {
   };
 
   // Override admin (§7.4): ribalta una submission già decisa. Approvando serve
-  // il punteggio; ribaltando a rifiutata i punti vanno tolti a mano (clawback).
+  // il punteggio; ribaltando a rifiutata i punti escono da soli dalla classifica
+  // (clawback automatico dal 6/8/2026, BE 0.17.7). La CO2 resta per ora nei totali.
   const onOverride = async (sub, decision) => {
     const f = forms[sub.id] || {};
     if (decision === "approved" && (f.points === "" || f.points == null || Number.isNaN(Number(f.points)))) {
@@ -421,7 +423,12 @@ export default function JudgeChallengeOverview() {
         points: decision === "approved" ? Number(f.points) : undefined,
         note: f.note?.trim() || undefined,
       });
-      if (res?.points_pending) setPointsAlert({ subId: sub.id });
+      if (res?.points_pending) {
+        setPointsAlert({
+          subId: sub.id,
+          kind: decision === "rejected" ? "not_revoked" : "not_awarded",
+        });
+      }
       await loadSubmissions({ reset: true });
       const ov = await getJudgeChallengeOverview(token, id);
       setOverview(ov);
@@ -597,13 +604,29 @@ export default function JudgeChallengeOverview() {
               esattamente cosa manca e chi se ne occupa. */}
           {pointsAlert && (
             <div className="callout error" style={{ marginTop: 10 }}>
-              <strong>Contributo #{pointsAlert.subId}: approvato, ma i punti non sono
-              stati assegnati.</strong>
-              <div style={{ marginTop: 6 }}>
-                La tua decisione è registrata e non va rifatta. Il calcolo dei punti è
-                però fallito, quindi in classifica non risulta ancora nulla: segnala il
-                numero del contributo all'organizzatore, che può assegnarli a mano.
-              </div>
+              {pointsAlert.kind === "not_revoked" ? (
+                <>
+                  <strong>Contributo #{pointsAlert.subId}: rifiutato, ma i punti non
+                  sono stati tolti dalla classifica.</strong>
+                  <div style={{ marginTop: 6 }}>
+                    La tua decisione è registrata e non va rifatta. La rimozione dei
+                    punti è però fallita, quindi il contributo risulta ancora in
+                    classifica: segnala il numero all'organizzatore, che può toglierli
+                    a mano.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <strong>Contributo #{pointsAlert.subId}: approvato, ma i punti non
+                  sono stati assegnati.</strong>
+                  <div style={{ marginTop: 6 }}>
+                    La tua decisione è registrata e non va rifatta. Il calcolo dei punti
+                    è però fallito, quindi in classifica non risulta ancora nulla:
+                    segnala il numero del contributo all'organizzatore, che può
+                    assegnarli a mano.
+                  </div>
+                </>
+              )}
               <button
                 className="btn btn-outline"
                 style={{ marginTop: 10 }}
