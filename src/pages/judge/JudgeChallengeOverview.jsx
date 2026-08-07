@@ -197,6 +197,25 @@ export default function JudgeChallengeOverview() {
   const [oLoading, setOLoading] = useState(true);
   const [oError, setOError] = useState("");
 
+  // Cutover del Motore Punti attivo? Quando lo è, il punteggio lo decide il
+  // motore e il numero del giudice viene sostituito: chiederlo come obbligatorio
+  // significherebbe far digitare un valore che verrà scartato, a ogni
+  // approvazione e proprio mentre la coda è piena (rilievo M6, 7/8/2026).
+  //
+  // Il campo resta obbligatorio a cutover SPENTO, e non è un dettaglio: lì il
+  // backend fa `points ?? 0`, quindi un campo vuoto assegnerebbe zero punti in
+  // silenzio. La validazione va allentata solo dove il numero è davvero inutile.
+  const [calibrationBeta, setCalibrationBeta] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .get("/v1/points-status")
+      .then(({ data }) => { if (alive) setCalibrationBeta(!!data?.calibration_beta); })
+      .catch(() => { /* endpoint assente o BE vecchio: si resta sul comportamento obbligatorio */ });
+    return () => { alive = false; };
+  }, []);
+
   // Cambio stato sfida (admin): busy + errore dedicati, per non confonderli con
   // gli stati della revisione.
   const [statusBusy, setStatusBusy] = useState(false);
@@ -309,8 +328,18 @@ export default function JudgeChallengeOverview() {
 
   const onApprove = async (sub) => {
     const f = forms[sub.id] || {};
-    if (f.points === "" || Number.isNaN(Number(f.points))) {
+    const pointsMancanti = f.points === "" || f.points == null;
+
+    // A cutover acceso il punteggio lo calcola la piattaforma: il campo è
+    // facoltativo e si può approvare lasciandolo vuoto. A cutover spento resta
+    // obbligatorio, altrimenti si assegnerebbero zero punti senza accorgersene.
+    if (!calibrationBeta && pointsMancanti) {
       setForm(sub.id, { err: "Inserisci i punti (numero) per approvare." });
+      return;
+    }
+    // Un valore scritto ma non numerico è un errore in entrambi i casi.
+    if (!pointsMancanti && Number.isNaN(Number(f.points))) {
+      setForm(sub.id, { err: "I punti devono essere un numero." });
       return;
     }
 
@@ -319,7 +348,11 @@ export default function JudgeChallengeOverview() {
     try {
       const res = await reviewSubmission(token, sub.id, {
         decision: "approved",
-        points: Number(f.points),
+        // Campo vuoto: si OMETTE invece di mandare 0. Server-side oggi è lo
+        // stesso (`points ?? 0`), ma "il giudice non ha indicato un numero" e
+        // "il giudice ha deciso zero" sono due fatti diversi, e in `judge_points`
+        // resta la traccia di ciò che la persona ha deciso.
+        points: pointsMancanti ? undefined : Number(f.points),
         note: f.note?.trim() || undefined,
       });
 
@@ -739,14 +772,26 @@ export default function JudgeChallengeOverview() {
                           {canDecide && (
                             <>
                               <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label>Punti (solo se approvi)</label>
+                                <label>
+                                  {calibrationBeta
+                                    ? "Punti (facoltativo)"
+                                    : "Punti (solo se approvi)"}
+                                </label>
                                 <input
                                   type="number"
                                   min="0"
                                   value={f.points}
                                   onChange={(e) => setForm(s.id, { points: e.target.value })}
-                                  placeholder="Es. 30"
+                                  placeholder={calibrationBeta ? "Lascia vuoto" : "Es. 30"}
                                 />
+                                {calibrationBeta && (
+                                  <div className="muted small" style={{ marginTop: 4 }}>
+                                    Il punteggio lo calcola la piattaforma dai dati del
+                                    contributo: puoi lasciare vuoto e approvare. Se scrivi
+                                    un numero, viene usato solo come riserva, nel caso il
+                                    calcolo non riesca.
+                                  </div>
+                                )}
                               </div>
 
                               <div className="form-group" style={{ marginBottom: 0 }}>
