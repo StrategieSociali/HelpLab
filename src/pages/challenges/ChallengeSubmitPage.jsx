@@ -122,9 +122,18 @@ function PhotoUploadField({ index, url, onUploaded, onRemove, t }) {
         </div>
       ) : (
         <label className="btn btn-outline photo-upload-btn" aria-busy={uploading}>
+          {/*
+            `accept="image/*"` e non l'elenco esplicito dei MIME: con una lista
+            ristretta Chrome su Android apre direttamente la GALLERIA, perché non
+            può garantire che l'uscita della fotocamera rientri nei tipi ammessi.
+            Con `image/*` torna a offrire fotocamera E galleria, che è il
+            comportamento che si aveva a SwimFit (rilievo mobile 4, 7/8/2026).
+            Non si usa `capture`: forzerebbe la fotocamera togliendo la galleria,
+            e a un evento serve poter caricare anche una foto già scattata.
+          */}
           <input
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/heic,.heic"
+            accept="image/*"
             onChange={handleFileChange}
             disabled={uploading}
             style={{ display: "none" }}

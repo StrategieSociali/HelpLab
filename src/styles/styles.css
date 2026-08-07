@@ -2620,3 +2620,84 @@ select.control {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE DEI FORM E ANTEPRIME FOTO
+   Aggiunto il 7/8/2026 dopo il test da telefono vero su helplab.space
+   (rilievi mobile 1, 2 e 3). Il pubblico del 30/8 partecipa dalla spiaggia,
+   col telefono in mano: questi form sono la parte che vedrà davvero.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* --- Form a colonna singola sotto i 700px -----------------------------------
+   `.form-grid` era `repeat(2, 1fr)` FISSO, senza alcuna media query: a 375px
+   ogni colonna stava sotto i 150px, le etichette andavano a capo una parola per
+   riga e il contenuto sfondava il contenitore. Sopra i 700px non cambia niente:
+   la regola vive solo dove il layout era già rotto. */
+@media (max-width: 700px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+
+  /* Stessa ragione per le righe flex: senza `min-width: 0` un figlio con
+     testo lungo si rifiuta di restringersi e spinge la riga oltre lo schermo. */
+  .form-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .form-row > label,
+  .form-row > div {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* --- Anteprime delle foto caricate -----------------------------------------
+   Queste classi erano usate in `ChallengeSubmitPage.jsx` ma NON esistevano in
+   nessun foglio di stile: l'anteprima veniva quindi disegnata alla dimensione
+   naturale del file, cioè qualche migliaio di pixel di una foto da telefono,
+   e da sola sfondava la pagina. */
+.photo-upload-field {
+  min-width: 0;
+}
+
+.photo-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;          /* area di tocco comoda anche con le mani bagnate */
+  text-align: center;
+}
+
+.photo-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.photo-thumb {
+  width: 72px;
+  height: 72px;
+  max-width: 100%;
+  object-fit: cover;          /* ritaglia invece di deformare: le foto sono di ogni proporzione */
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.18);
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.06);
+}
+
+.photo-preview-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.photo-uploaded-label {
+  color: #34d399;
+  font-size: 0.9rem;
+}
