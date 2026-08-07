@@ -172,7 +172,7 @@ export default function AdminAudit() {
         <div className="card" style={{ padding: 16, marginBottom: 20 }}>
           <div className="form-group" style={{ marginBottom: 10 }}>
             <label>Evento</label>
-            <select value={eventId} onChange={(e) => onSelectEvent(e.target.value)} style={{ minWidth: 240 }}>
+            <select className="control" value={eventId} onChange={(e) => onSelectEvent(e.target.value)} style={{ minWidth: 240 }}>
               <option value="">Scegli un evento…</option>
               {events.map((ev) => (
                 <option key={ev.id} value={ev.id}>

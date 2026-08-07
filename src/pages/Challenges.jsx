@@ -257,20 +257,40 @@ export default function Challenges() {
                   <div className="target-title">
                     {t('card.targetTitle')}
                   </div>
+                  {/* Il tipo target va NORMALIZZATO prima di confrontarlo (B0.2).
+                      Il confronto era con i soli valori inglesi, mentre il wizard
+                      raccoglieva testo libero in italiano ("quantità"): il riquadro
+                      obiettivo compariva con il corpo VUOTO su tutte le sfide
+                      esistenti. Dalla 1.15.31 il wizard scrive 'quantity', ma le
+                      sfide già create restano com'erano e devono continuare a
+                      mostrare il loro obiettivo. */}
                   <div className="target-body">
-                    {ch.target.kind === 'quantity' &&
-                      <span>{ch.target.amount} {ch.target.unit}</span>}
-                    {ch.target.kind === 'area' &&
-                      <span>{ch.target.amount} {ch.target.unit || 'm²'}</span>}
-                    {ch.target.kind === 'binary' &&
-                      <span>{t('card.targetBinary')}</span>}
-                    {ch.target.kind === 'composite' && (
-                      <ul className="checklist">
-                        {ch.target.items.slice(0, 4).map((it, i) => (
-                          <li key={i}>• {it.label || it.id}</li>
-                        ))}
-                      </ul>
-                    )}
+                    {(() => {
+                      const kind = String(ch.target.kind || '').trim().toLowerCase();
+                      const items = Array.isArray(ch.target.items) ? ch.target.items : null;
+
+                      if (kind === 'composite' || kind === 'misto' || items) {
+                        return items ? (
+                          <ul className="checklist">
+                            {items.slice(0, 4).map((it, i) => (
+                              <li key={i}>• {it.label || it.id}</li>
+                            ))}
+                          </ul>
+                        ) : null;
+                      }
+                      if (kind === 'binary' || kind === 'binario') {
+                        return <span>{t('card.targetBinary')}</span>;
+                      }
+                      if (kind === 'area') {
+                        return <span>{ch.target.amount} {ch.target.unit || 'm²'}</span>;
+                      }
+                      // quantity · quantità · numero · tipo assente: se c'è una
+                      // quantità la si mostra. Un obiettivo che non si vede non
+                      // serve a niente, ed è il caso in cui ricadevano tutte.
+                      return ch.target.amount != null
+                        ? <span>{ch.target.amount} {ch.target.unit || ''}</span>
+                        : null;
+                    })()}
                   </div>
                   <div className="muted small">
                     {t('card.targetNote')}

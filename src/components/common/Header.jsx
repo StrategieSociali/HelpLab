@@ -27,7 +27,7 @@
  * - Admin menu mobile si chiude quando si chiude il burger
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes";
@@ -66,6 +66,37 @@ export default function Header() {
       return !prev;
     });
   };
+
+  // Menu admin desktop: chiusura cliccando FUORI e con Esc (B14).
+  //
+  // Il pulsante ha sempre alternato correttamente lo stato; mancava ogni altra via
+  // d'uscita. Chi lo apriva e poi cliccava altrove non lo vedeva chiudersi, doveva
+  // tornare sul pulsante: due clic per chiudere, che è il difetto segnalato.
+  //
+  // `pointerdown` e non `click`: scatta prima, così il menu è già chiuso quando
+  // parte il clic sull'elemento sottostante. Il listener vive solo a menu aperto.
+  const adminMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!adminDesktopOpen) return;
+
+    const onPointerDown = (e) => {
+      // Dentro il menu (pulsante compreso) non si chiude qui: al pulsante pensa
+      // il suo onClick, che deve restare l'alternanza aperto/chiuso.
+      if (adminMenuRef.current?.contains(e.target)) return;
+      setAdminDesktopOpen(false);
+    };
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setAdminDesktopOpen(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [adminDesktopOpen]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -404,10 +435,12 @@ export default function Header() {
           {isAuthenticated ? (
             <>
               {isAdminUser && (
-                <div className="admin-menu">
+                <div className="admin-menu" ref={adminMenuRef}>
                   <button
                     className="btn btn-ghost"
                     onClick={() => setAdminDesktopOpen((prev) => !prev)}
+                    aria-expanded={adminDesktopOpen}
+                    aria-haspopup="true"
                   >
                     {t("auth.admin.label")} {adminDesktopOpen ? "▴" : "▾"}
                   </button>

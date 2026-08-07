@@ -160,6 +160,7 @@ export default function AdminCoverage() {
 
     return (
       <select
+        className="control"
         value={rowState[key]?.userId || ""}
         onChange={(e) => setRow(key, { userId: e.target.value, err: "" })}
         style={{ minWidth: 160 }}

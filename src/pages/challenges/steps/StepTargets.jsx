@@ -79,6 +79,31 @@ function getPayloadSchema(impactType) {
   return IMPACT_SCHEMA_MAP[impactType] || IMPACT_SCHEMA_MAP._default;
 }
 
+// ─── Unità dell'obiettivo, derivate dal tipo di impatto (B0.2) ────────────────
+/**
+ * L'unità del target NON è più testo libero: era scollegata sia dall'impact_type
+ * sia dai campi che il volontario compila davvero, e produceva obiettivi che
+ * contraddicevano il form — «obiettivo 3 kg» su una sfida di riuso dove si
+ * digitano capi, oppure obiettivi in km su sfide di mobilità dove i km non si
+ * inseriscono più da giugno.
+ *
+ * Il criterio: si misura l'obiettivo in ciò che la persona CONTA E DIGITA, così
+ * la coerenza è garantita per costruzione — è lo stesso numero, non due grandezze
+ * da tenere allineate a mano. La CO₂ resta il RISULTATO che la piattaforma
+ * calcola e mostra accanto: l'obiettivo motiva, la CO₂ certifica (decisione PM
+ * 7/8/2026). Per la mobilità l'unità è "spostamenti": i km non esistono più nel
+ * form e la CO₂ non è contabile a mano da chi partecipa.
+ */
+const TARGET_UNITS = {
+  mobility:      ['spostamenti'],
+  no_waste:      ['kg'],
+  reuse:         ['capi'],
+  social:        ['ore di volontariato', 'persone raggiunte'],
+  tree_planting: ['alberi'],
+};
+
+const OTHER_UNIT = '__altro__';
+
 /**
  * Label human-friendly per il riepilogo dati raccolti (sola lettura).
  * Speculare a fieldLabel() in ChallengeSubmitPage.jsx.
@@ -103,7 +128,14 @@ export default function StepTargets({ value = {}, onChange }) {
   const impactType = v.impact_type || "";
 
   const set = (patch) => onChange(patch);
-  const setTarget = (patch) => onChange({ target: { ...target, ...patch } });
+  // `kind` non si chiede più all'organizzatore: era testo libero italiano e i
+  // consumatori confrontano valori inglesi, quindi l'obiettivo non compariva mai
+  // sulla card. Con l'unità derivata il target è sempre una quantità.
+  const setTarget = (patch) => onChange({ target: { ...target, kind: 'quantity', ...patch } });
+
+  const unitOptions = TARGET_UNITS[impactType] || [];
+  const unitIsCustom =
+    !!target.unit && unitOptions.length > 0 && !unitOptions.includes(target.unit);
 
   // ── Catalogo calcolatori d'impatto (Impact Engine) ───────────────────────
   // Caricato una volta sola e condiviso da tutte le TaskCard. Espone solo
@@ -233,26 +265,48 @@ export default function StepTargets({ value = {}, onChange }) {
       )}
 
       <div className="form-grid">
-        {/* TARGET QUANTITATIVO */}
+        {/* OBIETTIVO DELLA SFIDA (B0.2) */}
         <div className="form-row">
           <label>
-            Tipo target
-            <input
-              className="control"
-              placeholder="quantità | area | numero | misto"
-              value={target.kind || ""}
-              onChange={(e) => setTarget({ kind: e.target.value })}
-            />
-          </label>
-
-          <label>
-            Unità
-            <input
-              className="control"
-              placeholder="kg | m2 | sacchi | azioni"
-              value={target.unit || ""}
-              onChange={(e) => setTarget({ unit: e.target.value })}
-            />
+            Unità dell&rsquo;obiettivo
+            {unitOptions.length === 0 ? (
+              <input
+                className="control"
+                placeholder="es. azioni"
+                value={target.unit || ""}
+                onChange={(e) => setTarget({ unit: e.target.value })}
+              />
+            ) : (
+              <>
+                <select
+                  className="control"
+                  value={unitIsCustom ? OTHER_UNIT : target.unit || ""}
+                  onChange={(e) =>
+                    setTarget({ unit: e.target.value === OTHER_UNIT ? "" : e.target.value })
+                  }
+                >
+                  <option value="">— Scegli l&rsquo;unità —</option>
+                  {unitOptions.map((u) => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                  <option value={OTHER_UNIT}>altro…</option>
+                </select>
+                {unitIsCustom && (
+                  <input
+                    className="control"
+                    style={{ marginTop: 6 }}
+                    placeholder="Specifica l&rsquo;unità"
+                    value={target.unit || ""}
+                    onChange={(e) => setTarget({ unit: e.target.value })}
+                  />
+                )}
+              </>
+            )}
+            <div className="hint">
+              {impactType
+                ? "È l'unità che i volontari contano e digitano nel form: così l'obiettivo e i contributi parlano della stessa cosa. La CO₂ la calcola la piattaforma e la mostra accanto."
+                : "Scegli prima il tipo di impatto nello Step 1."}
+            </div>
           </label>
 
           <label>
