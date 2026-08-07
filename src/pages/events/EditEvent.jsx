@@ -39,6 +39,7 @@ import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/utils/roles";
 import { updateEvent, linkChallengeToEvent, unlinkChallengeFromEvent } from "@/api/events.api";
 import { routes } from "@/routes";
+import { apiErrorMessage } from "@/utils/apiError";
 
 // Badge colore per stato evento
 function StatusBadge({ status }) {
@@ -169,8 +170,8 @@ export default function EditEvent() {
           : "Modifiche salvate.",
       });
     } catch (err) {
-      const msg = err?.response?.data?.error || err?.message || "Errore durante il salvataggio.";
-      setSaveResult({ ok: false, msg });
+      // B19: stessa validazione zod della creazione → stessa lettura per campo.
+      setSaveResult({ ok: false, msg: apiErrorMessage(err, "Errore durante il salvataggio.") });
     } finally {
       setSaving(false);
     }

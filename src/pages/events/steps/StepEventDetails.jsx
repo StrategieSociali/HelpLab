@@ -18,6 +18,10 @@ import React from "react";
 
 // Soglie validazione (allineate con i requisiti BE — handoff §8)
 const NAME_MIN = 5;
+// La descrizione è FACOLTATIVA, ma se compilata il BE ne pretende almeno 20
+// caratteri (`createEventSchema`). Il vincolo non era dichiarato da nessuna parte
+// e produceva un 400 apparentemente immotivato (B20, 6/8).
+const DESCRIPTION_MIN = 20;
 
 export default function StepEventDetails({ value = {}, onChange }) {
   const v   = value || {};
@@ -26,6 +30,9 @@ export default function StepEventDetails({ value = {}, onChange }) {
   // Feedback validazione
   const nameLen = (v.name || "").trim().length;
   const nameOk  = nameLen >= NAME_MIN;
+
+  const descLen = (v.description || "").trim().length;
+  const descOk  = descLen === 0 || descLen >= DESCRIPTION_MIN;
 
   const datesOk =
     !!v.start_date &&
@@ -60,16 +67,23 @@ export default function StepEventDetails({ value = {}, onChange }) {
           {/* Lo slug viene generato dal BE dal nome — mai costruirlo qui */}
         </label>
 
-        {/* DESCRIZIONE */}
+        {/* DESCRIZIONE — facoltativa, ma con un minimo se compilata (B20) */}
         <label>
           Descrizione
           <textarea
-            className="control"
+            className={`control ${descLen === 0 ? "" : descOk ? "input-valid" : "input-invalid"}`}
             rows={4}
             placeholder="Descrivi l'evento, gli obiettivi, chi può partecipare…"
             value={v.description || ""}
             onChange={(e) => set({ description: e.target.value })}
           />
+          <div className={`hint ${descOk ? "ok" : "warn"}`}>
+            {descLen === 0
+              ? `Facoltativa. Se la compili servono almeno ${DESCRIPTION_MIN} caratteri.`
+              : descOk
+              ? "OK"
+              : `Ancora ${DESCRIPTION_MIN - descLen} caratteri (oppure lasciala vuota).`}
+          </div>
         </label>
 
         {/* DATE */}

@@ -34,11 +34,54 @@ import {
 import { routes } from "@/routes";
 import "../../styles/dynamic-pages.css";
 
+/**
+ * Messaggio di vuoto, costruito sui conteggi `explain` del BE (B7).
+ *
+ * Il vuoto ha ragioni opposte — "va tutto coperto" e "ce le hai già tutte tu" —
+ * e la check-list §4 chiede che la sparizione sia SPIEGATA, non silenziosa: il
+ * 4/8 il PM aveva letto un marketplace vuoto come un endpoint rotto, mentre il
+ * dato era corretto (era grantee di tutte e 12 le sfide).
+ *
+ * Senza `explain` (backend precedente alla 0.18.2) si ricade sul testo generico:
+ * il frontend gira anche contro un BE non ancora aggiornato.
+ */
+function emptyMessage(explain) {
+  if (!explain) {
+    return "Nessuna sfida o evento scoperto al momento. Torna più tardi: le nuove offerte compaiono qui.";
+  }
+
+  const ch = explain.challenges || {};
+  const ev = explain.events || {};
+  const total = (ch.total || 0) + (ev.total || 0);
+
+  if (total === 0) {
+    return "Non c'è ancora nessuna sfida aperta né evento pubblicato. Appena ne nascono li trovi qui.";
+  }
+
+  const mine        = (ch.alreadyJudge || 0) + (ev.alreadyJudge || 0);
+  const covered     = (ch.covered || 0) + (ev.covered || 0);
+  const participant = ch.participant || 0;
+
+  const reasons = [];
+  if (mine > 0)    reasons.push(`sei già giudice su ${mine}`);
+  if (covered > 0) reasons.push(`${covered} ${covered === 1 ? "ha" : "hanno"} già il numero di giudici previsto`);
+  if (participant > 0) {
+    reasons.push(
+      `a ${participant} partecipi come volontario, e non si può giudicare una sfida a cui si partecipa`
+    );
+  }
+
+  const universo = `${total} tra sfide aperte ed eventi pubblicati`;
+  return reasons.length === 0
+    ? `Nessuna candidatura disponibile al momento, su ${universo}.`
+    : `Su ${universo} non ce n'è nessuno su cui candidarti: ${reasons.join(" · ")}.`;
+}
+
 export default function JudgeMarketplace() {
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const [data, setData] = useState({ challenges: [], events: [] });
+  const [data, setData] = useState({ challenges: [], events: [], explain: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   // stato per singolo elemento in opt-in: { [`c:${id}`|`e:${id}`]: { busy, err } }
@@ -53,6 +96,7 @@ export default function JudgeMarketplace() {
       setData({
         challenges: res.challenges || [],
         events: res.events || [],
+        explain: res.explain || null,
       });
     } catch (e) {
       setError("Impossibile caricare il marketplace.");
@@ -119,10 +163,14 @@ export default function JudgeMarketplace() {
         )}
 
         {!loading && !error && isEmpty && (
-          <TextBlock>
-            Nessuna sfida o evento scoperto al momento. Torna più tardi: le nuove
-            offerte compaiono qui.
-          </TextBlock>
+          <>
+            <TextBlock>{emptyMessage(data.explain)}</TextBlock>
+            {data.explain && (
+              <p className="muted small">
+                Non è un errore: la vetrina mostra solo ciò che è ancora scoperto.
+              </p>
+            )}
+          </>
         )}
 
         {!loading && !error && !isEmpty && (

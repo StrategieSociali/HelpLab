@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/utils/roles";
 import { createEvent, linkChallengeToEvent } from "@/api/events.api";
+import { apiErrorMessage } from "@/utils/apiError";
 import { routes } from "@/routes";
 import StepEventDetails from "./steps/StepEventDetails";
 import StepEventChallenges from "./steps/StepEventChallenges";
@@ -99,11 +100,11 @@ export default function CreateEvent() {
         setCreatedEventId(eventId);
         setCreatedEventSlug(eventSlug);
       } catch (err) {
-        const msg =
-          err?.response?.data?.error ||
-          err?.message ||
-          "Errore durante la creazione dell'evento. Riprova.";
-        setSubmitError(msg);
+        // B19: il BE dice quale campo non passa (`data.errors`), e va mostrato —
+        // prima si vedeva solo «Request failed with status code 400».
+        setSubmitError(
+          apiErrorMessage(err, "Errore durante la creazione dell'evento. Riprova.")
+        );
         setBusy(false);
         return;
       }

@@ -42,8 +42,8 @@
  *   Ribalta approved↔rejected (loggato). Su una submission GIÀ approvata i punti
  *   vengono ora rettificati davvero anche in classifica (bug #9, BE 0.17.6), e il
  *   rifiuto di un contributo approvato ne toglie i punti e lo scala dai verificati
- *   (clawback automatico, BE 0.17.7). La CO2 dell'impatto resta invece nei totali:
- *   è il passo successivo, deciso il 6/8 e in coda.
+ *   (clawback automatico, BE 0.17.7) e ne fa uscire anche la CO2 da dashboard,
+ *   report e attestato (bug #11, BE 0.18.0: la riga d'impatto resta, marcata revocata).
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -408,7 +408,7 @@ export default function JudgeChallengeOverview() {
 
   // Override admin (§7.4): ribalta una submission già decisa. Approvando serve
   // il punteggio; ribaltando a rifiutata i punti escono da soli dalla classifica
-  // (clawback automatico dal 6/8/2026, BE 0.17.7). La CO2 resta per ora nei totali.
+  // (clawback automatico dal 6/8/2026, BE 0.17.7) e con loro la CO2 (BE 0.18.0).
   const onOverride = async (sub, decision) => {
     const f = forms[sub.id] || {};
     if (decision === "approved" && (f.points === "" || f.points == null || Number.isNaN(Number(f.points)))) {
@@ -855,8 +855,9 @@ export default function JudgeChallengeOverview() {
                                 />
                               </div>
                               <div className="muted small">
-                                Ribaltare un'approvazione a rifiutata non revoca i punti in automatico:
-                                vanno tolti a mano (clawback §3-bis).
+                                Ribaltare un'approvazione a rifiutata toglie da sé i punti dalla
+                                classifica e la CO₂ dai totali: non serve fare altro. Il movimento
+                                resta a registro azzerato, con la sua storia.
                               </div>
                               {f.err && <div className="callout error">{f.err}</div>}
                               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

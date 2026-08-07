@@ -131,20 +131,48 @@ export default function AdminCoverage() {
     }
   };
 
-  const judgeSelect = (key) => (
-    <select
-      value={rowState[key]?.userId || ""}
-      onChange={(e) => setRow(key, { userId: e.target.value, err: "" })}
-      style={{ minWidth: 160 }}
-    >
-      <option value="">Scegli giudice…</option>
-      {judges.map((j) => (
-        <option key={j.id} value={j.id}>
-          {j.username}
-        </option>
-      ))}
-    </select>
-  );
+  /**
+   * Tendina dei giudici assegnabili a QUELLA riga (B13).
+   *
+   * Prima elencava tutti i giudici, compresi quelli già assegnati: l'admin non
+   * aveva modo di sapere quale scegliere e scopriva l'errore solo dopo il clic,
+   * con un 409. Si escludono i già assegnati (`assignedUserIds`) e, per le sfide,
+   * chi vi partecipa come volontario (`ineligibleUserIds`, §7.1).
+   *
+   * I due elenchi arrivano da `GET /admin/coverage` (BE ≥ 0.18.2); con un backend
+   * precedente sono `undefined` e la tendina resta completa come prima.
+   */
+  const judgeSelect = (key, row) => {
+    const excluded = new Set([
+      ...(row?.assignedUserIds || []),
+      ...(row?.ineligibleUserIds || []),
+    ].map(Number));
+    const selectable = judges.filter((j) => !excluded.has(Number(j.id)));
+
+    if (selectable.length === 0) {
+      return (
+        <span className="muted small">
+          Nessun giudice assegnabile: sono già tutti su questa riga o esclusi perché
+          vi partecipano.
+        </span>
+      );
+    }
+
+    return (
+      <select
+        value={rowState[key]?.userId || ""}
+        onChange={(e) => setRow(key, { userId: e.target.value, err: "" })}
+        style={{ minWidth: 160 }}
+      >
+        <option value="">Scegli giudice…</option>
+        {selectable.map((j) => (
+          <option key={j.id} value={j.id}>
+            {j.username}
+          </option>
+        ))}
+      </select>
+    );
+  };
 
   const isEmpty = data.challenges.length === 0 && data.events.length === 0;
 
@@ -219,7 +247,7 @@ export default function AdminCoverage() {
                         </div>
 
                         <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
-                          {judgeSelect(key)}
+                          {judgeSelect(key, c)}
                           <button className="btn btn-outline" disabled={rs.busy} onClick={() => doAssign("c", c.id)}>
                             {rs.busy ? "…" : "Assegna"}
                           </button>
@@ -252,7 +280,7 @@ export default function AdminCoverage() {
                         </div>
 
                         <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
-                          {judgeSelect(key)}
+                          {judgeSelect(key, ev)}
                           <button className="btn btn-outline" disabled={rs.busy} onClick={() => doAssign("e", ev.id)}>
                             {rs.busy ? "…" : "Assegna all'evento"}
                           </button>

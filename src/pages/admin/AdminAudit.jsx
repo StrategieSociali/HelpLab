@@ -9,8 +9,9 @@
  * SCOPO
  * L'admin guida il run d'audit su un EVENTO: apre il campione iniziale, valuta il
  * cancello di qualità (che approfondisce se sotto target), vede lo stato, e lavora
- * la lista dei clawback (revoca punti ADMIN-MANUALE per agosto: reverte a mano,
- * poi segna risolto). La re-review dei casi la fanno i giudici (coda audit §3-bis).
+ * l'elenco dei contributi invalidati. Dal 6/8/2026 la revoca NON è più manuale: si
+ * rifiuta il contributo e punti (BE 0.17.7) e CO2 (BE 0.18.0) escono da soli; qui si
+ * segna solo che è stato fatto. La re-review dei casi la fanno i giudici (§3-bis).
  *
  * DATI
  * - GET  /api/v1/admin/events                       → selettore evento
@@ -162,8 +163,8 @@ export default function AdminAudit() {
               qualità non rientra o si è controllato tutto il pool.
             </li>
             <li>
-              Ogni caso <strong>invalidato</strong> finisce nei <strong>clawback</strong>:
-              i punti già assegnati vanno tolti a mano (vedi sotto).
+              Ogni caso <strong>invalidato</strong> finisce nell'elenco qui sotto:
+              i punti già assegnati vanno ancora tolti.
             </li>
           </ol>
         </div>
@@ -239,17 +240,18 @@ export default function AdminAudit() {
               </ul>
             </div>
 
-            {/* Clawback da revertire */}
+            {/* Contributi invalidati: punti ancora da togliere */}
             <div className="card" style={{ padding: 16 }}>
-              <h2 className="dynamic-title">Clawback da revertire ({clawbacks.length})</h2>
+              <h2 className="dynamic-title">Punti da togliere ({clawbacks.length})</h2>
               <p className="muted small" style={{ marginTop: 4 }}>
-                "Clawback" = recupero dei punti. Quando un giudice <strong>invalida</strong>{" "}
-                un caso, i punti già assegnati alla persona vanno <strong>tolti a mano</strong>
-                {" "}(per ora non è automatico): revocali nel sistema punti, poi premi
-                <strong> "Segna risolto"</strong> per toglierlo da questa lista.
+                Un giudice ha ri-controllato questi contributi e li ha giudicati{" "}
+                <strong>non validi</strong>, ma i punti e la CO₂ sono ancora conteggiati.
+                Per toglierli apri il contributo nella pagina della sua sfida e{" "}
+                <strong>rifiutalo</strong>: punti e impatto escono da soli. Poi torna qui e
+                premi <strong>"Fatto"</strong> per togliere la riga dall'elenco.
               </p>
               {clawbacks.length === 0 ? (
-                <div className="card-info neutral" style={{ marginTop: 10 }}>Nessun clawback in sospeso.</div>
+                <div className="card-info neutral" style={{ marginTop: 10 }}>Nessun contributo da sistemare.</div>
               ) : (
                 <div style={{ display: "grid", gap: 12, marginTop: 10 }}>
                   {clawbacks.map((c) => {
@@ -266,7 +268,7 @@ export default function AdminAudit() {
                         </div>
                         <div style={{ marginTop: 10 }}>
                           <button className="btn btn-outline" disabled={rs.busy} onClick={() => onResolve(c)}>
-                            {rs.busy ? "…" : "Segna risolto (punti revertiti)"}
+                            {rs.busy ? "…" : "Fatto, punti tolti"}
                           </button>
                         </div>
                         {rs.err && <div className="callout error" style={{ marginTop: 8 }}>{rs.err}</div>}
