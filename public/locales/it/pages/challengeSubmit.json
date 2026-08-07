@@ -54,7 +54,11 @@
       "format": "Formato non supportato. Usa JPG, PNG o WEBP.",
       "size": "Il file è troppo grande. Massimo 10 MB per foto.",
       "upload": "Errore durante il caricamento. Riprova."
-    }
+    },
+    "cameraBtn": "📷 Scatta foto",
+    "galleryBtn": "🖼️ Dalla galleria",
+    "cameraAria": "Scatta la foto {{index}} con la fotocamera",
+    "galleryAria": "Scegli la foto {{index}} dalla galleria"
   },
   "cta": {
     "submit": "Invia contributo",

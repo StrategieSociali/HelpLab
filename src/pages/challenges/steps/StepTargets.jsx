@@ -328,8 +328,9 @@ export default function StepTargets({ value = {}, onChange }) {
           </label>
         </div>
 
-        {/* TASK */}
-        <div style={{ marginTop: 8 }}>
+        {/* TASK — sezione a tutta larghezza: dentro la griglia a due colonne
+            finirebbe in una colonna sola, e ogni card di task sfonderebbe. */}
+        <div className="form-grid__full" style={{ marginTop: 8 }}>
           <h4>Task (almeno 1 con evidenze)</h4>
 
           {tasks.map((t, i) => (

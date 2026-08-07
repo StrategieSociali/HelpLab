@@ -121,33 +121,49 @@ function PhotoUploadField({ index, url, onUploaded, onRemove, t }) {
           </div>
         </div>
       ) : (
-        <label className="btn btn-outline photo-upload-btn" aria-busy={uploading}>
-          {/*
-            `accept="image/*"` e non l'elenco esplicito dei MIME: con una lista
-            ristretta Chrome su Android apre direttamente la GALLERIA, perché non
-            può garantire che l'uscita della fotocamera rientri nei tipi ammessi.
-            Con `image/*` torna a offrire fotocamera E galleria, che è il
-            comportamento che si aveva a SwimFit (rilievo mobile 4, 7/8/2026).
-            Non si usa `capture`: forzerebbe la fotocamera togliendo la galleria,
-            e a un evento serve poter caricare anche una foto già scattata.
-          */}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            disabled={uploading}
-            style={{ display: "none" }}
-            aria-label={t("photo.uploadAria", { index: index + 1 })}
-          />
-          {uploading ? (
+        /*
+          DUE pulsanti, non uno.
+          `accept="image/*"` da solo non basta più: su Android recente Chrome apre
+          il Photo Picker di sistema, che la fotocamera NON la offre (verificato dal
+          PM su due telefoni diversi, 7/8/2026). L'unico modo per aprire davvero la
+          fotocamera è un input con `capture`, che però esclude la galleria: da qui
+          due controlli distinti, così la persona sceglie e nessuna delle due strade
+          viene tolta. A un evento servono entrambe: chi scatta sul momento e chi
+          carica una foto fatta poco prima.
+        */
+        uploading ? (
+          <div className="btn btn-outline photo-upload-btn" aria-busy="true">
             <span className="upload-loading">
               <span className="spinner-inline" aria-hidden="true" />
               {t("photo.uploading")}
             </span>
-          ) : (
-            <span>📷 {t("photo.uploadBtn", { index: index + 1 })}</span>
-          )}
-        </label>
+          </div>
+        ) : (
+          <div className="photo-upload-actions">
+            <label className="btn btn-primary photo-upload-btn">
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+                aria-label={t("photo.cameraAria", { index: index + 1 })}
+              />
+              <span>{t("photo.cameraBtn")}</span>
+            </label>
+
+            <label className="btn btn-outline photo-upload-btn">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+                aria-label={t("photo.galleryAria", { index: index + 1 })}
+              />
+              <span>{t("photo.galleryBtn")}</span>
+            </label>
+          </div>
+        )
       )}
 
       {uploadError && (

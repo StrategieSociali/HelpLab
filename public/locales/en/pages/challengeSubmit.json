@@ -54,7 +54,11 @@
       "format": "Unsupported format. Use JPG, PNG or WEBP.",
       "size": "File is too large. Maximum 10 MB per photo.",
       "upload": "Upload failed. Please try again."
-    }
+    },
+    "cameraBtn": "📷 Take a photo",
+    "galleryBtn": "🖼️ From gallery",
+    "cameraAria": "Take photo {{index}} with the camera",
+    "galleryAria": "Pick photo {{index}} from the gallery"
   },
   "cta": {
     "submit": "Submit contribution",

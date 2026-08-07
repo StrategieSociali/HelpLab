@@ -2701,3 +2701,25 @@ select.control {
   color: #34d399;
   font-size: 0.9rem;
 }
+
+/* Cella che occupa TUTTA la larghezza della griglia.
+   Serve ai blocchi che non sono un campo ma una sezione: dentro una griglia a
+   due colonne finivano in una colonna sola, larghi la metà, e il contenuto (una
+   card con i suoi campi) sfondava spingendo il resto fuori asse. È il caso
+   dell'elenco task nella creazione sfida, segnalato dal PM il 7/8/2026. */
+.form-grid__full {
+  grid-column: 1 / -1;
+}
+
+/* Due strade per la foto: fotocamera e galleria, affiancate.
+   Su schermo stretto vanno in colonna e occupano tutta la larghezza: sono i due
+   pulsanti che una persona preme in spiaggia, con una mano sola. */
+.photo-upload-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.photo-upload-actions .photo-upload-btn {
+  flex: 1 1 150px;
+}
