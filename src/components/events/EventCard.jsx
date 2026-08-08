@@ -176,7 +176,14 @@ export default function EventCard({ event, onOpen }) {
       {/* Sponsor + sfide aperte */}
       <div className="row two-col soft-gap">
         <div className="mini-box">
-          <div className="mini-label">Organizzato da</div>
+          {/* «Con il sostegno di» e non «Organizzato da»: il dato mostrato è il
+              primo SPONSOR, e uno sponsor non è l'organizzatore. Sulla card del
+              30/8 avrebbe presentato un'azienda sostenitrice come se fosse Futuro
+              Verde APS, che l'evento lo organizza davvero. Un'etichetta che
+              promette una cosa e ne mostra un'altra è peggio di una casella vuota.
+              L'organizzatore come entità NON esiste nel modello dati: vedi
+              `bug-e-todo.md`. */}
+          <div className="mini-label">Con il sostegno di</div>
           <div className="mini-value">
             {mainSponsor?.logo_url ? (
               <img
