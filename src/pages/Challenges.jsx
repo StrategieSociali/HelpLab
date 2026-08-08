@@ -79,6 +79,7 @@ const normalizeChallengeItem = (c) => {
     status: c.status || "open",
     budget: c.budget ?? null,
     sponsor: c.sponsor ?? null,
+    sponsors: Array.isArray(c.sponsors) ? c.sponsors : (c.sponsor ? [c.sponsor] : []),
     judge: judge ?? null,
     target: c.target ?? null,
     scoreboard: c.scoreboard ?? [],
@@ -159,7 +160,7 @@ export default function Challenges() {
           ch.location,
           ch.rules,
           ch.type,
-          ch.sponsor?.name,
+          ...(ch.sponsors ?? []).map((sp) => sp.name),
           ch.judge?.name,
           ch.judge?.username,
           ch.judge?.email
@@ -301,7 +302,14 @@ export default function Challenges() {
               <div className="row two-col soft-gap">
                 <div className="mini-box">
                   <div className="mini-label">{t('card.sponsor')}</div>
-                  <div className="mini-value">{ch.sponsor?.name || '—'}</div>
+                  {/* Tutti gli sponsor, non solo quello diretto: una sfida può
+                      averne più d'uno tramite sponsorizzazioni approvate, e
+                      mostrarne uno solo darebbe visibilità a caso. */}
+                  <div className="mini-value">
+                    {ch.sponsors?.length > 0
+                      ? ch.sponsors.map((sp) => sp.name).join(' · ')
+                      : '—'}
+                  </div>
                 </div>
                 <div className="mini-box">
                   <div className="mini-label">{t('card.judge')}</div>
