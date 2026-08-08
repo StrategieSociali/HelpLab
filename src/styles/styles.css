@@ -2639,6 +2639,28 @@ select.control {
     column-gap: 0;
   }
 
+  /* Un elemento di griglia ha `min-width: auto`, quindi NON si restringe sotto la
+     larghezza minima del proprio contenuto. Finché la colonna è vuota il problema
+     non si vede; appena dentro ci finisce una scheda task con una `select` dalle
+     opzioni lunghe o il campo dei comuni con datalist, quel minimo supera lo
+     schermo e la colonna sborda, disallineando tutta la pagina. Segnalato dal PM
+     l'8/8 provando a inserire un task da telefono: senza task tutto a posto, con
+     un task il layout si apre a destra.
+     Stessa ragione per gli elementi flex, che hanno `min-width: auto` anch'essi. */
+  .form-grid > *,
+  .form-row > * {
+    min-width: 0;
+  }
+
+  /* Rete di sicurezza sui campi: un input o una select non deve mai essere più
+     larga del contenitore, qualunque cosa contenga. */
+  .form-grid .control,
+  .form-grid input,
+  .form-grid select,
+  .form-grid textarea {
+    max-width: 100%;
+  }
+
   /* Stessa ragione per le righe flex: senza `min-width: 0` un figlio con
      testo lungo si rifiuta di restringersi e spinge la riga oltre lo schermo. */
   .form-row {

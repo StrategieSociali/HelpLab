@@ -32,6 +32,28 @@ import { getEventDetail } from "@/api/events.api";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes";
 import EventConsentModal from "@/components/events/EventConsentModal";
+import "../../styles/event-detail.css";
+
+// ─── Cosa misura la piattaforma, per tipo di sfida ────────────────────────────
+/**
+ * Traduce il tipo di impatto di una sfida in ciò che i partecipanti contano
+ * davvero. Serve alla sezione "Cosa misuriamo": un evento qualunque promette una
+ * bella giornata, questo dichiara in anticipo quali numeri produrrà. È l'unica
+ * cosa che questa piattaforma può mettere su una pagina evento e nessun altro,
+ * e parla a due pubblici insieme: chi partecipa capisce che il suo gesto viene
+ * contato, e lo sponsor vede su cosa poggeranno i numeri del suo attestato.
+ *
+ * L'unità è quella che la persona conta e digita (decisione PM 7/8/2026), non i
+ * kg di CO2: la CO2 è il risultato, non l'obiettivo.
+ */
+const IMPACT_LABELS = {
+  no_waste:      { icon: "♻️", label: "Rifiuti raccolti",        unit: "kg" },
+  waste:         { icon: "♻️", label: "Rifiuti raccolti",        unit: "kg" },
+  reuse:         { icon: "👕", label: "Capi rimessi in circolo", unit: "capi" },
+  mobility:      { icon: "🚲", label: "Spostamenti sostenibili", unit: "viaggi" },
+  social:        { icon: "🤝", label: "Volontariato",            unit: "ore" },
+  tree_planting: { icon: "🌱", label: "Alberi messi a dimora",   unit: "alberi" },
+};
 
 // ─── Helper: formato data ─────────────────────────────────────────────────────
 function formatDate(dateStr) {
@@ -182,79 +204,80 @@ export default function EventDetail() {
   const openChallenges = challenges.filter((ch) => ch.status === "open");
   const isActive = status === "published";
 
+  // Dimensioni misurate dall'evento, dedotte dai tipi delle sfide collegate.
+  // Nessuna chiamata in più: `type` arriva già con l'evento (BE 0.18.4).
+  const measured = Array.from(
+    new Map(
+      challenges
+        .map((ch) => IMPACT_LABELS[ch.type])
+        .filter(Boolean)
+        .map((m) => [m.label, m])
+    ).values()
+  );
+
   return (
     <section className="page-section page-bg page-text">
       <div className="container">
 
         {/* Breadcrumb */}
-        <Link
-          to={routes.events.list}
-          className="muted small"
-          style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 20 }}
-        >
+        <Link to={routes.events.list} className="muted small ev-back">
           ← Tutti gli eventi
         </Link>
 
-        {/* ── Hero evento ──────────────────────────────────────────────── */}
-        <div
-          className="card glass"
-          style={{ padding: "28px 24px", marginBottom: 24 }}
-        >
-          {/* Logo */}
+        {/* ── Testata ──────────────────────────────────────────────────────
+            Due colonne: la locandina a sinistra, i fatti a destra. La locandina
+            è l'oggetto caratteristico dell'evento (l'ha disegnata chi lo
+            organizza) e prima stava in un francobollo alto 80px, schiacciata in
+            un campo pensato per un logo. Su mobile le colonne si impilano e
+            l'immagine è limitata in altezza, perché sotto ci sono data e luogo:
+            le due cose che la persona è venuta a cercare. */}
+        <div className="card glass ev-hero">
+
           {logo_url && (
-            <div style={{ marginBottom: 20, textAlign: "center" }}>
-              <img
-                src={logo_url}
-                alt={`Logo ${name}`}
-                style={{ maxHeight: 80, maxWidth: "100%", objectFit: "contain" }}
-              />
+            <div>
+              {/* Cliccabile: una locandina contiene programma e orari in piccolo,
+                  e da telefono l'unico modo di leggerli è aprirla a schermo pieno. */}
+              <a
+                href={logo_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ev-poster-link"
+              >
+                <img src={logo_url} alt={`Locandina di ${name}`} className="ev-poster" />
+              </a>
+              <span className="muted small ev-poster-caption">
+                Tocca per ingrandire la locandina
+              </span>
             </div>
           )}
 
-          {/* Status + titolo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+          <div>
             <StatusBadge status={status} />
-          </div>
-          <h1 className="dynamic-title" style={{ fontSize: "clamp(1.6rem, 4vw, 2.4rem)", marginBottom: 16 }}>
-            {name}
-          </h1>
+            <h1 className="ev-title">{name}</h1>
 
-          {/* Info essenziali — visibili subito senza scroll su mobile */}
-          <ul className="meta-list" style={{ marginBottom: 20 }}>
-            <li>
-              <span>📅 Quando</span>
-              <span style={{ fontWeight: 600 }}>{dateRangeLabel(start_date, end_date)}</span>
-            </li>
-            {location_address && (
-              <li>
-                <span>📍 Dove</span>
-                <span>
-                  {mapUrl ? (
-                    <a
-                      href={mapUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: "rgba(255,255,255,0.85)", textDecoration: "underline" }}
-                    >
-                      {location_address} ↗
-                    </a>
-                  ) : (
-                    location_address
-                  )}
-                </span>
+            <ul className="ev-facts">
+              <li className="ev-fact">
+                <span className="ev-fact__label">Quando</span>
+                <span className="ev-fact__value">{dateRangeLabel(start_date, end_date)}</span>
               </li>
-            )}
-          </ul>
+              {location_address && (
+                <li className="ev-fact">
+                  <span className="ev-fact__label">Dove</span>
+                  <span className="ev-fact__value">
+                    {mapUrl ? (
+                      <a href={mapUrl} target="_blank" rel="noopener noreferrer">
+                        {location_address} ↗
+                      </a>
+                    ) : (
+                      location_address
+                    )}
+                  </span>
+                </li>
+              )}
+            </ul>
 
-          {/* Descrizione */}
-          {description && (
-            <p style={{ color: "rgba(255,255,255,0.85)", lineHeight: 1.65, marginBottom: 24 }}>
-              {description}
-            </p>
-          )}
-
-          {/* ── CTA principale ─────────────────────────────────────────── */}
-          <div className="dynamic-actions">
+            {/* ── CTA principale ─────────────────────────────────────────── */}
+            <div className="dynamic-actions">
             {isActive && openChallenges.length > 0 ? (
               <button
                 className="btn btn-primary"
@@ -287,13 +310,50 @@ export default function EventDetail() {
                 {isActive ? "📊 Segui l'impatto live" : "📊 Guarda i risultati"}
               </Link>
             )}
+            </div>
           </div>
         </div>
 
+        {/* ── Descrizione ──────────────────────────────────────────────────
+            Fuori dalla testata e a larghezza piena: è testo lungo, e in una
+            colonna stretta accanto alla locandina diventerebbe illeggibile.
+            La classe conserva gli a capo dell'originale (`white-space: pre-line`):
+            le descrizioni arrivano incollate dai social, dove le interruzioni di
+            riga sono la struttura del testo, e dentro un <p> normale venivano
+            collassate in un muro unico. */}
+        {description && (
+          <div className="card glass ev-section">
+            <p className="ev-description">{description}</p>
+          </div>
+        )}
+
+        {/* ── Cosa misuriamo ───────────────────────────────────────────────
+            Compare solo se le sfide collegate dichiarano un tipo d'impatto:
+            senza sfide non si promette nulla che non si possa mantenere. */}
+        {measured.length > 0 && (
+          <div className="card glass ev-measure">
+            <div className="ev-measure__eyebrow">Cosa misuriamo</div>
+            <ul className="ev-measure__list">
+              {measured.map((m) => (
+                <li key={m.label} className="ev-measure__item">
+                  <span aria-hidden="true">{m.icon}</span>
+                  {m.label}
+                  <span className="ev-measure__unit">({m.unit})</span>
+                </li>
+              ))}
+            </ul>
+            <p className="muted small" style={{ margin: 0 }}>
+              {status === "ended"
+                ? "I numeri di questo evento sono stati verificati uno per uno, con fonti dichiarate."
+                : "Ogni contributo viene verificato prima di entrare nel conto, con fonti dichiarate."}
+            </p>
+          </div>
+        )}
+
         {/* ── Sfide dell'evento ──────────────────────────────────────── */}
         {challenges.length > 0 && (
-          <div className="card glass" style={{ padding: "20px 24px", marginBottom: 24 }}>
-            <h2 className="dynamic-subtitle" style={{ marginBottom: 16 }}>
+          <div className="card glass ev-section">
+            <h2 className="dynamic-subtitle ev-section__title">
               Sfide dell'evento
             </h2>
             <div className="dynamic-list">
@@ -330,46 +390,56 @@ export default function EventDetail() {
           </div>
         )}
 
-        {/* ── Sponsor ────────────────────────────────────────────────── */}
+        {/* ── Sponsor ──────────────────────────────────────────────────────
+            Ogni logo su una PIASTRA CHIARA. I marchi di terzi sono quasi sempre
+            disegnati per il bianco: su fondo scuro un PNG con trasparenza si
+            sporca o sparisce del tutto, e prima erano immagini nude alte 48px
+            appoggiate sul gradiente. È il dettaglio che distingue "loghi
+            presentati" da "loghi incollati", ed è la parte della pagina che uno
+            sponsor guarda per prima.
+
+            ⚠️ NOTA STRUTTURALE: gli sponsor si ricavano dalle SFIDE collegate
+            (`sponsor_id` + `challenge_sponsorships`), non dall'evento. Un
+            sostenitore dell'evento che non sponsorizza una singola sfida non ha
+            oggi alcun modo di comparire qui. Vedi `bug-e-todo.md`. */}
         {sponsors.length > 0 && (
-          <div className="card glass" style={{ padding: "20px 24px" }}>
-            <h2 className="dynamic-subtitle" style={{ marginBottom: 16 }}>
-              Organizzatori e sostenitori
+          <div className="card glass ev-section">
+            <h2 className="dynamic-subtitle ev-section__title">
+              Con il sostegno di
             </h2>
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
-              {sponsors.map((sp) => (
-                <div
-                  key={sp.id}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 8,
-                    minWidth: 100,
-                  }}
-                >
-                  {sp.logo_url ? (
-                    <img
-                      src={sp.logo_url}
-                      alt={sp.name}
-                      style={{ maxHeight: 48, maxWidth: 120, objectFit: "contain" }}
-                    />
-                  ) : (
-                    <span style={{ fontWeight: 600, color: "#fff" }}>{sp.name}</span>
-                  )}
-                  {sp.website && (
-                    <a
-                      href={sp.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="muted small"
-                      style={{ textDecoration: "underline" }}
-                    >
-                      Sito web ↗
-                    </a>
-                  )}
-                </div>
-              ))}
+            <div className="ev-sponsors__grid">
+              {sponsors.map((sp) => {
+                const plate = (
+                  <div className="ev-sponsor__plate">
+                    {sp.logo_url ? (
+                      <img src={sp.logo_url} alt={sp.name} className="ev-sponsor__logo" />
+                    ) : (
+                      <span className="ev-sponsor__name">{sp.name}</span>
+                    )}
+                  </div>
+                );
+                return (
+                  <div key={sp.id} className="ev-sponsor">
+                    {/* Con un sito, tutta la piastra è cliccabile: un bersaglio
+                        grande è più comodo del link testuale sotto, e su telefono
+                        è la differenza fra un tocco e tre tentativi. */}
+                    {sp.website ? (
+                      <a
+                        href={sp.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ width: "100%" }}
+                        aria-label={`Sito di ${sp.name}`}
+                      >
+                        {plate}
+                      </a>
+                    ) : (
+                      plate
+                    )}
+                    <span className="muted small">{sp.name}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

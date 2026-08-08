@@ -1,0 +1,274 @@
+/* event-detail.css
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Pagina pubblica di dettaglio evento.
+ *
+ * Classi TUTTE prefissate `ev-`: nessuna regola globale toccata. È una scelta
+ * deliberata dopo la regressione del 5/8/2026, quando un selettore troppo largo
+ * (`.btn:visited`) rese illeggibile il menu admin. Qui il raggio d'azione è la
+ * sola pagina evento.
+ *
+ * Nessun font nuovo: si usa lo stack del sito. Una pagina che il pubblico apre
+ * dal telefono in spiaggia, su 4G condiviso, non può permettersi di scaricare
+ * caratteri per un solo schermo.
+ *
+ * Token: quelli esistenti in styles.css (--accent-green-1, --brand-*, --radius-*).
+ */
+
+/* ── Impianto ─────────────────────────────────────────────────────────────── */
+
+.ev-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  text-decoration: none;
+}
+
+/* Griglia asimmetrica: la locandina prende una colonna vera, non un ritaglio.
+   Le proporzioni (5 : 7) danno all'immagine presenza senza rubare la scena ai
+   fatti, che sono ciò per cui la pagina viene aperta. */
+.ev-hero {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 28px;
+  align-items: start;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 860px) {
+  .ev-hero {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 18px;
+  }
+}
+
+/* ── La locandina ─────────────────────────────────────────────────────────── */
+
+/* Cornice: bordo sottile e ombra bassa. L'immagine è materiale altrui (l'ha
+   disegnata l'organizzatore) e va presentata come un manifesto appeso, non
+   ritagliata dentro il layout. `object-fit: contain` perché non conosciamo le
+   proporzioni: una locandina è verticale, un logo è orizzontale, e nessuna delle
+   due va deformata. */
+.ev-poster {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.35);
+}
+
+/* Su mobile la locandina non deve occupare tutto lo schermo: sotto ci sono la
+   data e il luogo, cioè le due cose che la persona è venuta a cercare. */
+@media (max-width: 860px) {
+  .ev-poster {
+    max-height: 320px;
+  }
+}
+
+.ev-poster-link {
+  display: block;
+  border-radius: var(--radius-md);
+}
+
+.ev-poster-link:focus-visible {
+  outline: 2px solid var(--accent-green-1);
+  outline-offset: 3px;
+}
+
+.ev-poster-caption {
+  display: block;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* ── Testata ──────────────────────────────────────────────────────────────── */
+
+.ev-title {
+  font-size: clamp(1.7rem, 4.5vw, 2.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 10px 0 18px;
+  color: #fff;
+}
+
+/* I fatti essenziali: etichetta sopra, valore sotto. La lista a due colonne con
+   il valore allineato a destra è un impianto da tabella e su telefono spezza le
+   righe nei punti sbagliati (visto il 7/8 nel test da mobile). */
+.ev-facts {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.ev-fact {
+  display: grid;
+  gap: 2px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(16, 185, 129, 0.45);
+}
+
+.ev-fact__label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ev-fact__value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ev-fact__value a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Descrizione ──────────────────────────────────────────────────────────── */
+
+/* `pre-line` conserva gli a capo del testo originale. Le descrizioni arrivano
+   incollate dai social, dove le interruzioni di riga SONO la struttura: dentro
+   un <p> normale venivano collassate e il testo diventava un muro. */
+.ev-description {
+  white-space: pre-line;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.86);
+  max-width: 68ch;
+  margin: 0 0 22px;
+}
+
+/* ── Cosa misuriamo ───────────────────────────────────────────────────────── */
+
+/* La firma della pagina. Un evento qualunque promette una bella giornata;
+   questo dichiara in anticipo COSA verrà contato, ed è l'unica cosa che questa
+   piattaforma può mettere su una pagina evento e nessun altro. Serve a chi
+   partecipa (capisce che il suo gesto viene misurato) e agli sponsor, che
+   vedono su cosa poggeranno i numeri del loro attestato. */
+.ev-measure {
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  border-left: 3px solid var(--accent-green-1);
+}
+
+.ev-measure__eyebrow {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-green-1);
+  margin-bottom: 10px;
+}
+
+.ev-measure__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.ev-measure__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.ev-measure__unit {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+}
+
+/* ── Sponsor ──────────────────────────────────────────────────────────────── */
+
+/* Piastra CHIARA dietro ogni logo: i marchi sono quasi sempre disegnati per il
+   bianco, e su fondo scuro un PNG con trasparenza si sporca o sparisce. È il
+   dettaglio che distingue "loghi presentati" da "loghi incollati" — e questa è
+   la parte della pagina che gli sponsor guarderanno per prima. */
+.ev-sponsors__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.ev-sponsor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 150px;
+}
+
+.ev-sponsor__plate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 88px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.ev-sponsor__plate:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ev-sponsor__plate {
+    transition: none;
+  }
+  .ev-sponsor__plate:hover {
+    transform: none;
+  }
+}
+
+.ev-sponsor__logo {
+  max-height: 56px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* Senza logo si mostra il nome, sulla stessa piastra: la fila resta allineata
+   invece di alternare piastre e testo sospeso. */
+.ev-sponsor__name {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.ev-sponsor__link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Sezioni ──────────────────────────────────────────────────────────────── */
+
+.ev-section {
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.ev-section__title {
+  margin: 0 0 16px;
+  color: #fff;
+}
