@@ -53,6 +53,15 @@ function getJudgeLabel(j) {
 // --------------------------------------------------
 const PAGE_SIZE = 12;
 
+/** Vero solo se l'obiettivo ha davvero qualcosa da mostrare. */
+function hasTarget(target) {
+  if (!target || typeof target !== "object") return false;
+  const kind = String(target.kind || "").trim().toLowerCase();
+  if (kind === "binary" || kind === "binario") return true;
+  if (Array.isArray(target.items) && target.items.length > 0) return true;
+  return target.amount != null && target.amount !== "";
+}
+
 // --------------------------------------------------
 // Adapter: normalizza lo shape BE → UI
 // --------------------------------------------------
@@ -253,7 +262,12 @@ export default function Challenges() {
 
               {ch.rules && <p className="card-description">{ch.rules}</p>}
 
-              {ch.target && (
+              {/* Un `target` presente ma VUOTO (`{}`) è comunque "vero" per JS: senza
+                  questa guardia il riquadro compariva con titolo e nota ma senza
+                  numero, cioè una promessa senza contenuto. Capita su ogni sfida
+                  creata senza compilare l'obiettivo, come le tre dell'evento del
+                  30/8 (verificato l'11/8). */}
+              {hasTarget(ch.target) && (
                 <div className="target-box">
                   <div className="target-title">
                     {t('card.targetTitle')}
