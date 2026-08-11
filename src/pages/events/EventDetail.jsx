@@ -50,7 +50,7 @@ const IMPACT_LABELS = {
   no_waste:      { icon: "♻️", label: "Rifiuti raccolti",        unit: "kg" },
   waste:         { icon: "♻️", label: "Rifiuti raccolti",        unit: "kg" },
   reuse:         { icon: "👕", label: "Capi rimessi in circolo", unit: "capi" },
-  mobility:      { icon: "🚲", label: "Spostamenti sostenibili", unit: "viaggi" },
+  mobility:      { icon: "🚲", label: "Spostamenti sostenibili", unit: "spostamenti" },
   social:        { icon: "🤝", label: "Volontariato",            unit: "ore" },
   tree_planting: { icon: "🌱", label: "Alberi messi a dimora",   unit: "alberi" },
 };
