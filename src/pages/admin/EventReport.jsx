@@ -145,7 +145,13 @@ function ReportSummary({ impact }) {
     {
       value: impact.total_km,
       unit: "km",
-      label: "Chilometri sostenibili",
+      // NON "Chilometri sostenibili": la stessa etichetta serve entrambi i modi
+      // del plugin mobilità. In modo `emits` — la configurazione dell'evento del
+      // 30/8 — questi km sono la trasferta da compensare, percorsa anche in auto:
+      // chiamarli sostenibili è una qualifica che i dati non sostengono. "Percorsi"
+      // è vero in entrambi i casi, e allinea il report alla pagina evento pubblica,
+      // che dice già "Km percorsi".
+      label: "Chilometri percorsi",
       icon: "🛤️",
     },
     {
@@ -397,7 +403,7 @@ function ReportParticipants({ impact }) {
             ⏳ {pending_submissions} in attesa
           </span>
           <span className={`${styles.submissionBadge} ${styles.rejected}`}>
-            🔍 {rejected_submissions} revisionati
+            🔍 {rejected_submissions} non approvati
           </span>
         </div>
       </div>
@@ -411,8 +417,11 @@ function ReportParticipants({ impact }) {
  * I rifiuti sono presentati come indicatore positivo di rigore.
  */
 function ReportVerification({ impact }) {
-  const { approved_submissions, rejected_submissions } = impact;
-  const total = approved_submissions + rejected_submissions;
+  const { approved_submissions, pending_submissions, rejected_submissions } = impact;
+  // "Ricevuti" comprende anche i contributi in attesa: sono stati ricevuti eccome.
+  // Prima questo totale escludeva i pending e il documento si contraddiceva —
+  // "7 totali" nel riepilogo e "su 6 ricevuti" qui sotto, con lo stesso nome.
+  const total = approved_submissions + pending_submissions + rejected_submissions;
 
   return (
     <section
@@ -421,11 +430,20 @@ function ReportVerification({ impact }) {
     >
       <h2 className={styles.sectionTitle}>Il processo di verifica</h2>
 
+      {/* Questo paragrafo è la frase su cui uno sponsor fonda la propria fiducia,
+          e deve descrivere il modello REALE. Diceva "ogni contributo è stato
+          revisionato da un giudice indipendente": falso per le attività in modo
+          fiducia, che sono auto-approvate e ricontrollate a campione dopo. Alla
+          prova generale del 12/8/2026 erano 4 contributi su 5, e il 30/8 saranno
+          la maggioranza. Il modello a due livelli è difendibile: va spiegato,
+          non sostituito da un'affermazione più forte di ciò che il sistema fa. */}
       <p className={styles.verificationText}>
-        Ogni contributo è stato revisionato da un giudice indipendente nominato dalla
-        piattaforma HelpLab. La revisione richiede documentazione fotografica
-        dell'attività svolta, garantendo che ogni dato di impatto riportato corrisponda
-        a un'azione reale e verificabile.
+        I contributi sono verificati con due livelli di controllo, scelti
+        dall'organizzatore per ciascuna attività: <strong>revisione puntuale</strong> da
+        parte di un giudice indipendente nominato dalla piattaforma HelpLab, oppure
+        <strong> dichiarazione del partecipante sottoposta ad audit indipendente</strong> su
+        campione casuale a evento concluso. In entrambi i casi è richiesta
+        documentazione fotografica dell'attività svolta.
       </p>
 
       {/* Rigore del processo */}
@@ -439,9 +457,10 @@ function ReportVerification({ impact }) {
           {rejected_submissions > 0 && (
             <>
               {" "}
-              I {rejected_submissions}{" "}
-              {rejected_submissions === 1 ? "contributo revisionato" : "contributi revisionati"}{" "}
-              testimoniano il rigore del processo di verifica, che non certifica
+              {rejected_submissions === 1
+                ? "Il contributo non approvato testimonia"
+                : `I ${rejected_submissions} contributi non approvati testimoniano`}{" "}
+              il rigore del processo di verifica, che non certifica
               automaticamente ogni dichiarazione ma richiede evidenza documentata.
             </>
           )}
@@ -533,11 +552,23 @@ function ReportMethodology({ generatedAt }) {
           partecipanti e sottoposta a verifica da parte di giudici indipendenti della
           piattaforma HelpLab.
         </p>
+        {/* Citava SOLO le fonti della mobilità, mentre un evento misto produce
+            CO2 anche da rifiuti e riuso. Alla prova del 12/8/2026 i 30,5 kg
+            riportati venivano interamente da rifiuti e riuso, e il documento
+            citava fonti che non avevano prodotto nessuno di quei numeri. */}
         <p>
-          Il calcolo applica i fattori di emissione per il trasporto su strada pubblicati
-          dall'ISPRA (Istituto Superiore per la Protezione e la Ricerca Ambientale,
-          edizione 2024) e i valori di riferimento per i veicoli elettrici del Ministero
-          delle Infrastrutture e dei Trasporti (Mimit, 2025).
+          Il calcolo applica fattori di riferimento distinti per ciascun tipo di
+          attività: per la <strong>mobilità</strong>, i fattori di emissione del trasporto
+          su strada pubblicati dall'ISPRA (Istituto Superiore per la Protezione e la
+          Ricerca Ambientale, edizione 2024) e i valori per i veicoli elettrici del
+          Ministero delle Infrastrutture e dei Trasporti (Mimit, 2025); per la{" "}
+          <strong>raccolta rifiuti</strong>, il risparmio netto da riciclo stimato dal
+          Centro Comune di Ricerca della Commissione Europea (JRC); per il{" "}
+          <strong>riuso tessile</strong>, il valore medio per capo rimesso in circolo del
+          Climate Impact Report Vinted/Vaayu 2025; per il <strong>valore sociale</strong>,
+          la retribuzione oraria media ISTAT secondo il metodo del costo di sostituzione
+          (Manuale ILO). Ogni attività contribuisce al totale solo con i fattori del
+          proprio dominio.
         </p>
         <p>
           Le stime non costituiscono una certificazione delle emissioni ai sensi della
@@ -548,7 +579,7 @@ function ReportMethodology({ generatedAt }) {
       </div>
 
       <div className={styles.methodologyMeta}>
-        <span>Fonti: ISPRA 2024 · Mimit 2025</span>
+        <span>Fonti: ISPRA 2024 · Mimit 2025 · JRC · Vinted/Vaayu 2025 · ISTAT</span>
         {generatedAt && (
           <span>Report generato il {formatDateTimeIT(generatedAt)}</span>
         )}

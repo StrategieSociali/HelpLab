@@ -243,12 +243,19 @@ export default function AdminAudit() {
             {/* Contributi invalidati: punti ancora da togliere */}
             <div className="card" style={{ padding: 16 }}>
               <h2 className="dynamic-title">Punti da togliere ({clawbacks.length})</h2>
+              {/* Il pulsante si chiamava "Fatto, punti tolti": affermava un fatto che
+                  NON compie — toglie solo la riga da questo elenco. Premuto senza aver
+                  prima rifiutato il contributo, lascia punti e CO₂ nei totali e cancella
+                  l'unico promemoria del lavoro rimasto, in silenzio. Successo davvero il
+                  12/8/2026 durante la prova generale. Ora l'etichetta dice cosa fa, e
+                  l'istruzione sta PRIMA di ogni riga invece che solo in cima al blocco. */}
               <p className="muted small" style={{ marginTop: 4 }}>
                 Un giudice ha ri-controllato questi contributi e li ha giudicati{" "}
                 <strong>non validi</strong>, ma i punti e la CO₂ sono ancora conteggiati.
-                Per toglierli apri il contributo nella pagina della sua sfida e{" "}
-                <strong>rifiutalo</strong>: punti e impatto escono da soli. Poi torna qui e
-                premi <strong>"Fatto"</strong> per togliere la riga dall'elenco.
+                In due passi: <strong>1.</strong> apri il contributo nella pagina della sua
+                sfida e <strong>rifiutalo</strong> — lì punti e impatto escono da soli;{" "}
+                <strong>2.</strong> torna qui e togli la riga dall'elenco. Il pulsante qui
+                sotto fa <em>solo</em> il passo 2: da solo non toglie nulla.
               </p>
               {clawbacks.length === 0 ? (
                 <div className="card-info neutral" style={{ marginTop: 10 }}>Nessun contributo da sistemare.</div>
@@ -267,8 +274,11 @@ export default function AdminAudit() {
                           {c.note && <div className="muted small" style={{ marginTop: 4 }}>Nota: {c.note}</div>}
                         </div>
                         <div style={{ marginTop: 10 }}>
+                          <div className="muted small" style={{ marginBottom: 6 }}>
+                            Prima rifiuta il contributo dalla pagina della sfida, poi:
+                          </div>
                           <button className="btn btn-outline" disabled={rs.busy} onClick={() => onResolve(c)}>
-                            {rs.busy ? "…" : "Fatto, punti tolti"}
+                            {rs.busy ? "…" : "L'ho già rifiutato, togli la riga"}
                           </button>
                         </div>
                         {rs.err && <div className="callout error" style={{ marginTop: 8 }}>{rs.err}</div>}
