@@ -417,6 +417,12 @@ export default function ChallengeSubmitPage() {
       if (err?.response?.status === 409 && err?.response?.data?.error === "challenge_not_open") {
         setChallengeStatus(err?.response?.data?.status ?? "closed");
         setError(t("errors.challengeClosed"));
+      } else if (err?.response?.status === 409 && err?.response?.data?.error === "already_submitted") {
+        // Sulle sfide a fiducia si invia una volta sola (BE 0.18.11). Senza questo
+        // ramo il fallback qui sotto mostrerebbe `error` per primo, cioè il codice
+        // grezzo "already_submitted" a schermo — proprio ciò che il ramo della
+        // sfida chiusa esiste per evitare.
+        setError(t("errors.alreadySubmitted"));
       } else if (Array.isArray(backendErrors) && backendErrors.length > 0) {
         setError(backendErrors.join(" — "));
       } else {

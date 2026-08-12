@@ -13,7 +13,8 @@
     "notAuthenticated": "Devi essere autenticato per inviare un contributo.",
     "noTaskSelected": "Seleziona il task a cui si riferisce il tuo contributo.",
     "submitFailed": "Invio non riuscito. Riprova tra qualche istante.",
-    "challengeClosed": "Questa sfida è stata chiusa mentre stavi compilando: il contributo non è stato inviato."
+    "challengeClosed": "Questa sfida è stata chiusa mentre stavi compilando: il contributo non è stato inviato.",
+    "alreadySubmitted": "Hai già inviato il tuo contributo per questa attività. Se ne hai fatti altri durante la giornata sono già compresi in quello: conta quello che hai fatto in totale, non quante volte."
   },
   "validation": {
     "minPhotos": "Carica almeno {{count}} foto come evidenza.",
