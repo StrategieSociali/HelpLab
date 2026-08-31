@@ -243,7 +243,12 @@ export default function ChallengeSubmitPage() {
     setMobilityLoading(true);
     try {
       const { data } = await api.get("/v1/co2-factors/mobility");
-      setMobilityOptions(data?.items || []);
+      // Scarta le voci prive di id: `/co2-factors/mobility` include anche la
+      // riga `_comment_tree` del file fattori, che lo schema di risposta
+      // serializza come `{}`. Senza filtro diventava una SETTIMA opzione vuota
+      // in fondo alla tendina, con value undefined → React usa il testo
+      // dell'option, cioè "" → vehicle_id vuoto e submit rifiutato (30/8/2026).
+      setMobilityOptions((data?.items || []).filter((o) => o && o.id));
     } catch (err) {
       console.error("Errore caricamento opzioni mobilità:", err);
     } finally {
@@ -259,7 +264,7 @@ export default function ChallengeSubmitPage() {
     setComuniLoading(true);
     try {
       const { data } = await api.get("/v1/comuni");
-      setComuniOptions(data?.items || []);
+      setComuniOptions((data?.items || []).filter((o) => o && o.id));
     } catch (err) {
       console.error("Errore caricamento comuni:", err);
     } finally {
@@ -342,7 +347,10 @@ export default function ChallengeSubmitPage() {
             return t("validation.minPhotos", { count: field.minItems || 1 });
           }
         } else if (value === "" || value === null || value === undefined) {
-          const label = fieldLabel(field.name, t);
+          // fieldLabel vuole l'OGGETTO campo: passandogli field.name la label
+          // usciva vuota e il messaggio diceva «Il campo "" è obbligatorio»,
+          // cioè nascondeva proprio il campo da correggere (30/8/2026).
+          const label = fieldLabel(field, t);
           return t("validation.required", { label });
         }
       }
@@ -351,7 +359,7 @@ export default function ChallengeSubmitPage() {
         const num = parseFloat(value);
         if (isNaN(num) || (field.min !== undefined && num < field.min)) {
           return t("validation.minValue", {
-            label: fieldLabel(field.name, t),
+            label: fieldLabel(field, t),
             min: field.min,
           });
         }
@@ -619,14 +627,42 @@ function DynamicField({
 }) {
   const label = fieldLabel(field, t);
 
+  // Testo grezzo digitato nel campo comune. Serve a distinguere «non ho ancora
+  // scritto niente» da «ho scritto un nome che non corrisponde a nessun comune»:
+  // solo il secondo caso va segnalato, e va segnalato SUBITO, non all'invio.
+  const [comuneTyped, setComuneTyped] = useState("");
+
   // ── Comune d'origine (mobility) — input con datalist (typeahead) ──────────
   // L'utente digita e seleziona dalla lista; al backend va il codice ISTAT (id).
   // Datalist anziché select per gestire bene ~8.000 voci con ricerca incrementale.
   if (field.type === "string" && field.name === "comune_origine") {
     // Mappa label→id per risolvere la scelta dell'utente nel codice ISTAT.
-    const byLabel = new Map(comuniOptions.map((o) => [o.label, o.id]));
+    // Confronto normalizzato (spazi + maiuscole): chi digita "ravenna (ra)" o
+    // lascia uno spazio in coda intende lo stesso comune di chi tocca il
+    // suggerimento, e prima si ritrovava il campo vuoto senza capire perché.
+    const normalize = (x) => String(x ?? "").trim().toLowerCase();
+    const byLabel = new Map(comuniOptions.map((o) => [normalize(o.label), o.id]));
+
+    // Nome senza la sigla di provincia, accettato SOLO se identifica un unico
+    // comune: gli omonimi ("Peschiera") restano ambigui e vanno scelti dalla
+    // lista, altrimenti si assegnerebbe una distanza sbagliata in silenzio.
+    const byName = new Map();
+    for (const o of comuniOptions) {
+      const n = normalize(String(o.label).replace(/\s*\([^)]*\)\s*$/, ""));
+      byName.set(n, byName.has(n) ? null : o.id);
+    }
+
+    const resolveComune = (text) => {
+      const k = normalize(text);
+      if (!k) return "";
+      return byLabel.get(k) || byName.get(k) || "";
+    };
+
     const selectedLabel =
       comuniOptions.find((o) => o.id === value)?.label ?? "";
+    // Ha scritto qualcosa, ma non corrisponde a nessun comune: il campo SEMBRA
+    // compilato ed è vuoto. È il caso che il 30/8 ha bloccato l'invio.
+    const comuneUnresolved = comuneTyped.trim() !== "" && !value;
     return (
       <div className="form-group">
         <label htmlFor="field-comune_origine">
@@ -649,8 +685,8 @@ function DynamicField({
               onChange={(e) => {
                 // Salva il codice ISTAT corrispondente alla label scelta;
                 // stringa vuota se il testo non corrisponde a nessun comune.
-                const id = byLabel.get(e.target.value) || "";
-                onFieldChange(field.name, id);
+                setComuneTyped(e.target.value);
+                onFieldChange(field.name, resolveComune(e.target.value));
               }}
             />
             <datalist id="comuni-list">
@@ -659,6 +695,10 @@ function DynamicField({
               ))}
             </datalist>
           </>
+        )}
+
+        {comuneUnresolved && (
+          <div className="hint warn">{t("comune.notFound")}</div>
         )}
 
         {fieldHint(field, t) && <div className="hint">{fieldHint(field, t)}</div>}

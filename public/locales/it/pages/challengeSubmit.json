@@ -38,7 +38,8 @@
   },
   "comune": {
     "loading": "Caricamento comuni…",
-    "placeholder": "Inizia a digitare il tuo comune…"
+    "placeholder": "Inizia a digitare il tuo comune…",
+    "notFound": "Scegli il comune dall'elenco che compare mentre digiti: senza sceglierlo dalla lista il campo resta vuoto."
   },
   "photo": {
     "altText": "Evidenza {{index}}",

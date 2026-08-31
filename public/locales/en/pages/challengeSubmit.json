@@ -37,7 +37,8 @@
   },
   "comune": {
     "loading": "Loading municipalities…",
-    "placeholder": "Start typing your municipality…"
+    "placeholder": "Start typing your municipality…",
+    "notFound": "Pick your municipality from the list that appears as you type: without choosing it from the list the field stays empty."
   },
   "photo": {
     "altText": "Evidence {{index}}",
