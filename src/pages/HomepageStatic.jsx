@@ -5,6 +5,8 @@
  * Attualmente contiene:
  * - HERO Business/PA
  * - Benefici imprese (3 pilastri)
+ * - Chi organizza (percorsi partecipativi ed eventi)
+ * - Perimetro: cosa fa e cosa non fa
  * - Testimonianze
  * - HERO Cittadini
  * - CTA finale imprese
@@ -20,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { Wrench, Gift, Users } from "lucide-react";
 import heroBg from '@/assets/sustainability-hero.jpg';
 import { useTranslation } from "react-i18next";
+import { routes } from "@/routes";
 import "../styles/home.css";
 
 const HomepageStatic = () => {
@@ -35,6 +38,11 @@ const HomepageStatic = () => {
   });
 
   const howItWorksSteps = t("howItWorks.steps", {
+    returnObjects: true,
+    defaultValue: [],
+  });
+
+  const organizersItems = t("organizers.items", {
     returnObjects: true,
     defaultValue: [],
   });
@@ -72,14 +80,10 @@ const HomepageStatic = () => {
             <p className="home-hero__subtitle">
               {t("hero.subtitle")}
             </p>
-            <p className="home-hero__note">
-              <strong>{t("hero.note.label")}</strong> {t("hero.note.text")}
-            </p>
-
             <div className="home-hero__actions">
               <button
                 className="btn btn-ghost"
-                onClick={() => navigate('/challenges')}
+                onClick={() => navigate(routes.business.packages)}
                 title={t("hero.cta.launchTitle")}
               >
                 {t("hero.cta.launch")}
@@ -122,6 +126,82 @@ const HomepageStatic = () => {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
+          2-bis) CHI ORGANIZZA (enti, associazioni, imprese committenti)
+          ═══════════════════════════════════════════════════════════ */}
+      <section className="support-section">
+        <div className="container">
+          <h2>{t("organizers.title")}</h2>
+          <p className="home-section__subtitle">{t("organizers.subtitle")}</p>
+
+          <div className="home-grid home-grid--support">
+            {Array.isArray(organizersItems) &&
+              organizersItems.map((item, i) => (
+                <div className="support-card" key={i}>
+                  <div className="support-icon">
+                    {i === 0 && "📍"}
+                    {i === 1 && "🔍"}
+                    {i === 2 && "🗂️"}
+                  </div>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </div>
+              ))}
+          </div>
+
+          {/* Modelli di calcolo su misura: e' la leva commerciale verso chi ha un
+              progetto proprio, quindi sta nel corpo della sezione e non in una
+              nota di chiusura. */}
+          <div className="home-custom">
+            <h3 className="home-custom__title">{t("organizers.custom.title")}</h3>
+            <p>{t("organizers.custom.text")}</p>
+          </div>
+
+          <div className="home-cta__actions">
+            <button
+              className="btn btn-ghost"
+              onClick={() => {
+                const email = t("organizers.cta.email");
+                const subject = encodeURIComponent(t("organizers.cta.subject"));
+                const body = encodeURIComponent(t("organizers.cta.body"));
+                window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+              }}
+            >
+              {t("organizers.cta.talk")}
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => navigate(routes.business.packages)}
+            >
+              {t("organizers.cta.how")}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          2-ter) PERIMETRO: cosa fa e cosa non fa
+          ═══════════════════════════════════════════════════════════ */}
+      <section className="community-section">
+        <div className="community-bg"></div>
+        <div className="container">
+          <h2>{t("scope.title")}</h2>
+
+          <div className="home-grid home-grid--benefits home-grid--pair">
+            <div className="benefit-card">
+              <h3>{t("scope.does.title")}</h3>
+              <p>{t("scope.does.text")}</p>
+            </div>
+            <div className="benefit-card">
+              <h3>{t("scope.doesnt.title")}</h3>
+              <p>{t("scope.doesnt.text")}</p>
+            </div>
+          </div>
+
+          <p className="home-proof">{t("scope.note")}</p>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
           3) TESTIMONIALS
           ═══════════════════════════════════════════════════════════ */}
       <section className="community-section">
@@ -140,7 +220,7 @@ const HomepageStatic = () => {
                   </div>
                   <h3>{item.title}</h3>
                   <p>
-                    "{item.quote}"
+                    {item.quote}
                     {item.note && (
                       <>
                         <br />
@@ -244,6 +324,8 @@ const HomepageStatic = () => {
                 </div>
               ))}
           </div>
+
+          <p className="home-proof">{t("howItWorks.note")}</p>
         </div>
       </section>
 
@@ -301,6 +383,8 @@ const HomepageStatic = () => {
                 </div>
               ))}
           </div>
+
+          <p className="home-proof">{t("membership.note")}</p>
         </div>
       </section>
     </>

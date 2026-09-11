@@ -1,45 +1,79 @@
 {
   "_comment": "/src/pages/HomeStatic.jsx",
-
   "hero": {
     "title": "The infrastructure for participation that creates value.",
     "subtitle": "HelpLab connects citizens, businesses, and institutions to turn civic engagement into measurable data and real resources for local communities. We give structure to occasional participation.",
-    "note": {
-      "label": "Note:",
-      "text": "This is a work-in-progress version. Temporary interruptions or malfunctions may occur. Check the Roadmap in the top menu."
-    },
     "cta": {
-      "launch": "Launch a challenge",
+      "launch": "Use HelpLab in your project",
       "join": "Join a challenge",
-      "launchTitle": "Launch a challenge as a company or public body",
-      "joinTitle": "Join a challenge near you"
+      "launchTitle": "For public bodies, associations and companies running local activities",
+      "joinTitle": "Find open challenges near you"
     }
   },
-
   "businessBenefits": {
     "title": "One ecosystem, three actors, one shared impact",
     "items": [
       {
         "title": "For Citizens",
-        "highlight": "Certified actions",
-        "tagline": "Concrete and recognized participation",
-        "text": "Turn your everyday commitment into certified actions. Take part in real challenges in your neighborhood and help increase the value of your city."
+        "highlight": "What you did is recognized",
+        "tagline": "A record you can show",
+        "text": "Your effort does not end with the day. Every action stays on record, it is validated by someone other than you, and it becomes a result you can show to the organizers and to whoever supports them."
       },
       {
         "title": "For Businesses",
-        "highlight": "Measurable impact",
-        "tagline": "Reliable data for ESG strategies",
-        "text": "Fund change and obtain reliable data for your sustainability reporting (ESG). Make your territorial impact visible and measurable."
+        "highlight": "Data that stands up to questions",
+        "tagline": "When you are asked, you already have it",
+        "text": "Reporting duties have been cut back, demand has not: today it is your bank, your clients and your supply chain asking where you stand. With HelpLab your contribution to the territory becomes proven data, not a statement."
       },
       {
-        "title": "For Public Administrations",
+        "title": "For Public Administration",
         "highlight": "Objective data",
         "tagline": "Evidence-based governance",
-        "text": "Activate new private resources and channel civic energy into a dynamic map of local needs. Govern your territory using objective data."
+        "text": "Activate new private resources and channel civic energy into a dynamic map of local needs. Govern your territory with objective data."
       }
     ]
   },
-
+  "organizers": {
+    "title": "Running a participatory process or a local event?",
+    "subtitle": "If you have a funded project, a deadline and a report to deliver, HelpLab documents what people actually do and leaves the data with you once the process is over.",
+    "items": [
+      {
+        "title": "Proof of what happened",
+        "text": "Every action is recorded with place, time and photographic evidence. Whoever funded the project reads what was done, not a statement of intentions."
+      },
+      {
+        "title": "Checked by someone with no stake",
+        "text": "Contributions are validated by reviewers independent from the organization, with sample checks on automatically approved ones too."
+      },
+      {
+        "title": "The data stays with the promoter",
+        "text": "When the project ends the data stays with the body or association that promoted it, reusable for planning, communication and the next call for proposals."
+      }
+    ],
+    "custom": {
+      "title": "If what you need to measure is not there yet, we build it",
+      "text": "Today the platform measures mobility, waste collected, reuse and the social value of volunteering hours. Each calculation model is a separate module: when a project needs to measure something else, or a more accurate model for its own case, we define method and sources together and then bring it into the platform. The case of whoever asks becomes the tool."
+    },
+    "cta": {
+      "talk": "Let's talk",
+      "how": "How we work together",
+      "email": "info@helplab.space",
+      "subject": "HelpLab for a participatory process",
+      "body": "Describe the project, the territory and your timeline. Leave a contact so we can set up a 30-minute call."
+    }
+  },
+  "scope": {
+    "title": "What HelpLab does, and what it does not do",
+    "does": {
+      "title": "What it does",
+      "text": "It measures what people do, has it checked by someone with no stake in the result, and returns figures that can be reconstructed, with the sources of every factor stated."
+    },
+    "doesnt": {
+      "title": "What it does not do",
+      "text": "It does not bring the people. Participation comes from the relational work of whoever organizes. Three field events told us the same thing: where the organization asks people to take part the tool works, where it is merely made available to an audience that came for something else, announcing it is not enough."
+    },
+    "note": "We say it upfront: participation is built by whoever organizes. HelpLab makes it provable."
+  },
   "testimonials": {
     "title": "An ecosystem where value generates value.",
     "items": [
@@ -57,7 +91,6 @@
       }
     ]
   },
-
   "citizens": {
     "hero": {
       "title": "Your time is valuable. Give it shape!",
@@ -68,10 +101,9 @@
       }
     }
   },
-
   "finalCta": {
-    "title": "From occasional participation to certified impact",
-    "subtitle": "Ready to turn sustainability from a cost into an investment? HelpLab is the tool that gives structure, data, and resources to civic engagement in your territory.",
+    "title": "From occasional participation to provable impact",
+    "subtitle": "Reporting is now mandatory for few companies, but the question arrives all the same: from your bank, your clients, whoever picks you as a supplier. HelpLab gives structure, data and resources to civic engagement in your territory, and leaves you the proof.",
     "contact": {
       "label": "Get started",
       "email": "info@helplab.space",
@@ -80,9 +112,8 @@
     },
     "packages": "Explore business packages"
   },
-
   "howItWorks": {
-    "title": "From investment to data: how HelpLab enables your ESG strategy.",
+    "title": "From investment to data: what you can prove when you are asked.",
     "steps": [
       {
         "title": "Identify impact",
@@ -93,36 +124,61 @@
         "text": "Provide the necessary resources. HelpLab connects your investment directly to citizens’ energy."
       },
       {
-        "title": "Monitor with hybrid audit",
-        "text": "Track progress in real time. Receive certified data, SROI calculations, and outputs ready for CSRD and ESG reporting."
+        "title": "Receive verifiable data",
+        "text": "Follow progress as it happens. At the end you get figures that can be reconstructed, with independent review and the sources of every factor stated."
       }
-    ]
+    ],
+    "note": "A document you use, not eighty pages to file away: it says what was done, who checked it, and what was not measured."
   },
-
   "membership": {
-    "title": "Services & Opportunities: choose your role in impact",
-    "plans": ["Citizens", "Businesses", "Public Administrations"],
+    "title": "Who does what on the platform",
+    "plans": [
+      "Citizens",
+      "Businesses",
+      "Public bodies and associations"
+    ],
     "features": [
       {
-        "label": "Local Activist profile (free)",
-        "values": ["✔︎", "✔︎", "✔︎"]
+        "label": "Free account",
+        "values": [
+          "✔︎",
+          "✔︎",
+          "✔︎"
+        ]
       },
       {
         "label": "Ethical expense reimbursement",
-        "values": ["✔︎", "●", "●"]
+        "values": [
+          "✔︎",
+          "By agreement",
+          "By agreement"
+        ]
       },
       {
-        "label": "Challenge sponsorship",
-        "values": ["✔︎", "✔︎", "✔︎"]
+        "label": "Sponsoring a challenge",
+        "values": [
+          "✔︎",
+          "✔︎",
+          "✔︎"
+        ]
       },
       {
-        "label": "ESG & CSRD reporting",
-        "values": ["—", "✔︎", "✔︎"]
+        "label": "Verifiable impact report",
+        "values": [
+          "—",
+          "✔︎",
+          "✔︎"
+        ]
       },
       {
-        "label": "Territorial monitoring dashboard",
-        "values": ["Transparency", "✔︎", "✔︎"]
+        "label": "Territorial dashboard",
+        "values": [
+          "Public data",
+          "✔︎",
+          "✔︎"
+        ]
       }
-    ]
+    ],
+    "note": "Using the platform has no licence cost. Support, training and tailored reports are agreed case by case."
   }
 }

@@ -22,6 +22,78 @@
   color: rgba(255,255,255,0.9);
 }
 
+/* Sottotitolo di sezione (chi organizza): stessa misura del sottotitolo hero */
+.home-section__subtitle {
+  max-width: 860px;
+  margin: 0 auto 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.community-section .home-section__subtitle {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* Nota di sezione: sta sotto una griglia, non grida.
+   Il colore va dichiarato per contesto: senza, eredita il testo scuro del body
+   e dentro .community-section (sfondo immagine scuro) resta illeggibile. */
+.home-proof {
+  max-width: 860px;
+  margin: 1.75rem auto 0;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Sezioni a fondo scuro: stessa regola delle .benefit-card, che sono bianche */
+.community-section .home-proof {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* Blocco "su misura": si stacca dalle card senza diventare un banner */
+.home-custom {
+  max-width: 900px;
+  margin: 2rem auto 0;
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--brand-600);
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.home-custom__title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+}
+
+.home-custom p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .home-custom {
+    padding: 16px;
+  }
+}
+
+/* Coppia "cosa fa / cosa non fa": due colonne su desktop, una su mobile */
+.home-grid.home-grid--pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Doppia classe di proposito: le regole di styles.css (1 / 2 / 3 colonne per
+   breakpoint) usano la sola .home-grid, quindi senza questo peso in più
+   vincerebbero loro e la coppia tornerebbe a tre colonne su desktop. */
+@media (max-width: 768px) {
+  .home-grid.home-grid--pair {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Hero actions (bottoni CTA) */
 .home-hero__actions {
   display: flex;

@@ -9,7 +9,11 @@
     "sortDeadline": "Scadenza"
   },
   "status": {
-    "loading": "Caricamento sfide…"
+    "loading": "Caricamento sfide…",
+    "empty": "Al momento non ci sono sfide aperte. Le prossime nascono insieme agli eventi sul territorio.",
+    "emptyFiltered": "Nessuna sfida corrisponde alla ricerca. Prova con un altro luogo o tema.",
+    "emptyCtaEvents": "Guarda gli eventi",
+    "emptyCtaImpact": "Vedi l'impatto raccolto"
   },
   "errors": {
     "load": "Errore nel caricamento"

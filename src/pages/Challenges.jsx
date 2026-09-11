@@ -384,6 +384,35 @@ export default function Challenges() {
           ))}
         </div>
 
+        {/* Stato vuoto: senza questo blocco la pagina mostra una griglia vuota e
+            sembra guasta. Distingue i due casi, perche' la mossa utile e' diversa:
+            con un filtro attivo si svuota la ricerca, senza filtro non c'e' nulla
+            di aperto e l'unica cosa sensata e' guardare eventi e impatto. */}
+        {!loading && !error && filteredChallenges.length === 0 && (
+          <div className="dynamic-empty">
+            <div className="dynamic-empty__icon">🔎</div>
+            <p className="dynamic-empty__text">
+              {query.trim() ? t('status.emptyFiltered') : t('status.empty')}
+            </p>
+            {!query.trim() && (
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => navigate(routes.events.list)}
+                >
+                  {t('status.emptyCtaEvents')}
+                </button>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => navigate(routes.impact.page)}
+                >
+                  {t('status.emptyCtaImpact')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {nextCursor && !loading && (
           <div style={{ textAlign: 'center', marginTop: 16 }}>
             <button

@@ -9,7 +9,11 @@
     "sortDeadline": "Deadline"
   },
   "status": {
-    "loading": "Loading challenges…"
+    "loading": "Loading challenges…",
+    "empty": "There are no open challenges right now. New ones start alongside local events.",
+    "emptyFiltered": "No challenge matches your search. Try another place or topic.",
+    "emptyCtaEvents": "See the events",
+    "emptyCtaImpact": "See the impact so far"
   },
   "errors": {
     "load": "Error loading challenges"
