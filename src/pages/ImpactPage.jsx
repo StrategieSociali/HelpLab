@@ -178,7 +178,16 @@ function ProgressBar({ current, total }) {
  * Mostra nome, CO₂, stato compensazione e mini-progress.
  */
 function EventCompensationCard({ event }) {
-  const isCompensated = event.status === "compensated";
+  const savedKg   = event.co2_saved_kg ?? 0;
+  const emittedKg = event.co2_emitted_kg ?? 0;
+
+  // Un evento in modo `emits` (il partecipante dichiara come e' arrivato) misura
+  // l'impronta della trasferta, non un risparmio: ha trees_needed 0 e il backend
+  // lo marca "compensated". Dirgli "Compensato" sarebbe falso, perche' quella CO2
+  // e' stata emessa e non compensata da nessuno. Terzo stato, neutro.
+  const isFootprintOnly = savedKg <= 0 && emittedKg > 0;
+  const isCompensated = !isFootprintOnly && event.status === "compensated";
+
   const pct =
     event.trees_needed > 0
       ? Math.min(100, Math.round((event.trees_planted / event.trees_needed) * 100))
@@ -189,7 +198,9 @@ function EventCompensationCard({ event }) {
       className="card"
       style={{
         /* Bordo colorato a sinistra come indicatore visivo rapido */
-        borderLeft: isCompensated
+        borderLeft: isFootprintOnly
+          ? "3px solid rgba(255,255,255,0.35)"
+          : isCompensated
           ? "3px solid rgb(74,222,128)"
           : "3px solid rgb(250,204,21)",
         padding: "20px 20px 20px 18px",
@@ -219,10 +230,18 @@ function EventCompensationCard({ event }) {
         </h3>
         {/* Badge stato: usa le classi chip semantiche già in styles.css */}
         <span
-          className={`chip ${isCompensated ? "chip-success" : "chip-warning"}`}
-          aria-label={isCompensated ? "Evento compensato" : "Compensazione in corso"}
+          className={`chip ${
+            isFootprintOnly ? "chip-neutral" : isCompensated ? "chip-success" : "chip-warning"
+          }`}
+          aria-label={
+            isFootprintOnly
+              ? "Impronta misurata"
+              : isCompensated
+              ? "Evento compensato"
+              : "Compensazione in corso"
+          }
         >
-          {isCompensated ? "✓ Compensato" : "⏳ In attesa"}
+          {isFootprintOnly ? "Impronta misurata" : isCompensated ? "✓ Compensato" : "⏳ In attesa"}
         </span>
       </div>
 
@@ -235,31 +254,55 @@ function EventCompensationCard({ event }) {
           flexWrap: "wrap",
         }}
       >
-        <div>
-          <div
-            style={{ fontSize: "1.4rem", fontWeight: 800, color: "rgb(74,222,128)", lineHeight: 1 }}
-          >
-            {fmt(event.co2_saved_kg)}
-            <span style={{ fontSize: "0.5em", marginLeft: 4, opacity: 0.7 }}>kg CO₂</span>
+        {savedKg > 0 && (
+          <div>
+            <div
+              style={{ fontSize: "1.4rem", fontWeight: 800, color: "rgb(74,222,128)", lineHeight: 1 }}
+            >
+              {fmt(savedKg)}
+              <span style={{ fontSize: "0.5em", marginLeft: 4, opacity: 0.7 }}>kg CO₂</span>
+            </div>
+            <div style={{ fontSize: "0.75rem", opacity: 0.55, marginTop: 4, color: "#ffffff" }}>
+              CO₂ risparmiata
+            </div>
           </div>
-          <div style={{ fontSize: "0.75rem", opacity: 0.55, marginTop: 4, color: "#ffffff" }}>
-            CO₂ risparmiata
+        )}
+
+        {/* Le due grandezze non si sommano mai: una e' CO2 non emessa grazie a
+            una scelta, l'altra e' CO2 emessa per raggiungere l'evento. */}
+        {emittedKg > 0 && (
+          <div>
+            <div
+              style={{ fontSize: "1.4rem", fontWeight: 800, color: "rgb(250,204,21)", lineHeight: 1 }}
+            >
+              {fmt(emittedKg)}
+              <span style={{ fontSize: "0.5em", marginLeft: 4, opacity: 0.7 }}>kg CO₂</span>
+            </div>
+            <div style={{ fontSize: "0.75rem", opacity: 0.55, marginTop: 4, color: "#ffffff" }}>
+              CO₂ emessa per arrivare
+            </div>
           </div>
-        </div>
-        <div>
-          <div
-            style={{ fontSize: "1.4rem", fontWeight: 800, color: "#ffffff", lineHeight: 1 }}
-          >
-            {event.trees_planted}
-            <span style={{ opacity: 0.45, fontSize: "0.65em" }}> / {event.trees_needed}</span>
+        )}
+
+        {event.trees_needed > 0 && (
+          <div>
+            <div
+              style={{ fontSize: "1.4rem", fontWeight: 800, color: "#ffffff", lineHeight: 1 }}
+            >
+              {event.trees_planted}
+              <span style={{ opacity: 0.45, fontSize: "0.65em" }}> / {event.trees_needed}</span>
+            </div>
+            <div style={{ fontSize: "0.75rem", opacity: 0.55, marginTop: 4, color: "#ffffff" }}>
+              Alberi piantati / necessari
+            </div>
           </div>
-          <div style={{ fontSize: "0.75rem", opacity: 0.55, marginTop: 4, color: "#ffffff" }}>
-            Alberi piantati / necessari
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Mini barra progresso */}
+      {/* Mini barra progresso: solo dove c'e' qualcosa da compensare. Su un
+          evento di sola impronta la barra a 0% suggerirebbe un ritardo, mentre
+          non c'e' alcun obiettivo da raggiungere. */}
+      {event.trees_needed > 0 && (
       <div
         style={{
           height: 6,
@@ -284,6 +327,7 @@ function EventCompensationCard({ event }) {
           }}
         />
       </div>
+      )}
     </div>
   );
 }
@@ -383,6 +427,7 @@ export default function ImpactPage() {
 
   // ── Dati estratti dalla risposta API ──────────────────────────────────────
   const totalCo2     = data?.total_co2_saved_kg ?? 0;
+  const totalCo2Emitted = data?.total_co2_emitted_kg ?? 0;
   const totalVolunteers = data?.total_volunteers ?? 0;
   const totalSubmissions = data?.total_submissions ?? 0;
   const treesPlanted = data?.compensation?.trees_planted ?? 0;
@@ -390,8 +435,14 @@ export default function ImpactPage() {
   const treesPending = data?.compensation?.trees_pending ?? 0;
   const co2Pending   = data?.compensation?.co2_pending_kg ?? 0;
 
-  // Filtro eventi: solo quelli con CO₂ > 0 (come da specifiche backend)
-  const events = (data?.by_event ?? []).filter((e) => e.co2_saved_kg > 0);
+  // Filtro eventi: si mostra un evento che ha misurato qualcosa, in una delle
+  // due grandezze. Con il solo risparmio restavano fuori gli eventi in modo
+  // `emits`, che misurano l'impronta: Wear The Future spariva dalla pagina pur
+  // avendo 682 km e cinque contributi. Restano fuori gli eventi davvero a zero,
+  // come La Social Pedaleda, che non ha avuto partecipanti.
+  const events = (data?.by_event ?? []).filter(
+    (e) => (e.co2_saved_kg ?? 0) > 0 || (e.co2_emitted_kg ?? 0) > 0
+  );
 
   // Calcolo micro-copy CTA: kg di CO₂ per albero necessario
   // Divisione di due valori già calcolati dal backend — non è IP.
@@ -523,6 +574,13 @@ export default function ImpactPage() {
                   unit="kg"
                   accent
                 />
+                {totalCo2Emitted > 0 && (
+                  <HeroCounter
+                    label="CO₂ emessa per raggiungere gli eventi"
+                    value={fmt(totalCo2Emitted)}
+                    unit="kg"
+                  />
+                )}
                 <HeroCounter
                   label="Volontari attivi"
                   value={fmtInt(totalVolunteers)}

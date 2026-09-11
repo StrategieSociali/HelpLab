@@ -82,6 +82,11 @@ function ChallengeProgressBar({ challenge }) {
             🌱 {fmt(challenge.co2_saved_kg)} kg CO₂
           </span>
         )}
+        {challenge.co2_emitted_kg > 0 && (
+          <span style={{ fontSize: "0.9rem", color: "rgb(250,204,21)" }}>
+            ⛽ {fmt(challenge.co2_emitted_kg)} kg CO₂ emessa
+          </span>
+        )}
         {challenge.total_km > 0 && (
           <span style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.7)" }}>
             🚲 {fmt(challenge.total_km, 0)} km
@@ -270,6 +275,16 @@ export default function EventLiveDashboard() {
                 unit="kg"
                 accent
               />
+              {/* CO2 emessa: grandezza distinta dal risparmio, mai sommata.
+                  Compare solo quando l'evento misura davvero una trasferta
+                  (sfide in modo `emits`), altrimenti resterebbe uno zero muto. */}
+              {(impact.total_co2_emitted_kg ?? 0) > 0 && (
+                <BigCounter
+                  label="CO₂ emessa per arrivare"
+                  value={fmt(impact.total_co2_emitted_kg)}
+                  unit="kg"
+                />
+              )}
               <BigCounter
                 label="Km percorsi"
                 value={fmt(impact.total_km, 0)}

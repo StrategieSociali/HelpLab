@@ -6,14 +6,20 @@
     "searchPlaceholder": "Cerca per luogo, tema o organizzazione…",
     "sortRecent": "Più recenti",
     "sortTitle": "Titolo A–Z",
-    "sortDeadline": "Scadenza"
+    "sortDeadline": "Scadenza",
+    "statusLabel": "Filtra per stato",
+    "statusOpen": "Sfide aperte",
+    "statusClosed": "Sfide concluse",
+    "statusAll": "Tutti gli stati"
   },
   "status": {
     "loading": "Caricamento sfide…",
     "empty": "Al momento non ci sono sfide aperte. Le prossime nascono insieme agli eventi sul territorio.",
     "emptyFiltered": "Nessuna sfida corrisponde alla ricerca. Prova con un altro luogo o tema.",
     "emptyCtaEvents": "Guarda gli eventi",
-    "emptyCtaImpact": "Vedi l'impatto raccolto"
+    "emptyCtaImpact": "Vedi l'impatto raccolto",
+    "emptyOpen": "Nessuna sfida aperta in questo momento. Le sfide concluse restano consultabili come esempio di azioni già fatte.",
+    "emptyCtaShowClosed": "Mostra anche le concluse"
   },
   "errors": {
     "load": "Errore nel caricamento"

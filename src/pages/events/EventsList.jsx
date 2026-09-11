@@ -36,7 +36,10 @@ export default function EventsList() {
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState("");
   const [query, setQuery]           = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  // Default "published" (decisione PM 11/9/2026): chi arriva sulla pagina deve
+  // vedere cosa puo' fare adesso, non l'archivio. Gli eventi conclusi restano
+  // raggiungibili dal filtro, che parte da qui e non da "Tutti gli stati".
+  const [filterStatus, setFilterStatus] = useState("published");
 
 // ── Fetch pagina ──────────────────────────────────────────────────────────
 const fetchPage = useCallback(async ({ append = false } = {}) => {
@@ -168,8 +171,10 @@ const fetchPage = useCallback(async ({ append = false } = {}) => {
           <div className="dynamic-empty">
             <div className="dynamic-empty__icon">📅</div>
             <div className="dynamic-empty__text">
-              {query || filterStatus !== "all"
+              {query
                 ? "Nessun evento corrisponde alla ricerca."
+                : filterStatus === "published"
+                ? "Nessun evento aperto in questo momento. Scegli \u00abTutti gli stati\u00bb per vedere quelli conclusi."
                 : "Nessun evento disponibile al momento."}
             </div>
           </div>

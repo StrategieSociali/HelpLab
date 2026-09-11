@@ -1176,6 +1176,23 @@ label:has(input[type="checkbox"]) > span {
   padding-right: 14px;
 }
 
+/* Select nelle barre filtri: allineati agli input accanto.
+   Piu' su, "Fix altezza select" impone `select.control { min-height: 48px }`,
+   pensata per i form. min-height batte height, quindi in una filters-row il
+   select restava a 48px mentre l'input .control-small stava a 32: i due
+   controlli risultavano sfalsati (segnalato dal PM l'11/9/2026 sulla pagina
+   eventi). Qui si azzera il minimo e si ridichiara l'altezza della variante. */
+select.control.control-small {
+  min-height: 0;
+  height: 32px;
+}
+
+/* La riga dei filtri allinea i controlli sulla loro linea mediana, cosi' una
+   variante di altezza diversa non trascina gli altri. */
+.filters-row {
+  align-items: center;
+}
+
 .control:focus,
 .filter-input:focus {
   border-color: rgba(59,130,246,0.7);

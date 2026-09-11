@@ -6,14 +6,20 @@
     "searchPlaceholder": "Search by place, topic or organisation…",
     "sortRecent": "Most recent",
     "sortTitle": "Title A–Z",
-    "sortDeadline": "Deadline"
+    "sortDeadline": "Deadline",
+    "statusLabel": "Filter by status",
+    "statusOpen": "Open challenges",
+    "statusClosed": "Closed challenges",
+    "statusAll": "All statuses"
   },
   "status": {
     "loading": "Loading challenges…",
     "empty": "There are no open challenges right now. New ones start alongside local events.",
     "emptyFiltered": "No challenge matches your search. Try another place or topic.",
     "emptyCtaEvents": "See the events",
-    "emptyCtaImpact": "See the impact so far"
+    "emptyCtaImpact": "See the impact so far",
+    "emptyOpen": "No open challenge right now. Closed ones stay available as examples of what has already been done.",
+    "emptyCtaShowClosed": "Show closed ones too"
   },
   "errors": {
     "load": "Error loading challenges"

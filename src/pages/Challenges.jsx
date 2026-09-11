@@ -105,6 +105,12 @@ export default function Challenges() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Default "all" (decisione PM 11/9/2026): il filtro esiste e funziona, ma
+  // finche' non c'e' nessuna sfida aperta partire dalle aperte mostrerebbe una
+  // pagina vuota a chi arriva dalla home. Si porta il default su "open" quando
+  // ci sara' qualcosa di aperto. Le sfide chiuse non si cancellano: una sfida
+  // senza partecipanti e' comunque un esempio di azione fattibile.
+  const [filterStatus, setFilterStatus] = useState("all");
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
   const [items, setItems] = useState([]);
@@ -119,6 +125,11 @@ export default function Challenges() {
       try {
         const q = new URLSearchParams();
         q.set("limit", String(PAGE_SIZE));
+        // Il filtro di stato lo applica il BE (GET /challenges?status=...):
+        // filtrarlo solo qui sarebbe una bugia con la paginazione, perche' una
+        // pagina di sole sfide chiuse mostrerebbe "nessuna sfida aperta" mentre
+        // le aperte stanno nella pagina successiva.
+        if (filterStatus !== 'all') q.set("status", filterStatus);
         if (append && nextCursor) q.set("cursor", nextCursor);
 
         const { data } = await api.get(
@@ -143,7 +154,7 @@ export default function Challenges() {
         setLoading(false);
       }
     },
-    [nextCursor]
+    [nextCursor, filterStatus]
   );
 
   useEffect(() => {
@@ -161,6 +172,13 @@ export default function Challenges() {
   const filteredChallenges = useMemo(() => {
     let list = [...challenges];
     const q = query.trim().toLowerCase();
+
+    // Rete di sicurezza: il filtro autorevole e' quello del BE (vedi fetchPage).
+    // Questo serve solo a non mostrare per un istante la lista precedente
+    // mentre arriva la risposta nuova.
+    if (filterStatus !== 'all') {
+      list = list.filter(ch => ch.status === filterStatus);
+    }
 
     if (q) {
       list = list.filter(ch =>
@@ -194,7 +212,7 @@ export default function Challenges() {
     }
 
     return list;
-  }, [challenges, query, sortBy]);
+  }, [challenges, query, sortBy, filterStatus]);
 
   return (
     <section className="page-section page-bg page-text">
@@ -215,6 +233,16 @@ export default function Challenges() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+          <select
+            className="control control-small control-pill"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            aria-label={t('filters.statusLabel')}
+          >
+            <option value="open">{t('filters.statusOpen')}</option>
+            <option value="closed">{t('filters.statusClosed')}</option>
+            <option value="all">{t('filters.statusAll')}</option>
+          </select>
           <select
             className="control control-small control-pill"
             value={sortBy}
@@ -385,16 +413,32 @@ export default function Challenges() {
         </div>
 
         {/* Stato vuoto: senza questo blocco la pagina mostra una griglia vuota e
-            sembra guasta. Distingue i due casi, perche' la mossa utile e' diversa:
-            con un filtro attivo si svuota la ricerca, senza filtro non c'e' nulla
-            di aperto e l'unica cosa sensata e' guardare eventi e impatto. */}
+            sembra guasta. Tre casi, tre mosse utili diverse: con una ricerca
+            attiva si cambia ricerca; col filtro sulle aperte si guardano le
+            chiuse; senza filtro non c'e' proprio nulla e restano eventi e
+            impatto. */}
         {!loading && !error && filteredChallenges.length === 0 && (
           <div className="dynamic-empty">
             <div className="dynamic-empty__icon">🔎</div>
             <p className="dynamic-empty__text">
-              {query.trim() ? t('status.emptyFiltered') : t('status.empty')}
+              {query.trim()
+                ? t('status.emptyFiltered')
+                : filterStatus === 'open'
+                ? t('status.emptyOpen')
+                : t('status.empty')}
             </p>
-            {!query.trim() && (
+            {!query.trim() && filterStatus === 'open' && (
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setFilterStatus('all')}
+                >
+                  {t('status.emptyCtaShowClosed')}
+                </button>
+              </div>
+            )}
+
+            {!query.trim() && filterStatus !== 'open' && (
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
                 <button
                   className="btn btn-outline"
