@@ -34,8 +34,8 @@
  *   (task_id non serve: arriva dalla submission)
  *   Su 409 (lock coda giudici: già revisionata da un'altra sessione)
  *   la lista viene ricaricata automaticamente.
- *   Se la risposta porta `points_pending: true` la decisione è registrata ma i
- *   punti NON sono stati assegnati (motore in avaria): si dichiara a schermo.
+ *   Su 503 la decisione NON è stata registrata e non è rimasto nulla a metà
+ *   (BE ≥ 0.21.0, decisione unica in una sola transazione): si chiede di riprovare.
  *
  * - Override admin (§7.4): SOLO admin, sulle submission già decise
  *   POST /api/v1/submissions/:id/override  Body: { decision, points?, note? }
@@ -229,13 +229,12 @@ export default function JudgeChallengeOverview() {
   // form state per ogni submission: solo points e note (task_id non serve più)
   const [forms, setForms] = useState({}); // { [subId]: { points, note, busy, err } }
 
-  // Motore punti in avaria (bug #10): il BE risponde `points_pending: true` quando
-  // la decisione è registrata ma i punti NON sono stati assegnati. Prima questo caso
-  // era invisibile — la revisione diceva "approvato, N punti" e il partecipante non
-  // riceveva nulla. Sta a livello di pagina e non nel form della singola submission
-  // perché dopo l'approvazione la lista si ricarica e la card sparisce dai pending:
-  // un messaggio agganciato al form se ne andrebbe con lei, senza essere letto.
-  const [pointsAlert, setPointsAlert] = useState(null); // { subId, kind }
+  // Decisione non registrata (BE 503): dal BE 0.21.0 stato del contributo, punti e
+  // impatto si scrivono in una transazione sola, quindi un guasto non lascia nulla a
+  // metà. Non esiste più il caso "approvato ma senza punti" (era `points_pending`):
+  // o la decisione è salvata, o va ripetuta. Sta a livello di pagina perché è un
+  // messaggio sullo stato del sistema, non sul singolo contributo.
+  const [decisionAlert, setDecisionAlert] = useState(null); // { subId }
 
   // Mappa codice ISTAT → label comune, per mostrare il comune di partenza dei
   // task mobility in chiaro (il payload contiene solo il codice). Caricata una volta.
@@ -344,7 +343,7 @@ export default function JudgeChallengeOverview() {
     }
 
     setForm(sub.id, { busy: true, err: "" });
-    setPointsAlert(null);
+    setDecisionAlert(null);
     try {
       const res = await reviewSubmission(token, sub.id, {
         decision: "approved",
@@ -356,10 +355,6 @@ export default function JudgeChallengeOverview() {
         note: f.note?.trim() || undefined,
       });
 
-      // L'approvazione è valida (non si blocca la coda durante l'evento), ma se il
-      // motore non ha assegnato i punti va detto: il silenzio era il bug.
-      if (res?.points_pending) setPointsAlert({ subId: sub.id, kind: "not_awarded" });
-
       await loadSubmissions({ reset: true });
       const ov = await getJudgeChallengeOverview(token, id);
       setOverview(ov);
@@ -370,6 +365,9 @@ export default function JudgeChallengeOverview() {
         await loadSubmissions({ reset: true });
         const ov = await getJudgeChallengeOverview(token, id);
         setOverview(ov);
+      } else if (e.status === 503) {
+        // Decisione non registrata: non è rimasto nulla a metà, va ripetuta.
+        setDecisionAlert({ subId: sub.id });
       } else {
         setForm(sub.id, { err: e.message || "Errore approvazione" });
       }
@@ -382,6 +380,7 @@ export default function JudgeChallengeOverview() {
     const f = forms[sub.id] || {};
 
     setForm(sub.id, { busy: true, err: "" });
+    setDecisionAlert(null);
     try {
       await reviewSubmission(token, sub.id, {
         decision: "rejected",
@@ -398,6 +397,8 @@ export default function JudgeChallengeOverview() {
         await loadSubmissions({ reset: true });
         const ov = await getJudgeChallengeOverview(token, id);
         setOverview(ov);
+      } else if (e.status === 503) {
+        setDecisionAlert({ subId: sub.id });
       } else {
         setForm(sub.id, { err: e.message || "Errore rifiuto" });
       }
@@ -449,24 +450,19 @@ export default function JudgeChallengeOverview() {
       return;
     }
     setForm(sub.id, { busy: true, err: "" });
-    setPointsAlert(null);
+    setDecisionAlert(null);
     try {
-      const res = await overrideSubmission(token, sub.id, {
+      await overrideSubmission(token, sub.id, {
         decision,
         points: decision === "approved" ? Number(f.points) : undefined,
         note: f.note?.trim() || undefined,
       });
-      if (res?.points_pending) {
-        setPointsAlert({
-          subId: sub.id,
-          kind: decision === "rejected" ? "not_revoked" : "not_awarded",
-        });
-      }
       await loadSubmissions({ reset: true });
       const ov = await getJudgeChallengeOverview(token, id);
       setOverview(ov);
     } catch (e) {
-      setForm(sub.id, { err: e.message || "Errore durante l'override" });
+      if (e.status === 503) setDecisionAlert({ subId: sub.id });
+      else setForm(sub.id, { err: e.message || "Errore durante l'override" });
     } finally {
       setForm(sub.id, { busy: false });
     }
@@ -632,38 +628,20 @@ export default function JudgeChallengeOverview() {
           {sError && <div className="callout error">{sError}</div>}
           {sLoading && subs.length === 0 && <div className="callout neutral">Caricamento…</div>}
 
-          {/* Motore punti in avaria (#10): la decisione è registrata, i punti no.
-              Non si dice "errore" perché la revisione è andata a buon fine: si dice
-              esattamente cosa manca e chi se ne occupa. */}
-          {pointsAlert && (
+          {/* Decisione non registrata: dal BE 0.21.0 non resta mai niente a metà,
+              quindi il messaggio dice una cosa sola — ripeti la decisione. */}
+          {decisionAlert && (
             <div className="callout error" style={{ marginTop: 10 }}>
-              {pointsAlert.kind === "not_revoked" ? (
-                <>
-                  <strong>Contributo #{pointsAlert.subId}: rifiutato, ma i punti non
-                  sono stati tolti dalla classifica.</strong>
-                  <div style={{ marginTop: 6 }}>
-                    La tua decisione è registrata e non va rifatta. La rimozione dei
-                    punti è però fallita, quindi il contributo risulta ancora in
-                    classifica: segnala il numero all'organizzatore, che può toglierli
-                    a mano.
-                  </div>
-                </>
-              ) : (
-                <>
-                  <strong>Contributo #{pointsAlert.subId}: approvato, ma i punti non
-                  sono stati assegnati.</strong>
-                  <div style={{ marginTop: 6 }}>
-                    La tua decisione è registrata e non va rifatta. Il calcolo dei punti
-                    è però fallito, quindi in classifica non risulta ancora nulla:
-                    segnala il numero del contributo all'organizzatore, che può
-                    assegnarli a mano.
-                  </div>
-                </>
-              )}
+              <strong>Contributo #{decisionAlert.subId}: decisione non registrata.</strong>
+              <div style={{ marginTop: 6 }}>
+                Non è stato salvato nulla: né lo stato del contributo, né i punti.
+                Riprova fra qualche istante. Se continua a non funzionare, avvisa
+                l'organizzatore.
+              </div>
               <button
                 className="btn btn-outline"
                 style={{ marginTop: 10 }}
-                onClick={() => setPointsAlert(null)}
+                onClick={() => setDecisionAlert(null)}
               >
                 Ho capito
               </button>
