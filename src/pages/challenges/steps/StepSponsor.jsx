@@ -5,7 +5,7 @@
  */
 import React from "react";
 
-export default function StepSponsor({ value = {}, onChange, pointsPreview }) {
+export default function StepSponsor({ value = {}, onChange }) {
   const v = value || {};
   const vis = v.visibility_options || {};
   const set = (patch) => onChange(patch);
@@ -96,7 +96,6 @@ export default function StepSponsor({ value = {}, onChange, pointsPreview }) {
 
       <div className="card" style={{ padding: 12, marginTop: 12 }}>
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          <div><strong>Punti stimati:</strong> {pointsPreview}</div>
           <div><strong>Target:</strong> {v.target?.amount ?? "—"} {v.target?.unit || ""}</div>
           <div><strong>Durata:</strong> {v.start_date || "?"} → {v.deadline || "?"}</div>
           <div><strong>Luogo:</strong> {v.location?.address || "—"}</div>

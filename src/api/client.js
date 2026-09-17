@@ -35,8 +35,6 @@ export const API_PATHS = {
   // pubblico (v1)
   challenges: (q = "") => `/v1/challenges${q}`,
   challengeDetail: (id) => `/v1/challenges/${id}`,
-  scoringConfig: () => `/v1/scoring/config`,
-  previewScoring: () => `/v1/challenges/preview-scoring`,
   challengeLeaderboard: (id, q = '') => `/v1/challenges/${id}/leaderboard${q}`,
   
   // user-centric

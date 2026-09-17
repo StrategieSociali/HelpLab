@@ -13,7 +13,9 @@
  * FLUSSO
  * Il volontario ha già scelto il task al momento della creazione della submission.
  * Il giudice vede a quale task è collegata ogni submission e decide
- * se approvare (con punteggio) o rifiutare (con nota).
+ * se approvare o rifiutare, con una nota facoltativa. I punti li decide il Motore
+ * Punti (dal 17/9/2026, ritiro del cutover): il giudice non li inserisce.
+ * L'admin può correggerli con l'override.
  *
  * FUNZIONALITÀ SUPPORTATE
  * - Overview challenge e task associati
@@ -30,7 +32,7 @@
  *
  * - Revisione submission (approvazione / rifiuto)
  *   POST /api/v1/submissions/:id/review
- *   Body: { decision, points?, note? }
+ *   Body: { decision, note? }
  *   (task_id non serve: arriva dalla submission)
  *   Su 409 (lock coda giudici: già revisionata da un'altra sessione)
  *   la lista viene ricaricata automaticamente.
@@ -197,25 +199,6 @@ export default function JudgeChallengeOverview() {
   const [oLoading, setOLoading] = useState(true);
   const [oError, setOError] = useState("");
 
-  // Cutover del Motore Punti attivo? Quando lo è, il punteggio lo decide il
-  // motore e il numero del giudice viene sostituito: chiederlo come obbligatorio
-  // significherebbe far digitare un valore che verrà scartato, a ogni
-  // approvazione e proprio mentre la coda è piena (rilievo M6, 7/8/2026).
-  //
-  // Il campo resta obbligatorio a cutover SPENTO, e non è un dettaglio: lì il
-  // backend fa `points ?? 0`, quindi un campo vuoto assegnerebbe zero punti in
-  // silenzio. La validazione va allentata solo dove il numero è davvero inutile.
-  const [calibrationBeta, setCalibrationBeta] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    api
-      .get("/v1/points-status")
-      .then(({ data }) => { if (alive) setCalibrationBeta(!!data?.calibration_beta); })
-      .catch(() => { /* endpoint assente o BE vecchio: si resta sul comportamento obbligatorio */ });
-    return () => { alive = false; };
-  }, []);
-
   // Cambio stato sfida (admin): busy + errore dedicati, per non confonderli con
   // gli stati della revisione.
   const [statusBusy, setStatusBusy] = useState(false);
@@ -260,7 +243,6 @@ export default function JudgeChallengeOverview() {
       tasks.map((t) => ({
         id: t.id,
         label: t.title,
-        max_points: t.max_points,
         co2_quota: t.co2_quota,
         assigned_points: t.assigned_points,
       })),
@@ -327,31 +309,12 @@ export default function JudgeChallengeOverview() {
 
   const onApprove = async (sub) => {
     const f = forms[sub.id] || {};
-    const pointsMancanti = f.points === "" || f.points == null;
-
-    // A cutover acceso il punteggio lo calcola la piattaforma: il campo è
-    // facoltativo e si può approvare lasciandolo vuoto. A cutover spento resta
-    // obbligatorio, altrimenti si assegnerebbero zero punti senza accorgersene.
-    if (!calibrationBeta && pointsMancanti) {
-      setForm(sub.id, { err: "Inserisci i punti (numero) per approvare." });
-      return;
-    }
-    // Un valore scritto ma non numerico è un errore in entrambi i casi.
-    if (!pointsMancanti && Number.isNaN(Number(f.points))) {
-      setForm(sub.id, { err: "I punti devono essere un numero." });
-      return;
-    }
 
     setForm(sub.id, { busy: true, err: "" });
     setDecisionAlert(null);
     try {
       const res = await reviewSubmission(token, sub.id, {
         decision: "approved",
-        // Campo vuoto: si OMETTE invece di mandare 0. Server-side oggi è lo
-        // stesso (`points ?? 0`), ma "il giudice non ha indicato un numero" e
-        // "il giudice ha deciso zero" sono due fatti diversi, e in `judge_points`
-        // resta la traccia di ciò che la persona ha deciso.
-        points: pointsMancanti ? undefined : Number(f.points),
         note: f.note?.trim() || undefined,
       });
 
@@ -522,8 +485,6 @@ export default function JudgeChallengeOverview() {
           Tipo: <strong>{ch?.type || "—"}</strong>
           {" · "}
           CO₂ approvata: <strong>{ch?.approved_co2 ?? "—"}</strong>
-          {" · "}
-          Punti max: <strong>{ch?.max_points ?? "—"}</strong>
           {chStatus && (
             <>
               {" · "}
@@ -591,9 +552,7 @@ export default function JudgeChallengeOverview() {
           ) : (
             <div style={{ display: "grid", gap: 10 }}>
               {taskOptions.map((t) => {
-                const max = t.max_points ?? null;
                 const assigned = t.assigned_points ?? 0;
-                const remaining = max == null ? null : Math.max(0, max - assigned);
 
                 return (
                   <div key={t.id} className="card-info neutral">
@@ -601,17 +560,11 @@ export default function JudgeChallengeOverview() {
                       <div>
                         <strong>{t.label}</strong>
                         <div className="muted small">
-                          max_points: {t.max_points ?? "—"} · co2_quota: {t.co2_quota ?? "—"}
+                          co2_quota: {t.co2_quota ?? "—"}
                         </div>
                       </div>
                       <div className="muted small" style={{ textAlign: "right" }}>
                         assegnati: <strong>{assigned}</strong>
-                        {remaining != null && (
-                          <>
-                            {" · "}
-                            residui: <strong>{remaining}</strong>
-                          </>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -749,29 +702,6 @@ export default function JudgeChallengeOverview() {
                           {/* Form decisione: solo se detieni il claim (o sei admin) */}
                           {canDecide && (
                             <>
-                              <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label>
-                                  {calibrationBeta
-                                    ? "Punti (facoltativo)"
-                                    : "Punti (solo se approvi)"}
-                                </label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={f.points}
-                                  onChange={(e) => setForm(s.id, { points: e.target.value })}
-                                  placeholder={calibrationBeta ? "Lascia vuoto" : "Es. 30"}
-                                />
-                                {calibrationBeta && (
-                                  <div className="muted small" style={{ marginTop: 4 }}>
-                                    Il punteggio lo calcola la piattaforma dai dati del
-                                    contributo: puoi lasciare vuoto e approvare. Se scrivi
-                                    un numero, viene usato solo come riserva, nel caso il
-                                    calcolo non riesca.
-                                  </div>
-                                )}
-                              </div>
-
                               <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label>Nota (facoltativa)</label>
                                 <textarea

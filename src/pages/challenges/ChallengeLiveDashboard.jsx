@@ -25,7 +25,6 @@ import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "@/api/client";
 import { routes } from "@/routes";
-import CalibrationBadge from "@/components/points/CalibrationBadge";
 
 const POLL_INTERVAL_MS = 30_000; // 30 secondi
 
@@ -295,7 +294,6 @@ export default function ChallengeLiveDashboard() {
             {top5.length > 0 && (
               <div className="card" style={{ padding: 16 }}>
                 <h2 className="dynamic-title" style={{ marginBottom: 8 }}>🏆 {t("leaderboard.title")}</h2>
-                <CalibrationBadge withCaption />
                 <ol style={{ margin: "12px 0 0", padding: 0, listStyle: "none" }}>
                   {top5.map((entry, i) => (
                     <li

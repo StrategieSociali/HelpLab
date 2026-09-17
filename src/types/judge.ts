@@ -35,13 +35,11 @@ export interface JudgeChallengeOverview {
   title: string;
   type: ChallengeType;
   approved_co2: number | null;
-  max_points: number | null;
 }
 
 export interface JudgeTaskOverview {
   id: number;
   title: string;
-  max_points: number | null;
   co2_quota: number | null;
   assigned_points: number;
 }

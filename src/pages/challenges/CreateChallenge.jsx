@@ -8,13 +8,15 @@
  * Step 3 — StepImpact:   CO₂e stimata o difficoltà (XOR)
  * Step 4 — StepSponsor:  sponsor, visibilità, termini
  *
- * Fix applicati in questo aggiornamento:
- * - Blocco JSX "Preview punti" spostato dentro il return (era floating)
- * - payload_schema incluso nella normalizzazione dei task in handleSubmit
- *   e in previewServerScoring, così il backend lo riceve e lo salva
+ * payload_schema è incluso nella normalizzazione dei task in handleSubmit, così il
+ * backend lo riceve e lo salva.
+ *
+ * Nessuna anteprima di punti (tolte il 17/9/2026 col ritiro del cutover): quelle
+ * vecchie usavano una formula precedente al Motore Punti e mostravano a chi organizza
+ * un numero che non sarebbe mai stato assegnato. I punti li decide il motore.
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/api/client";
@@ -47,25 +49,6 @@ export default function CreateChallenge() {
     }
   });
 
-  // ── Anteprima punteggio server ──────────────────────────────────────────
-  const [serverScore,  setServerScore]  = useState(null);
-  const [scoringBusy,  setScoringBusy]  = useState(false);
-
-  const previewServerScoring = async () => {
-    setScoringBusy(true);
-    setServerScore(null);
-    try {
-      const body = buildPayload(draft);
-      const { data } = await api.post("/v1/challenges/preview-scoring", body);
-      setServerScore(data); // { version, points_estimate_total, breakdown, notes }
-    } catch (e) {
-      console.error("preview-scoring failed", e?.response || e);
-      alert("Anteprima punteggio non disponibile al momento.");
-    } finally {
-      setScoringBusy(false);
-    }
-  };
-
   // ── Autosave bozza ───────────────────────────────────────────────────────
   useEffect(() => {
     const t = setTimeout(() => {
@@ -79,24 +62,6 @@ export default function CreateChallenge() {
   const set  = (patch) => setDraft((d) => ({ ...d, ...patch }));
   const next = () => setStep((s) => Math.min(TOTAL_STEPS, s + 1));
   const prev = () => setStep((s) => Math.max(1, s - 1));
-
-  // ── Preview punti locale (client-side, indicativa) ───────────────────────
-  const pointsPreview = useMemo(() => {
-    const COEF = 1.0;
-    if (draft.co2e_estimate_kg != null && !draft.difficulty) {
-      return Math.max(
-        0,
-        Math.round(Number(draft.co2e_estimate_kg || 0) * COEF)
-      );
-    }
-    if (draft.difficulty && draft.co2e_estimate_kg == null) {
-      const base    = 3;
-      const mult    = { low: 1.0, medium: 1.25, high: 1.5 }[draft.difficulty] || 1;
-      const scaling = Math.log10(1 + (draft.target?.amount || 0)) + 1;
-      return Math.round(base * mult * scaling * 10);
-    }
-    return 0;
-  }, [draft]);
 
   const resetDraft = () => {
     localStorage.removeItem(STORAGE_KEY);
@@ -174,61 +139,12 @@ export default function CreateChallenge() {
           {step === 1 && <StepDetails value={draft} onChange={set} />}
           {step === 2 && <StepTargets value={draft} onChange={set} />}
           {step === 3 && (
-            <StepImpact
-              value={draft}
-              onChange={set}
-              pointsPreview={pointsPreview}
-            />
+            <StepImpact value={draft} onChange={set} />
           )}
           {step === 4 && (
-            <StepSponsor
-              value={draft}
-              onChange={set}
-              pointsPreview={pointsPreview}
-            />
+            <StepSponsor value={draft} onChange={set} />
           )}
         </div>
-
-        {/* Preview punti — visibile in tutti gli step
-            NOTA: il calcolo server usa buildPayload() che include
-            payload_schema, così il preview è coerente col submit. */}
-        <div className="points-preview" style={{ marginTop: 10 }}>
-          Punti stimati (client):{" "}
-          <strong className="points-value">{pointsPreview}</strong>
-          <button
-            className="btn btn-outline btn-small"
-            type="button"
-            onClick={previewServerScoring}
-            disabled={scoringBusy}
-            style={{ marginLeft: 8 }}
-          >
-            {scoringBusy ? "Calcolo…" : "Calcola punteggio server"}
-          </button>
-        </div>
-
-        {serverScore && (
-          <div className="card" style={{ marginTop: 8, padding: 10 }}>
-            <div>
-              <strong>Server:</strong> {serverScore.points_estimate_total}
-            </div>
-            {Array.isArray(serverScore.breakdown) &&
-              serverScore.breakdown.length > 0 && (
-                <ul style={{ margin: "6px 0 0 16px" }}>
-                  {serverScore.breakdown.map((b, i) => (
-                    <li key={i}>
-                      {b.label}: {b.value}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            {Array.isArray(serverScore.notes) &&
-              serverScore.notes.length > 0 && (
-                <small className="muted">
-                  Note: {serverScore.notes.join("; ")}
-                </small>
-              )}
-          </div>
-        )}
 
         {/* Navigazione wizard */}
         <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -257,8 +173,7 @@ export default function CreateChallenge() {
 // ─── Utility: normalizzazione payload prima dell'invio ────────────────────────
 /**
  * Trasforma il draft in un payload pulito pronto per il backend.
- * Usata sia in handleSubmit che in previewServerScoring per garantire
- * che entrambe le chiamate inviino esattamente gli stessi dati.
+ * Usata da handleSubmit.
  *
  * IMPORTANTE: i task vengono normalizzati includendo payload_schema,
  * che il backend salva e poi restituisce in GET /challenges/:id/tasks.

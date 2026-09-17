@@ -2,11 +2,12 @@
 /**
  * Scopo: step "Impatto" del form multi-step di creazione sfida (CreateChallenge).
  * Permette di dichiarare l'impatto in due modalità: stima CO₂ ("co2") o livello di difficoltà ("difficulty").
- * Nota: nessun calcolo di business lato FE — invia i dati al BE, mostra solo il pointsPreview ricevuto.
+ * Nota: nessun calcolo di business lato FE. Nessuna anteprima di punti: tolta il 17/9/2026,
+ * usava una formula precedente al Motore Punti (ritiro del cutover).
  */
 import React, { useState } from "react";
 
-export default function StepImpact({ value, onChange, pointsPreview }) {
+export default function StepImpact({ value, onChange }) {
   // Modalità iniziale: se ho CO₂ uso "co2", altrimenti "difficulty"
   const [mode, setMode] = useState(
     value?.co2e_estimate_kg ? "co2" : "difficulty"
@@ -56,7 +57,7 @@ export default function StepImpact({ value, onChange, pointsPreview }) {
 
   return (
     <div className="step step-impact">
-      <h3 className="step-title">Impatto e punteggio</h3>
+      <h3 className="step-title">Impatto</h3>
 
       <div className="row two-col soft-gap">
         <div className="field">
@@ -77,11 +78,6 @@ export default function StepImpact({ value, onChange, pointsPreview }) {
               Difficoltà
             </button>
           </div>
-        </div>
-
-        <div className="field">
-          <label className="label">Anteprima punteggio</label>
-          <div className="preview-points">{pointsPreview || 0} pt</div>
         </div>
       </div>
 
