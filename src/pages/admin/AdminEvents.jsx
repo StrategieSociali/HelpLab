@@ -20,6 +20,11 @@
  * Approvazione e chiusura restituiscono il riassunto dello stesso controllo
  * (`integrity`): il messaggio a schermo lo dice e il pulsante si aggiorna.
  *
+ * PREFLIGHT D'EVENTO (PM-6, decisione PM 1/10/2026): ogni riga non conclusa mostra lo
+ * stato della configurazione già colorato (verde a posto, neutro con avvisi, rosso con
+ * blocchi), dal campo `preflight` della lista; il clic apre EventPreflightModal con
+ * rilievi e riepilogo. «Approva» apre la stessa modale con i pulsanti del cancello.
+ *
  * PATTERN: identico ad AdminProposals.jsx
  * - useEffect + useState + api diretta
  * - Select per filtrare per stato
@@ -37,9 +42,10 @@ import { useNavigate, Link } from "react-router-dom";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/utils/roles";
-import { getAdminEvents, approveEvent, rejectEvent, endEvent } from "@/api/events.api";
+import { getAdminEvents, rejectEvent, endEvent } from "@/api/events.api";
 import { getPointsIntegrity } from "@/api/points.api";
 import PointsIntegrityButton from "@/components/admin/PointsIntegrityButton";
+import EventPreflightModal from "@/components/admin/EventPreflightModal";
 import { routes } from "@/routes";
 
 const PAGE_SIZE = 20;
@@ -53,6 +59,14 @@ function integrityMessage(res) {
   if (integrity.ok)       return "\n\nRegistro punti coerente.";
   const cases = integrity.count + integrity.anomalies_count;
   return `\n\nRegistro punti: ${cases} ${cases === 1 ? "caso" : "casi"} da verificare. Aprilo dal pulsante in alto.`;
+}
+
+// Etichetta e colore dell'indicatore di configurazione della riga
+function preflightPill(p) {
+  if (p === null)   return { label: "Configurazione: controllo non riuscito", modifier: "unknown" };
+  if (p.blocked)    return { label: `⚠ Configurazione: ${p.blocks} ${p.blocks === 1 ? "blocco" : "blocchi"}`, modifier: "alert" };
+  if (p.warnings)   return { label: `Configurazione: ${p.warnings} ${p.warnings === 1 ? "avviso" : "avvisi"}`, modifier: "unknown" };
+  return { label: "✓ Configurazione a posto", modifier: "ok" };
 }
 
 // Formattazione data leggibile
@@ -76,6 +90,8 @@ export default function AdminEvents() {
   const [error, setError]   = useState("");
   // Riassunto del registro punti: undefined = in caricamento, null = controllo non riuscito
   const [integrity, setIntegrity] = useState(undefined);
+  // Preflight d'evento: { event, approve } della modale aperta, null se chiusa
+  const [preflightOpen, setPreflightOpen] = useState(null);
 
   // ── Controllo di integrità del registro punti ────────────────────────
   const loadIntegrity = async () => {
@@ -130,13 +146,7 @@ export default function AdminEvents() {
     if (!isAdminUser) return alert("Permessi insufficienti (admin).");
     setBusy((b) => ({ ...b, [id]: true }));
     try {
-      if (kind === "approve") {
-        const res = await approveEvent(id);
-        setItems((list) => list.filter((x) => x.id !== id));
-        if (res && "integrity" in res) setIntegrity(res.integrity);
-        alert("Evento approvato e pubblicato ✅" + integrityMessage(res));
-
-      } else if (kind === "reject") {
+      if (kind === "reject") {
         const reason = prompt("Motivo del rifiuto (opzionale):") ?? undefined;
         await rejectEvent(id, reason || "");
         setItems((list) => list.filter((x) => x.id !== id));
@@ -167,6 +177,14 @@ export default function AdminEvents() {
     } finally {
       setBusy((b) => ({ ...b, [id]: false }));
     }
+  };
+
+  // Approvazione riuscita dalla modale del preflight
+  const onApproved = (id, res) => {
+    setPreflightOpen(null);
+    setItems((list) => list.filter((x) => x.id !== id));
+    if (res && "integrity" in res) setIntegrity(res.integrity);
+    alert("Evento approvato e pubblicato ✅" + integrityMessage(res));
   };
 
   // ── Guard ruolo ──────────────────────────────────────────────────────
@@ -270,6 +288,20 @@ export default function AdminEvents() {
                       Sfide: {ev.challenges.map((ch) => ch.title).join(", ")}
                     </div>
                   )}
+                  {/* Preflight d'evento: stato già colorato, il clic apre il dettaglio */}
+                  {"preflight" in ev && (() => {
+                    const pill = preflightPill(ev.preflight);
+                    return (
+                      <button
+                        className={`btn btn-pill btn-small integrity-pill integrity-pill--${pill.modifier}`}
+                        style={{ marginTop: 6 }}
+                        onClick={() => setPreflightOpen({ event: ev, approve: false })}
+                        title="Controllo della configurazione delle sfide di questo evento"
+                      >
+                        {pill.label}
+                      </button>
+                    );
+                  })()}
                   {/* Motivo rifiuto se presente */}
                   {ev.rejection_reason && (
                     <div className="card-info error" style={{ marginTop: 6, fontSize: "0.85rem" }}>
@@ -317,7 +349,7 @@ export default function AdminEvents() {
                   {(ev.status === "draft" || ev.status === "rejected") && (
                     <button
                       className="btn btn-primary btn-small"
-                      onClick={() => act(ev.id, "approve")}
+                      onClick={() => setPreflightOpen({ event: ev, approve: true })}
                       disabled={!!busy[ev.id]}
                     >
                       {busy[ev.id] ? "…" : "Approva"}
@@ -366,6 +398,14 @@ export default function AdminEvents() {
             </li>
           ))}
         </ul>
+
+        {preflightOpen && (
+          <EventPreflightModal
+            event={preflightOpen.event}
+            onClose={() => setPreflightOpen(null)}
+            onApproved={preflightOpen.approve ? (res) => onApproved(preflightOpen.event.id, res) : undefined}
+          />
+        )}
 
         {/* Paginazione */}
         {cursor && !loading && (

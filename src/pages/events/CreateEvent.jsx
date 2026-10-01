@@ -122,6 +122,9 @@ export default function CreateEvent() {
     }
 
     const failed = [];
+    // Motivi leggibili dal backend (es. preflight: la sfida darebbe zero), da mostrare
+    // invece del solo conteggio: riprovare non servirebbe, va corretta la sfida.
+    const reasons = [];
     for (const challengeId of idsToLink) {
       try {
         await linkChallengeToEvent(eventId, Number(challengeId));
@@ -130,6 +133,7 @@ export default function CreateEvent() {
         // 409 = già collegata a questo evento — non è un errore bloccante
         if (status !== 409) {
           failed.push(challengeId);
+          if (status === 400 && err?.response?.data?.error) reasons.push(err.response.data.error);
         }
       }
     }
@@ -141,7 +145,8 @@ export default function CreateEvent() {
       setFailedChallengeIds(failed);
       setSubmitError(
         `Evento creato, ma il collegamento a ${failed.length} sfida${failed.length > 1 ? " non è riuscito" : " non è riuscito"}. ` +
-        `Clicca "Riprova collegamento" per riprovare, oppure approva l'evento e collegale manualmente.`
+        `Clicca "Riprova collegamento" per riprovare, oppure approva l'evento e collegale manualmente.` +
+        (reasons.length ? `\n\n${reasons.join("\n")}` : "")
       );
       return;
     }
@@ -202,7 +207,7 @@ export default function CreateEvent() {
         {/* Errore submit */}
         {submitError && (
           <div className="card-info error" style={{ marginTop: 12 }} role="alert">
-            <div style={{ marginBottom: failedChallengeIds.length > 0 ? 10 : 0 }}>
+            <div style={{ marginBottom: failedChallengeIds.length > 0 ? 10 : 0, whiteSpace: "pre-line" }}>
               {submitError}
             </div>
             {/* Azioni di recovery quando l'evento è già stato creato */}

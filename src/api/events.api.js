@@ -25,6 +25,14 @@
  *   PATCH  /events/:id/reject             → rifiuta (admin)
  *   PATCH  /events/:id/end               → chiudi evento (admin)
  *
+ *   GET    /admin/events/:id/preflight    → preflight d'evento: rilievi e riepilogo (admin)
+ *
+ * Preflight d'evento (1/10/2026): ogni riga di /admin/events non conclusa porta
+ * `preflight` ({ blocked, needs_confirmation, blocks, warnings }, null se non riuscito).
+ * approve risponde 409 `preflight_blocked` con un task che darebbe zero, oppure
+ * `preflight_confirm_required` con soli avvisi e senza `confirm_warnings: true`.
+ * Il collegamento di una sfida sbagliata risponde 400 col motivo in `error`.
+ *
  * approve ed end restituiscono anche `integrity`: riassunto del controllo di integrità
  * del registro punti ({ ok, count, anomalies_count }), null se il controllo non è riuscito.
  */
@@ -148,9 +156,19 @@ export async function getAdminEvents({ status, limit = 20, cursor } = {}) {
 /**
  * Approva un evento (lo porta da draft a published).
  * @param {number} id
+ * @param {Object} [body] - es. { confirm_warnings: true } per confermare gli avvisi del preflight
  */
-export async function approveEvent(id) {
-  const { data } = await api.patch(`/v1/events/${id}/approve`);
+export async function approveEvent(id, body = {}) {
+  const { data } = await api.patch(`/v1/events/${id}/approve`, body);
+  return data;
+}
+
+/**
+ * Preflight d'evento: rilievi sulle sfide collegate e riepilogo della configurazione.
+ * @param {number} id
+ */
+export async function getEventPreflight(id) {
+  const { data } = await api.get(`/v1/admin/events/${id}/preflight`);
   return data;
 }
 
