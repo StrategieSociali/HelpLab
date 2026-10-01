@@ -1,8 +1,17 @@
 // src/pages/admin/AdminProposals.jsx
+/**
+ * Scopo: elenco delle proposte di sfida da approvare o respingere.
+ * Accesso: admin.
+ * Nota: «Approva» passa dalla modale del preflight (ProposalApproveModal, decisione PM
+ * 1/10/2026): si vede che cosa il backend ha trovato nei task prima che la sfida nasca
+ * aperta. Una proposta bloccata si respinge; il motivo oggi non si salva e il proponente
+ * va avvisato a voce o per email (bug-e-todo).
+ */
 import React, { useEffect, useMemo, useState } from "react";
 import { api, API_PATHS } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/utils/roles";
+import ProposalApproveModal from "@/components/admin/ProposalApproveModal";
 import "../../styles/dynamic-pages.css";
 
 const PAGE_SIZE = 20;
@@ -17,6 +26,7 @@ export function AdminProposals() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState({});
   const [error, setError] = useState("");
+  const [approving, setApproving] = useState(null);
 
   const load = async ({ append = false } = {}) => {
     if (!isAdminUser) return;
@@ -115,7 +125,7 @@ export function AdminProposals() {
                 <div>
                   <div style={{ fontWeight: 600 }}>{p.title || "(senza titolo)"}</div>
                   <div className="muted small">
-                    ID: {p.id} • Stato: {p.status} • {p.user ? `Utente #${p.user.id}` : ""}
+                    {p.author ? `Proposta da ${p.author.name}` : "Autore non indicato"} • Stato: {p.status}
                   </div>
                 </div>
                 <div style={{ textAlign: "right", display: "flex", gap: 8, justifyContent: "flex-end" }}>
@@ -123,7 +133,7 @@ export function AdminProposals() {
                     <>
                       <button
                         className="btn btn-primary"
-                        onClick={() => act(p.id, "approve")}
+                        onClick={() => setApproving(p)}
                         disabled={!!busy[p.id]}
                       >
                         Approva
@@ -149,6 +159,18 @@ export function AdminProposals() {
             </li>
           ))}
         </ul>
+
+        {approving && (
+          <ProposalApproveModal
+            proposal={approving}
+            onClose={() => setApproving(null)}
+            onApproved={(id) => {
+              setApproving(null);
+              setItems(list => list.filter(x => x.id !== id));
+              alert("Proposta approvata ✅");
+            }}
+          />
+        )}
 
         {cursor && !loading && (
           <div style={{ textAlign: "center", marginTop: 8 }}>

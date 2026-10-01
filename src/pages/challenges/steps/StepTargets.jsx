@@ -13,10 +13,16 @@
  * per ogni campo del payload_schema. Se non compilati, il form del
  * volontario usa i testi di default (fallback i18n in ChallengeSubmitPage).
  * Aggiunto pulsante "Rimuovi task" mancante.
+ *
+ * PREFLIGHT (decisione PM 1/10/2026): a ogni modifica dei task la bozza si manda al
+ * backend (POST /challenge-proposals/preflight, non salva nulla) e sotto ogni task
+ * compaiono i rilievi: in rosso ciò che darebbe zero (es. calcolatore che non trova il
+ * proprio campo), in grigio le scelte da confermare. Le regole stanno solo nel backend;
+ * all'invio una proposta con un rilievo bloccante viene rifiutata.
  */
 
 import React, { useState, useEffect } from "react";
-import { api } from "@/api/client";
+import { api, API_PATHS } from "@/api/client";
 
 // ─── Mappatura impact_type → payload_schema ───────────────────────────────────
 /**
@@ -188,6 +194,34 @@ export default function StepTargets({ value = {}, onChange }) {
     };
   }, []);
 
+  // ── Preflight della bozza (rilievi per task, dal backend) ────────────────
+  // Attesa breve dopo l'ultima modifica, per non chiamare a ogni tasto. Se la chiamata
+  // fallisce non si mostra nulla: il controllo vero resta all'invio.
+  const [findings, setFindings] = useState([]);
+
+  useEffect(() => {
+    if (tasks.length === 0) {
+      // Stesso riferimento se è già vuoto: `tasks` può essere un [] nuovo a ogni render.
+      setFindings((prev) => (prev.length ? [] : prev));
+      return;
+    }
+    let alive = true;
+    const t = setTimeout(() => {
+      api
+        .post(API_PATHS.draftPreflight(), { tasks })
+        .then(({ data }) => {
+          if (alive) setFindings(Array.isArray(data?.findings) ? data.findings : []);
+        })
+        .catch(() => {
+          if (alive) setFindings([]);
+        });
+    }, 600);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
+  }, [tasks]);
+
   // ── Aggiunta task con payload_schema automatico ──────────────────────────
   const addTask = () => {
     const schema = getPayloadSchema(impactType);
@@ -343,6 +377,7 @@ export default function StepTargets({ value = {}, onChange }) {
               calcError={calcError}
               comuni={comuni}
               comuniLoading={comuniLoading}
+              findings={findings.filter((f) => f.task_index === i)}
               onUpdate={(patch) => updTask(i, patch)}
               onRemove={() => removeTask(i)}
               onUpdateField={(fieldIndex, prop, val) =>
@@ -413,6 +448,7 @@ function TaskCard({
   calcError = false,
   comuni = [],
   comuniLoading = false,
+  findings = [],
   onUpdate,
   onRemove,
   onUpdateField,
@@ -538,8 +574,10 @@ function TaskCard({
           )}
           <div className="hint">
             Determina come la piattaforma calcola l&rsquo;impatto del task (es. CO₂
-            evitata). Nel dubbio lascia &ldquo;Nessuno&rdquo;: potrà essere corretto in
-            fase di approvazione.
+            evitata). Scegli quello del tipo di impatto della sfida: se non corrisponde
+            ai dati raccolti, qui sotto compare un avviso e la proposta non si può
+            inviare. Se il task non ha un impatto da misurare, lascia
+            &ldquo;Nessuno&rdquo;.
           </div>
         </label>
       </div>
@@ -603,6 +641,19 @@ function TaskCard({
           </label>
         </div>
       )}
+
+      {/* Preflight: rilievi del backend su questo task */}
+      {findings.map((f, fi) => (
+        <div
+          key={`${f.code}-${fi}`}
+          className={`callout ${f.level === "block" ? "error" : "neutral"}`}
+          role={f.level === "block" ? "alert" : undefined}
+          style={{ marginTop: 8, padding: "6px 10px" }}
+        >
+          {f.level === "block" ? "⚠ " : ""}
+          {f.message}
+        </div>
+      ))}
 
       {/* Riepilogo dati raccolti — sola lettura */}
       {fields.length > 0 && (

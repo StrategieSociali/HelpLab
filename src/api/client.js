@@ -44,6 +44,8 @@ export const API_PATHS = {
   adminProposals: (q = "") => `/v1/admin/proposals${q}`,
   approveProposal: (id) => `/v1/challenge-proposals/${id}/approve`,
   rejectProposal:  (id) => `/v1/challenge-proposals/${id}/reject`,
+  proposalPreflight: (id) => `/v1/admin/proposals/${id}/preflight`,
+  draftPreflight: () => `/v1/challenge-proposals/preflight`,
 
   // admin – judges (v1)
   adminJudges: (q = "") => `/v1/admin/judges${q}`,
