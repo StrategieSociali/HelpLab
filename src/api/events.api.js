@@ -24,6 +24,9 @@
  *   PATCH  /events/:id/approve            → approva (admin)
  *   PATCH  /events/:id/reject             → rifiuta (admin)
  *   PATCH  /events/:id/end               → chiudi evento (admin)
+ *
+ * approve ed end restituiscono anche `integrity`: riassunto del controllo di integrità
+ * del registro punti ({ ok, count, anomalies_count }), null se il controllo non è riuscito.
  */
 
 import { api } from "@/api/client";

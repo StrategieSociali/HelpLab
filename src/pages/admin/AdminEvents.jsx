@@ -13,6 +13,12 @@
  *   PATCH /events/:id/approve       → approva (draft → published)
  *   PATCH /events/:id/reject        → rifiuta (richiede reason)
  *   PATCH /events/:id/end           → chiudi evento (published → ended)
+ *   GET   /admin/points-integrity   → stato del registro punti (pulsante in alto)
+ *
+ * CONTROLLO DI INTEGRITÀ (decisione PM 17/9/2026): il pulsante del registro nella barra
+ * in alto mostra lo stato già colorato all'apertura della pagina e a ogni «Aggiorna».
+ * Approvazione e chiusura restituiscono il riassunto dello stesso controllo
+ * (`integrity`): il messaggio a schermo lo dice e il pulsante si aggiorna.
  *
  * PATTERN: identico ad AdminProposals.jsx
  * - useEffect + useState + api diretta
@@ -32,9 +38,22 @@ import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/utils/roles";
 import { getAdminEvents, approveEvent, rejectEvent, endEvent } from "@/api/events.api";
+import { getPointsIntegrity } from "@/api/points.api";
+import PointsIntegrityButton from "@/components/admin/PointsIntegrityButton";
 import { routes } from "@/routes";
 
 const PAGE_SIZE = 20;
+
+// Esito del controllo di integrità da aggiungere al messaggio dopo approvazione/chiusura.
+// Un backend senza il campo `integrity` (precedente alla 0.24.0) non aggiunge nulla.
+function integrityMessage(res) {
+  if (!res || !("integrity" in res)) return "";
+  const integrity = res.integrity;
+  if (integrity === null) return "\n\nControllo del registro punti non riuscito: aprilo dal pulsante in alto.";
+  if (integrity.ok)       return "\n\nRegistro punti coerente.";
+  const cases = integrity.count + integrity.anomalies_count;
+  return `\n\nRegistro punti: ${cases} ${cases === 1 ? "caso" : "casi"} da verificare. Aprilo dal pulsante in alto.`;
+}
 
 // Formattazione data leggibile
 function formatDate(dateStr) {
@@ -55,6 +74,26 @@ export default function AdminEvents() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy]     = useState({});
   const [error, setError]   = useState("");
+  // Riassunto del registro punti: undefined = in caricamento, null = controllo non riuscito
+  const [integrity, setIntegrity] = useState(undefined);
+
+  // ── Controllo di integrità del registro punti ────────────────────────
+  const loadIntegrity = async () => {
+    if (!isAdminUser) return;
+    setIntegrity(undefined);
+    try {
+      const r = await getPointsIntegrity();
+      setIntegrity({ ok: r.ok, count: r.count, anomalies_count: r.anomalies_count });
+    } catch (err) {
+      console.error("AdminEvents integrity error:", err);
+      setIntegrity(null);
+    }
+  };
+
+  useEffect(() => {
+    loadIntegrity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Carica lista eventi ──────────────────────────────────────────────
   const load = async ({ append = false } = {}) => {
@@ -92,9 +131,10 @@ export default function AdminEvents() {
     setBusy((b) => ({ ...b, [id]: true }));
     try {
       if (kind === "approve") {
-        await approveEvent(id);
+        const res = await approveEvent(id);
         setItems((list) => list.filter((x) => x.id !== id));
-        alert("Evento approvato e pubblicato ✅");
+        if (res && "integrity" in res) setIntegrity(res.integrity);
+        alert("Evento approvato e pubblicato ✅" + integrityMessage(res));
 
       } else if (kind === "reject") {
         const reason = prompt("Motivo del rifiuto (opzionale):") ?? undefined;
@@ -110,9 +150,10 @@ export default function AdminEvents() {
           setBusy((b) => ({ ...b, [id]: false }));
           return;
         }
-        await endEvent(id);
+        const res = await endEvent(id);
         setItems((list) => list.filter((x) => x.id !== id));
-        alert("Evento chiuso ✅");
+        if (res && "integrity" in res) setIntegrity(res.integrity);
+        alert("Evento chiuso ✅" + integrityMessage(res));
       }
     } catch (err) {
       const st  = err?.response?.status;
@@ -164,11 +205,14 @@ export default function AdminEvents() {
 
             <button
               className="btn btn-outline btn-pill"
-              onClick={() => load({ append: false })}
+              onClick={() => { load({ append: false }); loadIntegrity(); }}
               disabled={loading}
             >
               Aggiorna
             </button>
+
+            {/* Registro punti: controllo globale, un solo pulsante (non uno per riga) */}
+            <PointsIntegrityButton summary={integrity} onSummary={setIntegrity} />
 
             {/* Link creazione evento */}
             <button

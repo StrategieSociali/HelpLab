@@ -2217,6 +2217,43 @@ select.control {
 }
 
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   INTEGRITY PILL — stato del registro punti nella pagina admin degli eventi
+   Mostra l'esito SENZA essere aperto (decisione PM 17/9/2026): verde coerente,
+   rosso con il numero di casi, neutro in caricamento o se il controllo non riesce.
+   Sfondo scuro della pagina: colore e fondo si ridefiniscono insieme anche in hover.
+   ───────────────────────────────────────────────────────────────────────────── */
+.integrity-pill {
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,.35);
+  color: #ffffff;
+}
+
+.integrity-pill--ok {
+  background: rgba(16,185,129,.18);
+  border-color: rgba(16,185,129,.7);
+  color: #ffffff;
+}
+
+.integrity-pill--alert {
+  background: #b91c1c;
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+.integrity-pill--unknown {
+  color: rgba(255,255,255,.75);
+}
+
+.integrity-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+
+.integrity-pill--ok:hover      { background: rgba(16,185,129,.28); color: #ffffff; }
+.integrity-pill--alert:hover   { background: #991b1b; color: #ffffff; }
+.integrity-pill--unknown:hover { background: rgba(255,255,255,.12); color: #ffffff; }
+
 /* ===============================================================================
    SEZIONE 7: RESPONSIVE (tutte le media query raggruppate per breakpoint)
    =============================================================================== */
