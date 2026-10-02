@@ -280,7 +280,7 @@ function ReportChallenges({ challenges }) {
  * Equivalenze CO2 (alberi, voli) mostrate solo se > 0.
  */
 function ReportImpact({ impact }) {
-  const { breakdown_by_vehicle, trees_needed, flights_equivalent } = impact;
+  const { breakdown_by_vehicle, trees_equivalent, trees_to_compensate, flights_equivalent } = impact;
 
   // Calcola il valore massimo per scalare le barre CSS
   const maxCount =
@@ -288,7 +288,7 @@ function ReportImpact({ impact }) {
       ? Math.max(...breakdown_by_vehicle.map((v) => v.count))
       : 0;
 
-  const hasEquivalences = trees_needed > 0 || flights_equivalent > 0;
+  const hasEquivalences = trees_equivalent > 0 || trees_to_compensate > 0 || flights_equivalent > 0;
 
   return (
     <section
@@ -334,18 +334,30 @@ function ReportImpact({ impact }) {
       {/* Equivalenze — solo se almeno una > 0 */}
       {hasEquivalences && (
         <div className={styles.equivalencesBlock}>
-          <h3 className={styles.subsectionTitle}>Equivalenze CO₂</h3>
+          <h3 className={styles.subsectionTitle}>Equivalenze e compensazione</h3>
           <div className={styles.equivalencesGrid}>
-            {/* Alberi: la cornice della pagina Impatto, arrotondata per eccesso (P9,
-                2/10/2026). Prima «equivale a N alberi che assorbono», al più vicino. */}
-            {trees_needed > 0 && (
+            {/* Alberi, due cornici per due grandezze (decisione PM 2/10/2026): la CO₂
+                risparmiata non è mai stata emessa, quindi per lei solo un paragone;
+                per la CO₂ emessa dalle trasferte, gli alberi che servono ad assorbirla. */}
+            {trees_equivalent > 0 && (
               <div className={styles.equivalenceCard}>
                 <span className={styles.equivalenceIcon} aria-hidden="true">🌳</span>
                 <p className={styles.equivalenceText}>
-                  Per assorbire in un anno la CO₂ risparmiata{" "}
-                  {trees_needed === 1 ? "serve" : "servono"}{" "}
-                  <strong>{trees_needed}</strong>{" "}
-                  {trees_needed === 1 ? "albero" : "alberi"}
+                  La CO₂ risparmiata equivale a quanto{" "}
+                  {trees_equivalent === 1 ? "assorbe" : "assorbono"}{" "}
+                  <strong>{trees_equivalent}</strong>{" "}
+                  {trees_equivalent === 1 ? "albero" : "alberi"} in un anno
+                </p>
+              </div>
+            )}
+            {trees_to_compensate > 0 && (
+              <div className={styles.equivalenceCard}>
+                <span className={styles.equivalenceIcon} aria-hidden="true">🌱</span>
+                <p className={styles.equivalenceText}>
+                  Per assorbire la CO₂ emessa dalle trasferte{" "}
+                  {trees_to_compensate === 1 ? "serve" : "servono"}{" "}
+                  <strong>{trees_to_compensate}</strong>{" "}
+                  {trees_to_compensate === 1 ? "albero" : "alberi"}
                 </p>
               </div>
             )}
