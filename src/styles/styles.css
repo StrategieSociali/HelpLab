@@ -854,6 +854,23 @@ button.chip:active {
   opacity: 0.8;
 }
 
+/* Link nel testo su fondo scuro: il verde accento del sito, uguale da visitato.
+   Senza, un link già cliccato prende il blu/viola del browser e su fondo scuro non
+   si legge (rilievo PM 2/10/2026, pannello audit). Classe esplicita, non un selettore
+   generico: allargare una regola a tutti i link è la mossa che il 5/8 rese
+   illeggibile il menu admin. */
+.link-accent,
+.link-accent:visited {
+  color: var(--accent-green-1);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+}
+
+.link-accent:hover {
+  color: var(--accent-green-2);
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    FORMS (Input, Select, Textarea, Checkbox)
    ───────────────────────────────────────────────────────────────────────────── */
