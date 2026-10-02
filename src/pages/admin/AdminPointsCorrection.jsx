@@ -13,7 +13,9 @@
  * FLUSSO
  * Si sceglie la sfida (solo quelle con contributi decisi) e/o si cerca la persona per
  * nome; l'elenco mostra approvati e rifiutati, dal più recente. «Correggi» apre
- * PointsCorrectionModal, con la proposta del motore già nel campo punti.
+ * PointsCorrectionModal, con la proposta del motore già nel campo punti. La riga
+ * appena corretta resta segnata in verde, «✓ Appena corretto» (rilievo PM 2/10/2026:
+ * in prova una seconda correzione è finita sulla riga sbagliata).
  *
  * ENDPOINT: vedi src/api/adminSubmissions.api.js
  */
@@ -43,6 +45,7 @@ export default function AdminPointsCorrection() {
 
   const [editing, setEditing] = useState(null);
   const [doneMsg, setDoneMsg] = useState("");
+  const [lastCorrectedId, setLastCorrectedId] = useState(null);
 
   useEffect(() => {
     getCorrectionChallenges()
@@ -82,6 +85,7 @@ export default function AdminPointsCorrection() {
   function onDone(res) {
     const sub = editing;
     setEditing(null);
+    setLastCorrectedId(sub.id);
     setDoneMsg(
       res?.status === "approved"
         ? `Contributo #${sub.id} di ${sub.user_name || "—"}: approvato, ${res.points} punti.`
@@ -145,11 +149,12 @@ export default function AdminPointsCorrection() {
             {items.map((s) => (
               <div
                 key={s.id}
-                className="card-info neutral"
+                className={`card-info ${s.id === lastCorrectedId ? "success" : "neutral"}`}
                 style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}
               >
                 <div>
                   <strong>#{s.id}</strong> · {s.user_name || "persona senza nome"}
+                  {s.id === lastCorrectedId && <strong> · ✓ Appena corretto</strong>}
                   <div className="muted small">
                     {s.challenge_title || "sfida"} · {s.task_title || "task"}
                     {s.reviewed_at ? ` · deciso il ${fmtDate(s.reviewed_at)}` : ""}

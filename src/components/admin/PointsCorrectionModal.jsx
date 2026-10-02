@@ -10,6 +10,10 @@
  * ri-approvazione si faceva con un numero deciso alla cieca. Se il motore non fa una
  * proposta (task senza calcolatore), parte dai punti di oggi e lo dice.
  *
+ * Persona e numero del contributo stanno nel titolo e in un riquadro in evidenza
+ * (rilievo PM 2/10/2026): in prova su staging una seconda correzione è finita sul
+ * contributo sbagliato, e il numero si leggeva solo nel titolo.
+ *
  * PROPS:
  *   submission {Object}   - riga dell'elenco: { id, user_name, challenge_title, task_title, status, points }
  *   onClose    {Function} - chiusura senza modifiche
@@ -77,10 +81,15 @@ export default function PointsCorrectionModal({ submission, onClose, onDone }) {
   const who = submission.user_name || "persona senza nome";
 
   return (
-    <Modal title={`Correggi il contributo #${submission.id}`} onClose={busy ? undefined : onClose}>
-      <p className="muted small" style={{ marginTop: 0 }}>
-        {who} · {submission.challenge_title || "sfida"} · {submission.task_title || "task"}
-      </p>
+    <Modal title={`Correggi il contributo di ${who}`} onClose={busy ? undefined : onClose}>
+      <div className="card-info neutral" style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: "1.15rem", fontWeight: 700 }}>
+          #{submission.id} · {who}
+        </div>
+        <div className="muted small" style={{ marginTop: 4 }}>
+          {submission.challenge_title || "sfida"} · {submission.task_title || "task"}
+        </div>
+      </div>
 
       {loadError ? (
         <>
