@@ -154,12 +154,33 @@ function ReportSummary({ impact }) {
       label: "Chilometri percorsi",
       icon: "🛤️",
     },
-    {
-      value: impact.total_co2_saved_kg.toFixed(2),
-      unit: "kg CO₂",
-      label: "Emissioni risparmiate",
-      icon: "🌱",
-    },
+    // CO₂ evitata ed emessa sono due grandezze distinte (punto 6, 2/10/2026): prima il
+    // report mostrava solo l'evitata, e un evento in modo `emits` diceva «0 kg» con le
+    // trasferte misurate. L'evitata si mostra se c'è, o se non c'è nemmeno l'emessa.
+    ...(impact.total_co2_saved_kg > 0 || !(impact.total_co2_emitted_kg > 0)
+      ? [{
+          value: impact.total_co2_saved_kg.toFixed(2),
+          unit: "kg CO₂",
+          label: "Emissioni risparmiate",
+          icon: "🌱",
+        }]
+      : []),
+    ...(impact.total_co2_emitted_kg > 0
+      ? [{
+          value: impact.total_co2_emitted_kg.toFixed(2),
+          unit: "kg CO₂",
+          label: "Emissioni delle trasferte",
+          icon: "🚗",
+        }]
+      : []),
+    // Sociale (plugin social.v1): come nella dashboard live, solo se c'è.
+    ...(impact.social?.total_volunteer_hours > 0
+      ? [
+          { value: Number(impact.social.total_social_value_eur).toFixed(0), unit: "€", label: "Valore sociale", icon: "🤝" },
+          { value: impact.social.total_volunteer_hours, unit: "h", label: "Ore di volontariato", icon: "⏱️" },
+          { value: impact.social.total_people_reached, unit: "", label: "Persone raggiunte", icon: "🙋" },
+        ]
+      : []),
     {
       value: impact.approved_submissions,
       unit: "",
@@ -193,6 +214,8 @@ function ReportSummary({ impact }) {
  * Gestisce l'array vuoto con messaggio dedicato.
  */
 function ReportChallenges({ challenges }) {
+  // Colonna della CO₂ emessa solo se almeno una sfida ne ha (modo `emits`).
+  const hasEmitted = challenges.some((ch) => ch.co2_emitted_kg > 0);
   return (
     <section
       className={`${styles.section} ${styles.challenges}`}
@@ -211,7 +234,8 @@ function ReportChallenges({ challenges }) {
                 <th scope="col" className={styles.textRight}>Approvati</th>
                 <th scope="col" className={styles.textRight}>In attesa</th>
                 <th scope="col" className={styles.textRight}>Rifiutati</th>
-                <th scope="col" className={styles.textRight}>CO₂ (kg)</th>
+                <th scope="col" className={styles.textRight}>CO₂ evitata (kg)</th>
+                {hasEmitted && <th scope="col" className={styles.textRight}>CO₂ emessa (kg)</th>}
                 <th scope="col" className={styles.textRight}>Km</th>
                 <th scope="col" className={styles.textRight}>Punti</th>
               </tr>
@@ -237,6 +261,7 @@ function ReportChallenges({ challenges }) {
                     {ch.rejected_count}
                   </td>
                   <td className={styles.textRight}>{ch.co2_saved_kg.toFixed(2)}</td>
+                  {hasEmitted && <td className={styles.textRight}>{(ch.co2_emitted_kg ?? 0).toFixed(2)}</td>}
                   <td className={styles.textRight}>{ch.total_km}</td>
                   <td className={styles.textRight}>{ch.total_points ?? "—"}</td>
                 </tr>
@@ -255,7 +280,7 @@ function ReportChallenges({ challenges }) {
  * Equivalenze CO2 (alberi, voli) mostrate solo se > 0.
  */
 function ReportImpact({ impact }) {
-  const { breakdown_by_vehicle, trees_equivalent, flights_equivalent } = impact;
+  const { breakdown_by_vehicle, trees_needed, flights_equivalent } = impact;
 
   // Calcola il valore massimo per scalare le barre CSS
   const maxCount =
@@ -263,7 +288,7 @@ function ReportImpact({ impact }) {
       ? Math.max(...breakdown_by_vehicle.map((v) => v.count))
       : 0;
 
-  const hasEquivalences = trees_equivalent > 0 || flights_equivalent > 0;
+  const hasEquivalences = trees_needed > 0 || flights_equivalent > 0;
 
   return (
     <section
@@ -284,7 +309,7 @@ function ReportImpact({ impact }) {
               const pct = maxCount > 0 ? Math.round((vehicle.count / maxCount) * 100) : 0;
               return (
                 <div
-                  key={vehicle.vehicle_id}
+                  key={`${vehicle.vehicle_id}|${vehicle.mode ?? ""}`}
                   className={styles.barRow}
                   role="listitem"
                 >
@@ -297,7 +322,7 @@ function ReportImpact({ impact }) {
                   </div>
                   <span className={styles.barStats}>
                     {vehicle.count} {vehicle.count === 1 ? "contributo" : "contributi"} ·{" "}
-                    {vehicle.co2_kg.toFixed(2)} kg CO₂ · {vehicle.km} km
+                    {vehicle.co2_kg.toFixed(2)} kg CO₂ {vehicle.mode === "emits" ? "emessa" : "evitata"} · {vehicle.km} km
                   </span>
                 </div>
               );
@@ -311,14 +336,16 @@ function ReportImpact({ impact }) {
         <div className={styles.equivalencesBlock}>
           <h3 className={styles.subsectionTitle}>Equivalenze CO₂</h3>
           <div className={styles.equivalencesGrid}>
-            {trees_equivalent > 0 && (
+            {/* Alberi: la cornice della pagina Impatto, arrotondata per eccesso (P9,
+                2/10/2026). Prima «equivale a N alberi che assorbono», al più vicino. */}
+            {trees_needed > 0 && (
               <div className={styles.equivalenceCard}>
                 <span className={styles.equivalenceIcon} aria-hidden="true">🌳</span>
                 <p className={styles.equivalenceText}>
-                  Equivale a{" "}
-                  <strong>{trees_equivalent}</strong>{" "}
-                  {trees_equivalent === 1 ? "albero che assorbe" : "alberi che assorbono"}{" "}
-                  CO₂ per un anno
+                  Per assorbire in un anno la CO₂ risparmiata{" "}
+                  {trees_needed === 1 ? "serve" : "servono"}{" "}
+                  <strong>{trees_needed}</strong>{" "}
+                  {trees_needed === 1 ? "albero" : "alberi"}
                 </p>
               </div>
             )}

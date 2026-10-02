@@ -121,7 +121,7 @@ const FIELD_LABELS = {
   evidences:   "Foto evidenza",
   kg_rifiuti:  "Kg rifiuti raccolti",
   num_alberi:  "Numero alberi piantati",
-  n_capi:      "Numero capi riusati",
+  n_capi:      "Capi portati a casa dallo swap",
   volunteer_hours: "Ore di volontariato",
   people_reached:  "Persone raggiunte",
 };

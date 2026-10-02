@@ -92,9 +92,9 @@
       "hint": "Indicate the approximate weight of waste collected and properly disposed of."
     },
     "n_capi": {
-      "label": "How many items did you reuse?",
+      "label": "How many items are you taking home from the swap?",
       "placeholder": "E.g. 5",
-      "hint": "Indicate the number of garments you swapped or took at the swap party instead of buying new ones."
+      "hint": "Count only the items you take and will use instead of buying new ones: the ones you brought are counted by whoever takes them, so each item is counted once."
     },
     "volunteer_hours": {
       "label": "How many volunteer hours did you contribute?",

@@ -186,6 +186,9 @@ export default function ChallengeSubmitPage() {
   const [tasksLoading, setTasksLoading] = useState(true);
   const [tasksError, setTasksError] = useState("");
   const [mobilityOptions, setMobilityOptions] = useState([]);
+  // Modo per cui sono state caricate le voci: «nessun mezzo» si legge
+  // «A piedi o in bicicletta» nel modo `emits` (punto 6, 2/10/2026).
+  const [mobilityOptionsMode, setMobilityOptionsMode] = useState(null);
   const [mobilityLoading, setMobilityLoading] = useState(false);
   const [comuniOptions, setComuniOptions] = useState([]);
   const [comuniLoading, setComuniLoading] = useState(false);
@@ -238,23 +241,27 @@ export default function ChallengeSubmitPage() {
   }, [challengeId]);
 
   // ── Caricamento opzioni mobilità (condizionale) ───────────────────────────
-  const loadMobilityOptions = useCallback(async () => {
-    if (mobilityOptions.length > 0) return;
+  const loadMobilityOptions = useCallback(async (mode) => {
+    const key = mode || "";
+    if (mobilityOptions.length > 0 && mobilityOptionsMode === key) return;
     setMobilityLoading(true);
     try {
-      const { data } = await api.get("/v1/co2-factors/mobility");
+      const { data } = await api.get(
+        `/v1/co2-factors/mobility${mode ? `?mode=${encodeURIComponent(mode)}` : ""}`
+      );
       // Scarta le voci prive di id: `/co2-factors/mobility` include anche la
       // riga `_comment_tree` del file fattori, che lo schema di risposta
       // serializza come `{}`. Senza filtro diventava una SETTIMA opzione vuota
       // in fondo alla tendina, con value undefined → React usa il testo
       // dell'option, cioè "" → vehicle_id vuoto e submit rifiutato (30/8/2026).
       setMobilityOptions((data?.items || []).filter((o) => o && o.id));
+      setMobilityOptionsMode(key);
     } catch (err) {
       console.error("Errore caricamento opzioni mobilità:", err);
     } finally {
       setMobilityLoading(false);
     }
-  }, [mobilityOptions.length]);
+  }, [mobilityOptions.length, mobilityOptionsMode]);
 
   // ── Caricamento elenco comuni (condizionale, mobility) ────────────────────
   // Lista { id (codice ISTAT), label } per il campo comune d'origine. Le
@@ -298,7 +305,7 @@ export default function ChallengeSubmitPage() {
 
     const needsMobility = fields.some((f) => f.name === "vehicle_id");
     if (needsMobility) {
-      loadMobilityOptions();
+      loadMobilityOptions(task.payload_schema?.mobility_config?.mode);
     }
     const needsComuni = fields.some((f) => f.name === "comune_origine");
     if (needsComuni) {

@@ -93,9 +93,9 @@
       "hint": "Indica il peso approssimativo dei rifiuti raccolti e correttamente smaltiti."
     },
     "n_capi": {
-      "label": "Quanti capi hai riusato?",
+      "label": "Quanti capi porti a casa dallo swap?",
       "placeholder": "Es. 5",
-      "hint": "Indica il numero di capi che hai scambiato o preso allo swap party invece di comprarli nuovi."
+      "hint": "Conta solo i capi che prendi e userai al posto di comprarne di nuovi: quelli che hai portato li conta chi li prende, così ogni capo si conta una volta."
     },
     "volunteer_hours": {
       "label": "Quante ore di volontariato hai dedicato?",
