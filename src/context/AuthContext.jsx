@@ -1,9 +1,8 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { api, attachToken, API_PATHS } from "@/api/client";
+import { api, attachToken, attachSessionHandlers, API_PATHS, USE_REFRESH } from "@/api/client";
 
 const LS_TOKEN_KEY = "hl_access_token";
-const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || "false") === "true";
 
 const AuthContext = createContext(null);
 
@@ -11,6 +10,9 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);        // { id, email, username, role }
   const [token, setToken] = useState(null);      // accessToken (solo login)
   const [loading, setLoading] = useState(true);  // init app/auth in corso
+  // true quando la sessione è finita da sola (refresh rifiutato), non con «Esci»:
+  // la pagina di login lo dice invece di mostrare un errore tecnico (rilievo PM 2/10/2026).
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   // Il token va tenuto anche in un ref, non solo nello state: lo state React si
   // aggiorna al render successivo, mentre una richiesta axios partita subito dopo
@@ -22,6 +24,16 @@ export function AuthProvider({ children }) {
   // Registrato UNA volta sola: legge sempre il valore corrente dal ref.
   useEffect(() => {
     attachToken(() => tokenRef.current);
+    // Rinnovo automatico su 401 (client.js): salva il token nuovo, oppure chiude
+    // la sessione locale se il refresh non riesce (ProtectedRoute rimanda al login).
+    attachSessionHandlers({
+      onRefreshed: (t) => saveToken(t),
+      onSessionLost: () => {
+        saveToken(null);
+        setUser(null);
+        setSessionExpired(true);
+      },
+    });
   }, []);
 
   // Legge profilo/ruolo corrente (richiede Bearer)
@@ -100,6 +112,7 @@ export function AuthProvider({ children }) {
     if (!accessToken) throw new Error("Nessun accessToken nella risposta di login");
     saveToken(accessToken);
     setUser(data?.user || null);
+    setSessionExpired(false);
     return data;
   };
 
@@ -129,6 +142,7 @@ export function AuthProvider({ children }) {
       token,
       loading,
       isAuthenticated: !!token,
+      sessionExpired,
       role: user?.role || null,
       login,
       register,
@@ -136,7 +150,7 @@ export function AuthProvider({ children }) {
       setUser,
       setToken: saveToken, // esposto per casi particolari
     }),
-    [user, token, loading]
+    [user, token, loading, sessionExpired]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

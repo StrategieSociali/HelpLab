@@ -14,9 +14,13 @@
  * - audit adattivo §3-bis: coda giudice (claim/decide) + admin (open/evaluate/state/clawback)
  *
  * Allineato a BE v1.0 (no legacy)
+ *
+ * Le chiamate passano dal client condiviso (`api`) dal 2/10/2026: è lui che rinnova
+ * l'access token scaduto. Gli URL restano assoluti (axios ignora il baseURL) e il
+ * token passato dalle schermate viene sostituito da quello corrente.
  */
 
-import axios from "axios";
+import { api } from "@/api/client";
 import {
   JudgeChallengesResponse,
   JudgeChallengeOverviewResponse,
@@ -46,7 +50,7 @@ function authHeaders(token: string) {
 export async function getJudgeChallenges(
   token: string
 ): Promise<JudgeChallengesResponse> {
-  const { data } = await axios.get<JudgeChallengesResponse>(
+  const { data } = await api.get<JudgeChallengesResponse>(
     `${API_BASE}/judge/challenges`,
     { headers: authHeaders(token) }
   );
@@ -65,7 +69,7 @@ export async function getJudgeChallengeOverview(
   token: string,
   challengeId: number
 ): Promise<JudgeChallengeOverviewResponse> {
-  const { data } = await axios.get<JudgeChallengeOverviewResponse>(
+  const { data } = await api.get<JudgeChallengeOverviewResponse>(
     `${API_BASE}/judge/challenges/${challengeId}/overview`,
     { headers: authHeaders(token) }
   );
@@ -94,7 +98,7 @@ export async function reviewSubmission(
   submissionId: number,
   payload: ReviewSubmissionPayload
 ) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/submissions/${submissionId}/review`,
     payload,
     { headers: authHeaders(token) }
@@ -124,7 +128,7 @@ export interface JudgeAvailabilityResponse {
 export async function getJudgeAvailability(
   token: string
 ): Promise<JudgeAvailabilityResponse> {
-  const { data } = await axios.get<JudgeAvailabilityResponse>(
+  const { data } = await api.get<JudgeAvailabilityResponse>(
     `${API_BASE}/judge/availability`,
     { headers: authHeaders(token) }
   );
@@ -141,7 +145,7 @@ export async function setJudgeAvailability(
   weekStart: string,
   available: boolean
 ): Promise<AvailabilityWeek> {
-  const { data } = await axios.put<AvailabilityWeek>(
+  const { data } = await api.put<AvailabilityWeek>(
     `${API_BASE}/judge/availability`,
     { weekStart, available },
     { headers: authHeaders(token) }
@@ -190,7 +194,7 @@ export interface JudgeMarketplaceResponse {
 export async function getJudgeMarketplace(
   token: string
 ): Promise<JudgeMarketplaceResponse> {
-  const { data } = await axios.get<JudgeMarketplaceResponse>(
+  const { data } = await api.get<JudgeMarketplaceResponse>(
     `${API_BASE}/judge/marketplace`,
     { headers: authHeaders(token) }
   );
@@ -203,7 +207,7 @@ export async function getJudgeMarketplace(
  * (`coverage_full`). Idempotente se già assegnato.
  */
 export async function optInChallenge(token: string, challengeId: number) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/challenges/${challengeId}/opt-in`,
     {},
     { headers: authHeaders(token) }
@@ -217,7 +221,7 @@ export async function optInChallenge(token: string, challengeId: number) {
  * 409 se il tetto è pieno.
  */
 export async function optInEvent(token: string, eventId: number) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/events/${eventId}/opt-in`,
     {},
     { headers: authHeaders(token) }
@@ -252,7 +256,7 @@ export interface JudgeOffersResponse {
 export async function getJudgeOffers(
   token: string
 ): Promise<JudgeOffersResponse> {
-  const { data } = await axios.get<JudgeOffersResponse>(
+  const { data } = await api.get<JudgeOffersResponse>(
     `${API_BASE}/judge/offers`,
     { headers: authHeaders(token) }
   );
@@ -265,7 +269,7 @@ export async function getJudgeOffers(
  * partecipante o tetto pieno nel frattempo.
  */
 export async function acceptJudgeOffer(token: string, offerId: number) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/judge/offers/${offerId}/accept`,
     {},
     { headers: authHeaders(token) }
@@ -278,7 +282,7 @@ export async function acceptJudgeOffer(token: string, offerId: number) {
  * Rifiuta l'offerta → penalità (§6, 0 per agosto) e rotazione al successivo.
  */
 export async function declineJudgeOffer(token: string, offerId: number) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/judge/offers/${offerId}/decline`,
     {},
     { headers: authHeaders(token) }
@@ -302,7 +306,7 @@ export interface JudgeScoreResponse {
 export async function getJudgeScore(
   token: string
 ): Promise<JudgeScoreResponse> {
-  const { data } = await axios.get<JudgeScoreResponse>(
+  const { data } = await api.get<JudgeScoreResponse>(
     `${API_BASE}/judge/score`,
     { headers: authHeaders(token) }
   );
@@ -355,7 +359,7 @@ export interface SweepResult {
 export async function getAdminCoverage(
   token: string
 ): Promise<AdminCoverageResponse> {
-  const { data } = await axios.get<AdminCoverageResponse>(
+  const { data } = await api.get<AdminCoverageResponse>(
     `${API_BASE}/admin/coverage`,
     { headers: authHeaders(token) }
   );
@@ -367,7 +371,7 @@ export async function getAdminJudges(
   token: string,
   q = ""
 ): Promise<AdminJudge[]> {
-  const { data } = await axios.get<{ items: AdminJudge[] }>(
+  const { data } = await api.get<{ items: AdminJudge[] }>(
     `${API_BASE}/admin/judges${q ? `?q=${encodeURIComponent(q)}` : ""}`,
     { headers: authHeaders(token) }
   );
@@ -376,7 +380,7 @@ export async function getAdminJudges(
 
 /** POST /api/v1/admin/judge-offers/sweep — avanza il round-robin. */
 export async function runJudgeOffersSweep(token: string): Promise<SweepResult> {
-  const { data } = await axios.post<SweepResult>(
+  const { data } = await api.post<SweepResult>(
     `${API_BASE}/admin/judge-offers/sweep`,
     {},
     { headers: authHeaders(token) }
@@ -393,7 +397,7 @@ export async function assignChallengeJudge(
   challengeId: number,
   userId: number
 ) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/challenges/${challengeId}/assign-judge`,
     { userId },
     { headers: authHeaders(token) }
@@ -407,7 +411,7 @@ export async function assignEventJudge(
   eventId: number,
   userId: number
 ) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/events/${eventId}/assign-judge`,
     { userId },
     { headers: authHeaders(token) }
@@ -430,7 +434,7 @@ export interface OpenChallengeLite {
 export async function getOpenChallenges(
   token: string
 ): Promise<OpenChallengeLite[]> {
-  const { data } = await axios.get<{ items: OpenChallengeLite[] }>(
+  const { data } = await api.get<{ items: OpenChallengeLite[] }>(
     // NON si filtra su status=open: dal 4/8/2026 l'admin può chiudere una sfida,
     // e filtrando le aperte una sfida chiusa spariva dall'unico punto da cui la
     // si può riaprire — porta a senso unico. Lo stato si mostra nella riga.
@@ -463,7 +467,7 @@ export interface AuditCase {
 
 /** GET /api/v1/judge/audit/queue — casi da ri-revisionare (esclude i propri). */
 export async function getJudgeAuditQueue(token: string): Promise<AuditCase[]> {
-  const { data } = await axios.get<{ items: AuditCase[] }>(
+  const { data } = await api.get<{ items: AuditCase[] }>(
     `${API_BASE}/judge/audit/queue`,
     { headers: authHeaders(token) }
   );
@@ -472,7 +476,7 @@ export async function getJudgeAuditQueue(token: string): Promise<AuditCase[]> {
 
 /** POST /api/v1/judge/audit/cases/:id/claim — presa in carico morbida (409 se già preso). */
 export async function claimAuditCase(token: string, caseId: number) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/judge/audit/cases/${caseId}/claim`,
     {},
     { headers: authHeaders(token) }
@@ -487,7 +491,7 @@ export async function decideAuditCase(
   outcome: "validated" | "invalidated",
   note?: string
 ) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/judge/audit/cases/${caseId}/decide`,
     { outcome, note },
     { headers: authHeaders(token) }
@@ -517,7 +521,7 @@ export interface AuditStateResponse {
 
 /** POST /api/v1/admin/events/:id/audit/open — apre l'audit (campione iniziale). */
 export async function openEventAudit(token: string, eventId: number) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/admin/events/${eventId}/audit/open`,
     {},
     { headers: authHeaders(token) }
@@ -527,7 +531,7 @@ export async function openEventAudit(token: string, eventId: number) {
 
 /** POST /api/v1/admin/events/:id/audit/evaluate — valuta il cancello / approfondisce. */
 export async function evaluateEventAudit(token: string, eventId: number) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/admin/events/${eventId}/audit/evaluate`,
     {},
     { headers: authHeaders(token) }
@@ -540,7 +544,7 @@ export async function getEventAuditState(
   token: string,
   eventId: number
 ): Promise<AuditStateResponse> {
-  const { data } = await axios.get<AuditStateResponse>(
+  const { data } = await api.get<AuditStateResponse>(
     `${API_BASE}/admin/events/${eventId}/audit/state`,
     { headers: authHeaders(token) }
   );
@@ -552,7 +556,7 @@ export async function getAuditClawbacks(
   token: string,
   eventId?: number
 ): Promise<AuditCase[]> {
-  const { data } = await axios.get<{ items: AuditCase[] }>(
+  const { data } = await api.get<{ items: AuditCase[] }>(
     `${API_BASE}/admin/audit/clawbacks${eventId ? `?eventId=${eventId}` : ""}`,
     { headers: authHeaders(token) }
   );
@@ -565,7 +569,7 @@ export async function resolveAuditClawback(
   caseId: number,
   note?: string
 ) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API_BASE}/admin/audit/cases/${caseId}/clawback/resolve`,
     { note },
     { headers: authHeaders(token) }

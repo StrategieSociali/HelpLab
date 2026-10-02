@@ -7,16 +7,16 @@
  * - richiede utente autenticato
  * - l’eleggibilità è validata SOLO dal backend
  * - usa POST /api/v1/sponsors/:id/ratings
+ * - passa dal client condiviso (`api`) dal 2/10/2026, che rinnova l'access token scaduto
  */
 
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { api } from "@/api/client";
 import "../../styles/dynamic-pages.css";
 
-const API_BASE = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, "");
-
 export default function SponsorRatingsForm({ sponsorId, onSuccess }) {
-  const { token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const [rating, setRating] = useState(5);
   const [feedback, setFeedback] = useState("");
@@ -37,28 +37,17 @@ export default function SponsorRatingsForm({ sponsorId, onSuccess }) {
       setError(null);
       setSuccess(false);
 
-      const res = await fetch(
-        `${API_BASE}/v1/sponsors/${sponsorId}/ratings`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            rating,
-            feedback: feedback || undefined,
-          }),
+      try {
+        await api.post(`/v1/sponsors/${sponsorId}/ratings`, {
+          rating,
+          feedback: feedback || undefined,
+        });
+      } catch (e) {
+        if (e?.response?.status === 403) {
+          throw new Error(
+            "Puoi recensire uno sponsor solo dopo aver partecipato a una sua challenge."
+          );
         }
-      );
-
-      if (res.status === 403) {
-        throw new Error(
-          "Puoi recensire uno sponsor solo dopo aver partecipato a una sua challenge."
-        );
-      }
-
-      if (!res.ok) {
         throw new Error("Errore durante l’invio della recensione.");
       }
 

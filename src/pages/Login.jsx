@@ -4,10 +4,13 @@
  *
  * Attualmente supporta:
  * - Login
+ * - Sessione scaduta (dal 2/10/2026): se la sessione è finita da sola, un avviso lo
+ *   dice al posto dell'errore tecnico; dopo il login si torna alla pagina da cui
+ *   ProtectedRoute ha rimandato qui (`state.from`), altrimenti alle sfide.
  */
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import FormNotice from "@/components/common/FormNotice.jsx";
 import { useTranslation } from "react-i18next";
@@ -17,8 +20,11 @@ export default function Login() {
     useSuspense: false, // OBBLIGATORIO: pagina raggiunta da click
   });
 
-  const { login } = useAuth();
+  const { login, sessionExpired } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from;
+  const backTo = from?.pathname ? `${from.pathname}${from.search || ""}` : "/challenges";
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [errorCode, setErrorCode] = useState(null);
@@ -36,7 +42,7 @@ export default function Login() {
 
     try {
       await login(form.email, form.password);
-      navigate("/challenges");
+      navigate(backTo, { replace: true });
     } catch (err) {
       console.error(err);
       // codice logico, NON stringa tradotta
@@ -50,6 +56,12 @@ export default function Login() {
     <section className="registration-form">
       <div className="container">
         <FormNotice />
+
+        {sessionExpired && (
+          <div className="notice notice--info" role="status" aria-live="polite">
+            <div className="notice__content">{t("sessionExpired")}</div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="registration-form">
           <div className="form-group">
