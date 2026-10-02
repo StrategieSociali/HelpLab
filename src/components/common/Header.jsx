@@ -361,6 +361,14 @@ export default function Header() {
                         >
                           Audit qualità
                         </NavLink>
+                        {/* Correzione punti (PM-4, 2/10/2026): l'override in due clic */}
+                        <NavLink
+                          to={routes.admin.pointsCorrection}
+                          className="btn btn-ghost"
+                          onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
+                        >
+                          Correzione punti
+                        </NavLink>
                         {/* Gestione eventi */}
                         <NavLink
                           to={routes.admin.events}
@@ -466,6 +474,14 @@ export default function Header() {
                         onClick={() => setAdminDesktopOpen(false)}
                       >
                         Audit qualità
+                      </NavLink>
+                      {/* Correzione punti (PM-4, 2/10/2026): l'override in due clic */}
+                      <NavLink
+                        to={routes.admin.pointsCorrection}
+                        className="btn btn-ghost"
+                        onClick={() => setAdminDesktopOpen(false)}
+                      >
+                        Correzione punti
                       </NavLink>
                       {/* Gestione eventi */}
                       <NavLink

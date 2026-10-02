@@ -33,6 +33,7 @@ import Roadmap from './pages/Roadmap';
 import { AdminProposals } from './pages/admin/AdminProposals';
 import AdminCoverage from './pages/admin/AdminCoverage';
 import AdminAudit from './pages/admin/AdminAudit';
+import AdminPointsCorrection from './pages/admin/AdminPointsCorrection';
 import AdminEvents from './pages/admin/AdminEvents';
 
 import JudgeDashboard from './pages/judge/JudgeDashboard';
@@ -291,6 +292,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminAudit />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={routes.admin.pointsCorrection}
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminPointsCorrection />
                   </ProtectedRoute>
                 }
               />

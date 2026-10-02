@@ -24,6 +24,15 @@ export const EMPTY_CHALLENGE = {
   terms_consent: false,
 };
 
+// Una sfida può iniziare e finire lo stesso giorno (PM-1, 2/10/2026): è il caso di
+// un evento di una giornata. Prima la scadenza doveva essere successiva all'inizio,
+// e le sfide del 30/8 sono nate con scadenza 1/9. Regola unica per il passo del
+// wizard (StepDetails) e per il controllo finale qui sotto.
+export function challengeDatesOk(draft) {
+  return !!draft.start_date && !!draft.deadline &&
+         new Date(draft.deadline) >= new Date(draft.start_date);
+}
+
 export function canProceedBasic(draft) {
   const titleOk = (draft.title || "").trim().length >= 5;
   const descOk  = (draft.description || "").trim().length >= 50;
@@ -34,8 +43,7 @@ export function canProceedBasic(draft) {
   const modeDiff = draft.difficulty && draft.co2e_estimate_kg == null;
   const modeOk   = modeCO2 || modeDiff;
   const addrOk   = !!(draft.location?.address);
-  const datesOk  = !!draft.start_date && !!draft.deadline &&
-                   (new Date(draft.deadline) > new Date(draft.start_date));
+  const datesOk  = challengeDatesOk(draft);
   const termsOk  = !!draft.terms_consent;
 
   return titleOk && descOk && targetOk && tasksOk && modeOk && addrOk && datesOk && termsOk;
