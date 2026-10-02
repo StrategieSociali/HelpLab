@@ -12,6 +12,7 @@
  */
 
 import React from "react";
+import { challengeDatesOk } from "../schema";
 
 export default function StepDetails({ value = {}, onChange }) {
   const v = value || {};
@@ -26,10 +27,7 @@ export default function StepDetails({ value = {}, onChange }) {
   const titleLen = (v.title || "").trim().length;
   const descLen  = (v.description || "").trim().length;
   const addrOk   = !!(loc.address && loc.address.trim());
-  const datesOk  =
-    !!v.start_date &&
-    !!v.deadline &&
-    new Date(v.deadline) > new Date(v.start_date);
+  const datesOk  = challengeDatesOk(v);
 
   return (
     <>
@@ -152,7 +150,7 @@ export default function StepDetails({ value = {}, onChange }) {
             <div className={`hint ${datesOk ? "ok" : "warn"}`}>
               {datesOk
                 ? "OK"
-                : "La scadenza deve essere successiva all'inizio"}
+                : "La scadenza deve essere uguale o successiva all'inizio"}
             </div>
           </label>
         </div>
