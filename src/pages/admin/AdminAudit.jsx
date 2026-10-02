@@ -13,6 +13,13 @@
  * rifiuta il contributo e punti (BE 0.17.7) e CO2 (BE 0.18.0) escono da soli; qui si
  * segna solo che è stato fatto. La re-review dei casi la fanno i giudici (§3-bis).
  *
+ * DICE GLI ESITI (punto 7, 2/10/2026): un audit chiuso non si riapre (bug #12) e il
+ * pannello ora lo dice, con l'ora della chiusura e i contributi arrivati dopo; il
+ * cancello lavora sui candidati veri (bug #13, BE 0.31.0); lo stato porta l'ora del
+ * dato, si aggiorna con «Aggiorna» e da solo quando si torna sulla scheda (P6: un
+ * override fatto altrove lasciava qui numeri vecchi senza dirlo). Il contributo da
+ * rifiutare si apre da Correzione punti, dove vive l'override dal 2/10.
+ *
  * DATI
  * - GET  /api/v1/admin/events                       → selettore evento
  * - POST /api/v1/admin/events/:id/audit/open         → apre l'audit (idempotente)
@@ -22,7 +29,9 @@
  * - POST /api/v1/admin/audit/cases/:id/clawback/resolve → segna revertito
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { routes } from "@/routes";
 import TextBlock from "@/components/UI/TextBlock";
 import { useAuth } from "@/context/AuthContext";
 import { getAdminEvents } from "@/api/events.api";
@@ -38,9 +47,18 @@ import "../../styles/dynamic-pages.css";
 const GATE_LABEL = {
   close: "Audit chiuso: qualità sopra il target.",
   deepen: "Sotto target: estratto un nuovo campione (approfondimento).",
-  full_review: "Pool esaurito e ancora sotto target: revisione completa + alert admin.",
+  full_review:
+    "Non resta nulla da estrarre e la qualità è ancora sotto il target: i contributi rimasti vanno ricontrollati a mano.",
   awaiting_review: "In attesa: ci sono casi campionati non ancora ri-revisionati.",
 };
+
+function fmtTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleString("it-IT", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" });
+}
 
 export default function AdminAudit() {
   const { token } = useAuth();
@@ -80,6 +98,18 @@ export default function AdminAudit() {
     }
   };
 
+  // P6: tornando su questa scheda (dopo un override fatto altrove) lo stato si ricarica.
+  const eventIdRef = useRef("");
+  eventIdRef.current = eventId;
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && eventIdRef.current) loadState(eventIdRef.current);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onSelectEvent = (id) => {
     setEventId(id);
     setState(null);
@@ -111,7 +141,7 @@ export default function AdminAudit() {
       const r = await evaluateEventAudit(token, eventId);
       const label = GATE_LABEL[r.action] || r.action;
       setActionMsg(
-        `${label}${r.action === "deepen" ? ` (+${r.sampled} casi, giro ${r.round})` : ""}`
+        `${label}${r.action === "deepen" ? ` (+${r.sampled} ${r.sampled === 1 ? "caso" : "casi"}, giro ${r.round})` : ""}`
       );
       await loadState(eventId);
     } catch (e) {
@@ -217,7 +247,17 @@ export default function AdminAudit() {
           <>
             {/* Stato del run */}
             <div className="card" style={{ padding: 16, marginBottom: 20 }}>
-              <h2 className="dynamic-title">Stato</h2>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <h2 className="dynamic-title" style={{ margin: 0 }}>Stato</h2>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {state.generated_at && (
+                    <span className="muted small">Dati delle {fmtTime(state.generated_at)}</span>
+                  )}
+                  <button className="btn btn-outline btn-small" disabled={loading} onClick={() => loadState(eventId)}>
+                    Aggiorna
+                  </button>
+                </div>
+              </div>
               <div className="muted small" style={{ marginTop: 8, lineHeight: 1.8 }}>
                 Pool auditabile: <strong>{state.state.poolSize}</strong> ·
                 {" "}ri-revisionati: <strong>{state.state.audited}</strong>
@@ -225,14 +265,36 @@ export default function AdminAudit() {
                 {" "}aperti: <strong>{state.state.open}</strong> ·
                 {" "}giro: <strong>{state.state.round}</strong> ·
                 {" "}qualità: <strong>{pct(state.quality)}</strong>
+                {state.not_sampled != null && (
+                  <>
+                    {" "}· ancora estraibili: <strong>{state.not_sampled}</strong>
+                  </>
+                )}
               </div>
               {state.gate?.action && (
                 <div className="callout neutral" style={{ marginTop: 10 }}>
                   <strong>Cancello di qualità:</strong> {GATE_LABEL[state.gate.action] || state.gate.action}
                 </div>
               )}
+              {/* Bug #12: un audit chiuso non si riapre. Si dice, con i contributi che
+                  restano fuori; gli audit a giri ripetibili sono rinviati alla metodologia. */}
+              {state.closed_at && (
+                <div className="callout neutral" style={{ marginTop: 10 }}>
+                  Audit chiuso il <strong>{fmtTime(state.closed_at)}</strong>.{" "}
+                  {state.arrived_after_close > 0 ? (
+                    <>
+                      <strong>{state.arrived_after_close}</strong>{" "}
+                      {state.arrived_after_close === 1 ? "contributo arrivato dopo non entra" : "contributi arrivati dopo non entrano"}{" "}
+                      nel campione: un audit chiuso non si riapre.
+                    </>
+                  ) : (
+                    <>Da allora non sono arrivati contributi da controllare.</>
+                  )}
+                </div>
+              )}
               <ul className="muted small" style={{ margin: "12px 0 0", paddingLeft: 18, lineHeight: 1.7 }}>
-                <li><strong>Pool auditabile</strong>: totale delle approvazioni automatiche dell'evento (il massimo controllabile).</li>
+                <li><strong>Pool auditabile</strong>: totale delle approvazioni automatiche dell'evento.</li>
+                <li><strong>Ancora estraibili</strong>: quelle che possono ancora entrare nel campione. Un contributo già controllato nell'audit di un altro evento non si estrae di nuovo.</li>
                 <li><strong>Ri-revisionati</strong>: casi già chiusi dai giudici — <strong>validi</strong> (confermati) o <strong>invalidi</strong> (respinti).</li>
                 <li><strong>Aperti</strong>: casi campionati ma non ancora ri-controllati dai giudici.</li>
                 <li><strong>Giro</strong>: quante volte il campione è stato allargato (1 = solo il campione iniziale).</li>
@@ -252,8 +314,9 @@ export default function AdminAudit() {
               <p className="muted small" style={{ marginTop: 4 }}>
                 Un giudice ha ri-controllato questi contributi e li ha giudicati{" "}
                 <strong>non validi</strong>, ma i punti e la CO₂ sono ancora conteggiati.
-                In due passi: <strong>1.</strong> apri il contributo nella pagina della sua
-                sfida e <strong>rifiutalo</strong> — lì punti e impatto escono da soli;{" "}
+                In due passi: <strong>1.</strong> in{" "}
+                <Link to={routes.admin.pointsCorrection}>Correzione punti</Link> cerca il
+                contributo e premi <strong>Forza rifiutata</strong>: punti e impatto escono da soli;{" "}
                 <strong>2.</strong> torna qui e togli la riga dall'elenco. Il pulsante qui
                 sotto fa <em>solo</em> il passo 2: da solo non toglie nulla.
               </p>
