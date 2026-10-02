@@ -29,6 +29,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getEventDetail, getEventSummary } from "@/api/events.api";
+import EventLeaderboard from "@/components/events/EventLeaderboard";
 import { routes } from "@/routes";
 import "../../styles/dynamic-pages.css";
 
@@ -345,6 +346,9 @@ export default function EventLiveDashboard() {
                 ))}
               </div>
             )}
+
+            {/* ── Classifica dell'evento (PM-5, 2/10/2026): si aggiorna da sola ── */}
+            <EventLeaderboard eventId={event?.id} poll />
 
             {/* ── CTA partecipazione — visibile anche sulla live ──────── */}
             {event?.status === "published" && (

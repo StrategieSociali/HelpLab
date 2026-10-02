@@ -76,6 +76,17 @@ export async function getEventSummary(id) {
   return data;
 }
 
+/**
+ * Classifica di evento (PM-5, 2/10/2026): le sfide collegate sommate, cache 30s lato BE.
+ * Solo eventi pubblicati o conclusi: per gli altri il BE risponde 404.
+ * @param {string|number} id
+ * @param {number} [limit=10]
+ */
+export async function getEventLeaderboard(id, limit = 10) {
+  const { data } = await api.get(`/v1/events/${id}/leaderboard?limit=${limit}`);
+  return data;
+}
+
 // ─── AUTENTICATI ─────────────────────────────────────────────────────────────
 
 /**

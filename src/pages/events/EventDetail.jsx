@@ -29,6 +29,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getEventDetail } from "@/api/events.api";
+import EventLeaderboard from "@/components/events/EventLeaderboard";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes";
 import EventConsentModal from "@/components/events/EventConsentModal";
@@ -389,6 +390,9 @@ export default function EventDetail() {
             </div>
           </div>
         )}
+
+        {/* ── Classifica dell'evento (PM-5, 2/10/2026) ─────────────────── */}
+        <EventLeaderboard eventId={event?.id} />
 
         {/* ── Sponsor ──────────────────────────────────────────────────────
             Ogni logo su una PIASTRA CHIARA. I marchi di terzi sono quasi sempre
