@@ -15,7 +15,7 @@
  * Il giudice vede a quale task è collegata ogni submission e decide
  * se approvare o rifiutare, con una nota facoltativa. I punti li decide il Motore
  * Punti (dal 17/9/2026, ritiro del cutover): il giudice non li inserisce.
- * L'admin può correggerli con l'override.
+ * L'admin può correggerli dalla pagina «Correzione punti».
  *
  * FUNZIONALITÀ SUPPORTATE
  * - Overview challenge e task associati
@@ -39,13 +39,8 @@
  *   Su 503 la decisione NON è stata registrata e non è rimasto nulla a metà
  *   (BE ≥ 0.21.0, decisione unica in una sola transazione): si chiede di riprovare.
  *
- * - Override admin (§7.4): SOLO admin, sulle submission già decise
- *   POST /api/v1/submissions/:id/override  Body: { decision, points?, note? }
- *   Ribalta approved↔rejected (loggato). Su una submission GIÀ approvata i punti
- *   vengono ora rettificati davvero anche in classifica (bug #9, BE 0.17.6), e il
- *   rifiuto di un contributo approvato ne toglie i punti e lo scala dai verificati
- *   (clawback automatico, BE 0.17.7) e ne fa uscire anche la CO2 da dashboard,
- *   report e attestato (bug #11, BE 0.18.0: la riga d'impatto resta, marcata revocata).
+ * - L'override admin (§7.4) non vive più qui: dal 2/10/2026 è nella pagina admin
+ *   «Correzione punti» (PM-4), che un admin raggiunge dal menu per ogni sfida.
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -112,11 +107,6 @@ async function releaseSubmission(token, submissionId) {
 // `open`. Prima del 4/8/2026 nessuna rotta modificava questo campo.
 async function setChallengeStatus(token, challengeId, status) {
   return call("patch", `/v1/challenges/${challengeId}`, { status }, "Errore nel cambio di stato della sfida");
-}
-
-// Override admin (§7.4): ribalta una decisione già presa. Solo admin lato BE.
-async function overrideSubmission(token, submissionId, body) {
-  return call("post", `/v1/submissions/${submissionId}/override`, body, "Errore durante l'override");
 }
 
 export default function JudgeChallengeOverview() {
@@ -333,34 +323,6 @@ export default function JudgeChallengeOverview() {
     }
   };
 
-  // Override admin (§7.4): ribalta una submission già decisa. Approvando serve
-  // il punteggio; ribaltando a rifiutata i punti escono da soli dalla classifica
-  // (clawback automatico dal 6/8/2026, BE 0.17.7) e con loro la CO2 (BE 0.18.0).
-  const onOverride = async (sub, decision) => {
-    const f = forms[sub.id] || {};
-    if (decision === "approved" && (f.points === "" || f.points == null || Number.isNaN(Number(f.points)))) {
-      setForm(sub.id, { err: "Inserisci i punti per forzare l'approvazione." });
-      return;
-    }
-    setForm(sub.id, { busy: true, err: "" });
-    setDecisionAlert(null);
-    try {
-      await overrideSubmission(token, sub.id, {
-        decision,
-        points: decision === "approved" ? Number(f.points) : undefined,
-        note: f.note?.trim() || undefined,
-      });
-      await loadSubmissions({ reset: true });
-      const ov = await getJudgeChallengeOverview(token, id);
-      setOverview(ov);
-    } catch (e) {
-      if (e.status === 503) setDecisionAlert({ subId: sub.id });
-      else setForm(sub.id, { err: e.message || "Errore durante l'override" });
-    } finally {
-      setForm(sub.id, { busy: false });
-    }
-  };
-
   if (oLoading) {
     return (
       <section className="page-section page-text">
@@ -428,7 +390,7 @@ export default function JudgeChallengeOverview() {
 
         {/* Chiusura/riapertura sfida — solo admin. Vive qui perché questa è la
             pagina operativa della singola sfida, dove l'admin già interviene
-            (force-release, override). */}
+            (force-release). */}
         {isAdmin && (
           <div className="card" style={{ padding: 16, marginTop: 16 }}>
             <h2 className="dynamic-title">Stato della sfida</h2>
@@ -689,7 +651,6 @@ export default function JudgeChallengeOverview() {
               <div style={{ display: "grid", gap: 10 }}>
                 {reviewedSubs.map((s) => {
                   const taskLabel = s.taskTitle || getTaskLabel(s.taskId) || "—";
-                  const f = forms[s.id] || {};
 
                   return (
                     <div key={s.id} className="card-info neutral" style={{ opacity: 0.9 }}>
@@ -702,74 +663,6 @@ export default function JudgeChallengeOverview() {
                         </div>
                         <div className="muted small">status: <strong>{s.status}</strong></div>
                       </div>
-
-                      {/* Override admin (§7.4): ribalta la decisione già presa */}
-                      {isAdmin && (
-                        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-                          {!f.overrideOpen ? (
-                            <button
-                              className="btn btn-ghost"
-                              onClick={() => setForm(s.id, { overrideOpen: true, err: "" })}
-                            >
-                              Override (admin)
-                            </button>
-                          ) : (
-                            <div style={{ display: "grid", gap: 8 }}>
-                              <div className="muted small" style={{ fontWeight: 600 }}>
-                                Override admin — ribalta l'esito
-                              </div>
-                              <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label>Punti (se forzi l'approvazione)</label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={f.points ?? ""}
-                                  onChange={(e) => setForm(s.id, { points: e.target.value })}
-                                  placeholder="Es. 30"
-                                />
-                              </div>
-                              <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label>Nota (facoltativa)</label>
-                                <textarea
-                                  rows={2}
-                                  value={f.note ?? ""}
-                                  onChange={(e) => setForm(s.id, { note: e.target.value })}
-                                  placeholder="Motivo dell'override…"
-                                />
-                              </div>
-                              <div className="muted small">
-                                Ribaltare un'approvazione a rifiutata toglie da sé i punti dalla
-                                classifica e la CO₂ dai totali: non serve fare altro. Il movimento
-                                resta a registro azzerato, con la sua storia.
-                              </div>
-                              {f.err && <div className="callout error">{f.err}</div>}
-                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                <button
-                                  className="btn btn-outline"
-                                  disabled={f.busy}
-                                  onClick={() => onOverride(s, "approved")}
-                                >
-                                  {f.busy ? "…" : "Forza approvata"}
-                                </button>
-                                <button
-                                  className="btn btn-outline"
-                                  disabled={f.busy}
-                                  onClick={() => onOverride(s, "rejected")}
-                                >
-                                  {f.busy ? "…" : "Forza rifiutata"}
-                                </button>
-                                <button
-                                  className="btn btn-ghost"
-                                  disabled={f.busy}
-                                  onClick={() => setForm(s.id, { overrideOpen: false, err: "" })}
-                                >
-                                  Annulla
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
