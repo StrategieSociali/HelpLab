@@ -56,12 +56,28 @@ import { getJudgeChallengeOverview } from "@/api/judge.api";
 import { api } from "@/api/client";
 import "../../styles/dynamic-pages.css";
 
-const API_BASE = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, "");
-
 function fmtDate(value) {
   if (!value) return "—";
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
+}
+
+// Le chiamate passano dal client condiviso (`api`) dal 2/10/2026: è lui che rinnova
+// l'access token scaduto, che con `fetch` faceva fallire la revisione dopo la durata
+// del token. Il parametro `token` resta per non toccare i chiamanti: l'interceptor
+// mette comunque quello corrente. Gli errori conservano il contratto di prima:
+// messaggio leggibile (`message` per gli errori strutturati del BE, es. 409 lock coda
+// giudici, altrimenti `error`) e `status`, per distinguere 409 e 503.
+async function call(method, url, body, fallbackMsg) {
+  try {
+    const { data } = await api.request({ method, url, data: body });
+    return data;
+  } catch (e) {
+    const data = e?.response?.data;
+    const err = new Error(data?.message || data?.error || fallbackMsg);
+    err.status = e?.response?.status;
+    throw err;
+  }
 }
 
 async function fetchChallengeSubmissions(token, challengeId, cursor = null) {
@@ -69,124 +85,38 @@ async function fetchChallengeSubmissions(token, challengeId, cursor = null) {
   params.set("limit", "20");
   if (cursor) params.set("cursor", cursor);
 
-  const res = await fetch(
-    `${API_BASE}/v1/challenges/${challengeId}/submissions?${params.toString()}`,
-    { headers: { Authorization: `Bearer ${token}` } }
+  return call(
+    "get",
+    `/v1/challenges/${challengeId}/submissions?${params.toString()}`,
+    undefined,
+    "Errore caricamento submissions"
   );
-  if (!res.ok) throw new Error("Errore caricamento submissions");
-  return res.json();
 }
 
 async function reviewSubmission(token, submissionId, body) {
-  const res = await fetch(`${API_BASE}/v1/submissions/${submissionId}/review`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    let msg = "Errore durante la revisione";
-    try {
-      const data = await res.json();
-      // Gli errori strutturati del BE mettono il messaggio leggibile in `message`
-      // (es. 409 lock coda giudici), gli altri in `error`.
-      msg = data?.message || data?.error || msg;
-    } catch {}
-    const err = new Error(msg);
-    err.status = res.status;
-    throw err;
-  }
-
-  return res.json();
+  return call("post", `/v1/submissions/${submissionId}/review`, body, "Errore durante la revisione");
 }
 
-// Presa in carico / rilascio (§3). Stessa gestione di reviewSubmission: catturo
-// lo status per distinguere il 409 (claim di altri / già revisionata) dagli errori generici.
+// Presa in carico / rilascio (§3). Stessa gestione di reviewSubmission: lo status
+// distingue il 409 (claim di altri / già revisionata) dagli errori generici.
 async function claimSubmission(token, submissionId) {
-  const res = await fetch(`${API_BASE}/v1/submissions/${submissionId}/claim`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) {
-    let msg = "Errore nella presa in carico";
-    try {
-      const data = await res.json();
-      msg = data?.message || data?.error || msg;
-    } catch {}
-    const err = new Error(msg);
-    err.status = res.status;
-    throw err;
-  }
-  return res.json();
+  return call("post", `/v1/submissions/${submissionId}/claim`, undefined, "Errore nella presa in carico");
 }
 
 async function releaseSubmission(token, submissionId) {
-  const res = await fetch(`${API_BASE}/v1/submissions/${submissionId}/release`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) {
-    let msg = "Errore nel rilascio";
-    try {
-      const data = await res.json();
-      msg = data?.message || data?.error || msg;
-    } catch {}
-    const err = new Error(msg);
-    err.status = res.status;
-    throw err;
-  }
-  return res.json();
+  return call("post", `/v1/submissions/${submissionId}/release`, undefined, "Errore nel rilascio");
 }
 
 // Cambio stato della sfida (solo admin lato BE). È la leva che ferma i nuovi
 // contributi: `POST /challenges/:id/submissions` accetta solo se lo stato è
 // `open`. Prima del 4/8/2026 nessuna rotta modificava questo campo.
 async function setChallengeStatus(token, challengeId, status) {
-  const res = await fetch(`${API_BASE}/v1/challenges/${challengeId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ status }),
-  });
-  if (!res.ok) {
-    let msg = "Errore nel cambio di stato della sfida";
-    try {
-      const data = await res.json();
-      msg = data?.message || data?.error || msg;
-    } catch {}
-    const err = new Error(msg);
-    err.status = res.status;
-    throw err;
-  }
-  return res.json();
+  return call("patch", `/v1/challenges/${challengeId}`, { status }, "Errore nel cambio di stato della sfida");
 }
 
 // Override admin (§7.4): ribalta una decisione già presa. Solo admin lato BE.
 async function overrideSubmission(token, submissionId, body) {
-  const res = await fetch(`${API_BASE}/v1/submissions/${submissionId}/override`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    let msg = "Errore durante l'override";
-    try {
-      const data = await res.json();
-      msg = data?.message || data?.error || msg;
-    } catch {}
-    const err = new Error(msg);
-    err.status = res.status;
-    throw err;
-  }
-  return res.json();
+  return call("post", `/v1/submissions/${submissionId}/override`, body, "Errore durante l'override");
 }
 
 export default function JudgeChallengeOverview() {

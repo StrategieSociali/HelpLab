@@ -1,9 +1,8 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { api, attachToken, API_PATHS } from "@/api/client";
+import { api, attachToken, attachSessionHandlers, API_PATHS, USE_REFRESH } from "@/api/client";
 
 const LS_TOKEN_KEY = "hl_access_token";
-const USE_REFRESH = (import.meta.env.VITE_USE_REFRESH || "false") === "true";
 
 const AuthContext = createContext(null);
 
@@ -22,6 +21,15 @@ export function AuthProvider({ children }) {
   // Registrato UNA volta sola: legge sempre il valore corrente dal ref.
   useEffect(() => {
     attachToken(() => tokenRef.current);
+    // Rinnovo automatico su 401 (client.js): salva il token nuovo, oppure chiude
+    // la sessione locale se il refresh non riesce (ProtectedRoute rimanda al login).
+    attachSessionHandlers({
+      onRefreshed: (t) => saveToken(t),
+      onSessionLost: () => {
+        saveToken(null);
+        setUser(null);
+      },
+    });
   }, []);
 
   // Legge profilo/ruolo corrente (richiede Bearer)
