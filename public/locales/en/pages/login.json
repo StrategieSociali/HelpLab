@@ -11,6 +11,8 @@
     "placeholder": "Enter your password"
   },
 
+  "sessionExpired": "For your security, your session has expired: log in again to pick up where you left off.",
+
   "actions": {
     "login": "Login",
     "loggingIn": "Logging in..."

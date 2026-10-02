@@ -11,6 +11,8 @@
     "placeholder": "Inserisci la tua password"
   },
 
+  "sessionExpired": "Per sicurezza la sessione è scaduta: accedi di nuovo per continuare da dove eri.",
+
   "actions": {
     "login": "Accedi",
     "loggingIn": "Accesso in corso..."
