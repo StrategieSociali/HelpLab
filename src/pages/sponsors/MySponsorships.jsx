@@ -219,12 +219,14 @@ export default function MySponsorships() {
   const [items, setItems]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
+  const [noProfile, setNoProfile]   = useState(false);
   const [withdrawingId, setWithdrawingId] = useState(null);
 
   // ── Fetch candidature ────────────────────────────────────────────────────
   const loadRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setNoProfile(false);
     try {
       const data = await getMySponshorshipRequests();
       // La response può essere array diretto o { items }
@@ -233,6 +235,12 @@ export default function MySponsorships() {
       list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       setItems(list);
     } catch (err) {
+      // 404 = profilo sponsor non ancora creato (l'unico 404 di questa rotta): non è
+      // un errore, è il passo successivo, e lo si dice con il link per farlo.
+      if (err?.response?.status === 404) {
+        setNoProfile(true);
+        return;
+      }
       setError(
         err?.response?.data?.error ||
         "Errore nel caricamento delle candidature. Riprova tra qualche momento."
@@ -311,6 +319,22 @@ export default function MySponsorships() {
           </Link>
         </div>
 
+        {noProfile && (
+          <div className="callout neutral" style={{ marginBottom: 16 }}>
+            <p>
+              <strong>Manca il tuo profilo sponsor.</strong> Crealo prima di candidarti
+              alle sfide: nome, sito e logo sono quelli che la community vedrà.
+            </p>
+            <Link
+              to={routes.community.sponsorEdit}
+              className="btn btn-primary"
+              style={{ marginTop: 12, display: "inline-block" }}
+            >
+              Crea il profilo sponsor
+            </Link>
+          </div>
+        )}
+
         {/* Errore globale */}
         {error && (
           <div className="callout error" style={{ marginBottom: 16 }}>
@@ -319,7 +343,7 @@ export default function MySponsorships() {
         )}
 
         {/* Lista vuota */}
-        {!error && items.length === 0 && (
+        {!error && !noProfile && items.length === 0 && (
           <div className="callout neutral">
             <p>Non hai ancora inviato nessuna candidatura.</p>
             <Link

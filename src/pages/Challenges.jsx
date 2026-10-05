@@ -26,7 +26,6 @@ import { useNavigate } from "react-router-dom";
 import { api, API_PATHS } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { isJudge } from "@/utils/roles";
-import SponsorshipBadge from "@/components/sponsors/SponsorshipBadge";
 
 // --------------------------------------------------
 // Helper: visualizzazione robusta del nome del giudice
@@ -266,16 +265,6 @@ export default function Challenges() {
                   {ch.status === 'open' ? t('card.statusOpen') : ch.status}
                 </div>
                 {ch.type && <div className="chip chip-type">{ch.type}</div>}
-
-                {/* Badge "Cerca sponsor" — visibile solo se il backend segnala
-                    sponsor_interest === true. Cliccando porta alla guida
-                    sponsorizzazioni senza interrompere il flusso volontario. */}
-                {ch.sponsor_interest && (
-                  <SponsorshipBadge
-                    size="sm"
-                    onClick={() => navigate(routes.community.sponsorGuide)}
-                  />
-                )}
               </div>
 
               <h3 className="card-title">{ch.title}</h3>
@@ -384,6 +373,24 @@ export default function Challenges() {
                     onClick={() => navigate('/login')}
                   >
                     {t('card.cta.loginToJoin')}
+                  </button>
+                )}
+
+                {/* Sfida che cerca sponsor (sponsor_interest dal BE): pulsante, non
+                    badge (rilievo PM 5/10/2026: il badge sembrava un'icona). Parla
+                    all'azienda: lo sponsor va al modulo di candidatura per questa
+                    sfida, gli altri alla guida su come diventarlo. */}
+                {ch.sponsor_interest && (
+                  <button
+                    className="btn btn-outline btn-small"
+                    onClick={() => navigate(
+                      user?.role === "sponsor"
+                        ? routes.community.sponsorshipRequest(ch.id)
+                        : routes.community.sponsorGuide
+                    )}
+                    style={{ width: "100%", marginTop: 4 }}
+                  >
+                    {t('card.cta.sponsor')}
                   </button>
                 )}
 

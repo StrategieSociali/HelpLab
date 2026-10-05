@@ -18,6 +18,14 @@ import { useNavigate } from "react-router-dom";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 
+// Quasi nessuno scrive «https://» (rilievo PM 5/10/2026): «www.azienda.it» diventa
+// «https://www.azienda.it». Vuoto resta null, che il BE accetta come «nessun sito».
+function withScheme(value) {
+  const v = value.trim();
+  if (!v) return null;
+  return /^https?:\/\//i.test(v) ? v : `https://${v}`;
+}
+
 export default function SponsorProfileEditor() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -90,17 +98,34 @@ export default function SponsorProfileEditor() {
     setSaving(true);
     setError(null);
 
+    // I campi facoltativi vuoti vanno come null: il BE valida come URL qualunque
+    // stringa, anche vuota, e rispondeva 400 a chi lasciava vuoto logo o sito
+    // (rilievo PM 5/10/2026).
+    const body = {
+      name:        form.name.trim(),
+      website:     withScheme(form.website),
+      description: form.description.trim() || null,
+      logo_url:    withScheme(form.logo_url),
+    };
+
     try {
       if (exists) {
-        await api.put("/v1/sponsors/me", form);
+        await api.put("/v1/sponsors/me", body);
       } else {
-        await api.post("/v1/sponsors/me", form);
+        await api.post("/v1/sponsors/me", body);
         setExists(true);
       }
 
       navigate("/sponsors"); // ritorno alla community sponsor
     } catch (err) {
-      setError("Errore nel salvataggio del profilo sponsor");
+      // 400: il BE dice quale campo non va (es. «name: String must contain at least 2
+      // character(s)»); prima il motivo restava nascosto dietro un messaggio generico.
+      const detail = err?.response?.status === 400 ? err.response.data?.error : null;
+      setError(
+        detail
+          ? `Controlla i dati inseriti: ${detail}`
+          : "Errore nel salvataggio del profilo sponsor. Riprova tra poco."
+      );
     } finally {
       setSaving(false);
     }
@@ -154,10 +179,11 @@ export default function SponsorProfileEditor() {
             <input
               id="website"
               name="website"
-              type="url"
+              type="text"
+              inputMode="url"
               value={form.website}
               onChange={onChange}
-              placeholder="https://"
+              placeholder="www.esempio.it"
             />
           </div>
 
@@ -166,7 +192,8 @@ export default function SponsorProfileEditor() {
             <input
               id="logo_url"
               name="logo_url"
-              type="url"
+              type="text"
+              inputMode="url"
               value={form.logo_url}
               onChange={onChange}
               placeholder="https://..."

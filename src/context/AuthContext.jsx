@@ -148,6 +148,10 @@ export function AuthProvider({ children }) {
       register,
       logout,
       setUser,
+      // Rilegge profilo e ruolo dal database (/auth/me), senza nuovo login: serve dopo un
+      // cambio di ruolo approvato dall'admin. I permessi il BE li legge già dal database
+      // a ogni richiesta, quindi il token non va rinnovato (5/10/2026).
+      refreshUser: fetchMe,
       setToken: saveToken, // esposto per casi particolari
     }),
     [user, token, loading, sessionExpired]

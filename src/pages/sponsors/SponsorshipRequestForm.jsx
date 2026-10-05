@@ -14,6 +14,8 @@
  * RUOLO: sponsor
  *
  * DIPENDENZE API:
+ *   GET  /v1/sponsors/me   (404 = profilo non ancora creato: lo si dice subito,
+ *                           prima di far compilare il modulo — 5/10/2026)
  *   GET  /v1/challenges?seeking_sponsor=true
  *   POST /v1/sponsorship-requests
  */
@@ -62,6 +64,16 @@ export default function SponsorshipRequestForm() {
   const [error, setError]             = useState(null);
   const [submitted, setSubmitted]     = useState(false);
   const [nextSteps, setNextSteps]     = useState([]);
+  const [noProfile, setNoProfile]     = useState(false);
+
+  // ── Profilo sponsor: senza, il BE rifiuta la candidatura ─────────────────
+  // Si controlla all'apertura invece di far scoprire il problema all'invio, dove
+  // arrivava il messaggio tecnico del BE (rilievo PM 5/10/2026).
+  useEffect(() => {
+    api.get("/v1/sponsors/me").catch((err) => {
+      if (err?.response?.status === 404) setNoProfile(true);
+    });
+  }, []);
 
   // ── Fetch challenge che cercano sponsor ──────────────────────────────────
   // Caricato solo quando target_type === "challenge"
@@ -101,7 +113,14 @@ export default function SponsorshipRequestForm() {
   // ── Submit ────────────────────────────────────────────────────────────────
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (motivationLeft > 0) return;
+    // Prima usciva in silenzio, con il pulsante disattivato: sembrava bloccato
+    // (rilievo PM 5/10/2026). Ora il pulsante resta attivo e il motivo si legge.
+    if (motivationLeft > 0) {
+      setError(
+        `La motivazione deve avere almeno ${MOTIVATION_MIN} caratteri: ne mancano ${motivationLeft}.`
+      );
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -227,11 +246,26 @@ export default function SponsorshipRequestForm() {
         </header>
 
         {error && (
-          <div className="callout error" style={{ marginBottom: 16 }}>
+          <div className="callout error" role="alert" style={{ marginBottom: 16 }}>
             {error}
           </div>
         )}
 
+        {noProfile ? (
+          <div className="callout neutral">
+            <p>
+              <strong>Prima di candidarti crea il tuo profilo sponsor.</strong> Nome,
+              sito e logo sono quelli che la community vedrà accanto alla sfida.
+            </p>
+            <Link
+              to={routes.community.sponsorEdit}
+              className="btn btn-primary"
+              style={{ marginTop: 12, display: "inline-block" }}
+            >
+              Crea il profilo sponsor
+            </Link>
+          </div>
+        ) : (
         <form
           onSubmit={onSubmit}
           className="registration-form"
@@ -383,7 +417,7 @@ export default function SponsorshipRequestForm() {
             <button
               type="submit"
               className="submit-button"
-              disabled={submitting || motivationLeft > 0}
+              disabled={submitting}
             >
               {submitting ? "Invio in corso…" : "Invia candidatura"}
             </button>
@@ -397,6 +431,7 @@ export default function SponsorshipRequestForm() {
           </div>
 
         </form>
+        )}
 
         {/* Link utili */}
         <p className="small muted sponsor-footer-links" style={{ marginTop: 32 }}>

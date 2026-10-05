@@ -13,8 +13,10 @@
  *     - Stesso contenuto pubblico
  *     - Form per richiedere l'upgrade a ruolo "sponsor"
  *     - Se ha già una richiesta pending: mostra stato
- *     - Se la richiesta è stata approvata: triggera refresh token
- *       (il JWT corrente ha ancora il vecchio ruolo — vedi note BE)
+ *     - Se la richiesta è stata approvata: «Attiva ruolo sponsor» rilegge il
+ *       profilo (refreshUser, /auth/me) e il redirect dello stato 3 parte da solo.
+ *       Fino al 5/10/2026 chiamava un refreshToken che AuthContext non esponeva,
+ *       e finiva sempre sul login.
  *     - Se la richiesta è stata rifiutata: mostra rejection_reason
  *       e permette di inviarne una nuova
  *
@@ -25,7 +27,7 @@
  *   GET  /v1/challenges?seeking_sponsor=true
  *   POST /v1/role-requests
  *   GET  /v1/role-requests/mine
- *   POST /v1/auth/refresh  (per aggiornare JWT dopo approvazione)
+ *   GET  /v1/auth/me       (ruolo aggiornato dopo l'approvazione)
  *
  * ROUTE: /sponsorizza  (routes.community.sponsorGuide)
  */
@@ -139,7 +141,7 @@ function SeekingChallengeCard({ challenge, onSelect }) {
 // ---------------------------------------------------------------------------
 // Sottocomponente: stato richiesta ruolo esistente
 // ---------------------------------------------------------------------------
-function RoleRequestStatus({ request, onRefreshToken, onNewRequest }) {
+function RoleRequestStatus({ request, onActivate, activationError, onNewRequest }) {
   const statusMap = {
     pending: {
       label: "In attesa di approvazione",
@@ -185,10 +187,15 @@ function RoleRequestStatus({ request, onRefreshToken, onNewRequest }) {
           <button
             className="btn btn-primary"
             style={{ marginTop: 12 }}
-            onClick={onRefreshToken}
+            onClick={onActivate}
           >
             Attiva ruolo sponsor
           </button>
+          {activationError && (
+            <div className="callout error" role="alert" style={{ marginTop: 12, marginBottom: 0 }}>
+              {activationError}
+            </div>
+          )}
         </>
       )}
 
@@ -357,7 +364,7 @@ function RoleRequestForm({ onSuccess }) {
 // ---------------------------------------------------------------------------
 export default function SponsorGuide() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, refreshToken } = useAuth?.() || {};
+  const { user, isAuthenticated, refreshUser } = useAuth?.() || {};
 
   // Stato challenge che cercano sponsor
   const [challenges, setChallenges] = useState([]);
@@ -369,6 +376,7 @@ export default function SponsorGuide() {
   const [submitted, setSubmitted] = useState(false);       // appena inviata
   const [nextSteps, setNextSteps] = useState([]);          // da BE post-submit
   const [showForm, setShowForm] = useState(false);         // forza nuovo form dopo reject
+  const [activationError, setActivationError] = useState(null);
 
   const isUser = isAuthenticated && user?.role === "user";
   const isSponsor = isAuthenticated && user?.role === "sponsor";
@@ -473,22 +481,24 @@ export default function SponsorGuide() {
   }, []);
 
   // -------------------------
-  // Handler: refresh token dopo approvazione
+  // Handler: attivazione del ruolo dopo l'approvazione
   // -------------------------
-  const handleRefreshToken = useCallback(async () => {
+  // Rilegge il profilo: se il ruolo è sponsor, il redirect dello stato 3 parte da
+  // solo. Se non lo è, lo dice: la richiesta risulta approvata ma il profilo no (è
+  // successo con un ruolo rimesso a mano nel database).
+  const handleActivate = useCallback(async () => {
+    setActivationError(null);
     try {
-      // refreshToken è esposto da AuthContext — aggiorna il JWT in memoria
-      // e ricarica user.role dal nuovo token
-      if (typeof refreshToken === "function") {
-        await refreshToken();
-      } else {
-        // Fallback: forza re-login
-        navigate(routes.auth.login);
+      const me = await refreshUser();
+      if (me?.role !== "sponsor") {
+        setActivationError(
+          "Il ruolo sponsor non risulta ancora attivo sul tuo profilo. Scrivi al team di HelpLab."
+        );
       }
     } catch {
-      navigate(routes.auth.login);
+      setActivationError("Non riesco a contattare il server. Riprova tra poco.");
     }
-  }, [refreshToken, navigate]);
+  }, [refreshUser]);
 
   // -------------------------
   // Render
@@ -602,7 +612,8 @@ export default function SponsorGuide() {
                   </p>
                   <RoleRequestStatus
                     request={roleRequest}
-                    onRefreshToken={handleRefreshToken}
+                    onActivate={handleActivate}
+                    activationError={activationError}
                     onNewRequest={() => setShowForm(true)}
                   />
                 </>
