@@ -20,9 +20,12 @@
  *   GET   /v1/admin/role-requests?requested_role=sponsor
  *   PATCH /v1/admin/role-requests/:id/approve
  *   PATCH /v1/admin/role-requests/:id/reject
+ *
+ * MODALI: TextModal e PaymentModal su components/UI/Modal (standard grafico, 5/10/2026).
  */
 
 import React, { useEffect, useState, useCallback } from "react";
+import Modal from "@/components/UI/Modal";
 import {
   adminGetSponsorshipRequests,
   adminApproveSponsorshipRequest,
@@ -82,51 +85,33 @@ function TextModal({ title, label, placeholder, required = false, onConfirm, onC
   const [value, setValue] = useState("");
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-      style={{
-        position: "fixed", inset: 0, zIndex: 1000,
-        background: "rgba(0,0,0,0.5)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 16,
-      }}
-    >
-      <div
-        className="card"
-        style={{ maxWidth: 480, width: "100%", padding: 24 }}
-      >
-        <h2 id="modal-title" style={{ marginTop: 0, fontSize: "1.1rem" }}>
-          {title}
-        </h2>
-
-        <div className="form-group" style={{ marginTop: 12 }}>
-          <label htmlFor="modal-input">{label}</label>
-          <textarea
-            id="modal-input"
-            rows={4}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder={placeholder}
-            style={{ width: "100%" }}
-          />
-        </div>
-
-        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-          <button
-            className="btn btn-primary"
-            disabled={required && !value.trim()}
-            onClick={() => onConfirm(value.trim())}
-          >
-            Conferma
-          </button>
-          <button className="btn btn-outline" onClick={onCancel}>
-            Annulla
-          </button>
-        </div>
+    <Modal title={title} onClose={onCancel}>
+      <div className="form-group">
+        <label htmlFor="modal-input">{label}</label>
+        <textarea
+          id="modal-input"
+          rows={4}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={placeholder}
+          style={{ width: "100%" }}
+        />
       </div>
-    </div>
+
+      <div className="dynamic-actions" style={{ marginTop: 4 }}>
+        <button
+          className="btn btn-primary"
+          style={{ flex: 1 }}
+          disabled={required && !value.trim()}
+          onClick={() => onConfirm(value.trim())}
+        >
+          Conferma
+        </button>
+        <button className="btn btn-ghost" onClick={onCancel}>
+          Annulla
+        </button>
+      </div>
+    </Modal>
   );
 }
 
@@ -139,69 +124,54 @@ function PaymentModal({ onConfirm, onCancel }) {
   const [notes, setNotes]   = useState("");
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="payment-modal-title"
-      style={{
-        position: "fixed", inset: 0, zIndex: 1000,
-        background: "rgba(0,0,0,0.5)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 16,
-      }}
-    >
-      <div className="card" style={{ maxWidth: 480, width: "100%", padding: 24 }}>
-        <h2 id="payment-modal-title" style={{ marginTop: 0, fontSize: "1.1rem" }}>
-          Conferma pagamento ricevuto
-        </h2>
-
-        <div className="form-group" style={{ marginTop: 12 }}>
-          <label htmlFor="payment-amount">
-            Importo ricevuto (€) <span className="muted small">(obbligatorio)</span>
-          </label>
-          <input
-            id="payment-amount"
-            type="number"
-            min="1"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="es. 500"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="payment-notes">
-            Note interne <span className="muted small">(non visibili allo sponsor)</span>
-          </label>
-          <textarea
-            id="payment-notes"
-            rows={3}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Riferimento bonifico, data valuta, ecc."
-          />
-        </div>
-
-        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-          <button
-            className="btn btn-primary"
-            disabled={!amount || parseFloat(amount) <= 0}
-            onClick={() =>
-              onConfirm({
-                amount_eur:    parseFloat(amount),
-                private_notes: notes.trim() || undefined,
-              })
-            }
-          >
-            Conferma pagamento
-          </button>
-          <button className="btn btn-outline" onClick={onCancel}>
-            Annulla
-          </button>
-        </div>
+    <Modal title="Conferma pagamento ricevuto" onClose={onCancel}>
+      <div className="form-group">
+        <label htmlFor="payment-amount">
+          Importo ricevuto (€) <span className="muted small">(obbligatorio)</span>
+        </label>
+        <input
+          id="payment-amount"
+          type="number"
+          min="1"
+          step="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="es. 500"
+        />
       </div>
-    </div>
+
+      <div className="form-group">
+        <label htmlFor="payment-notes">
+          Note interne <span className="muted small">(non visibili allo sponsor)</span>
+        </label>
+        <textarea
+          id="payment-notes"
+          rows={3}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Riferimento bonifico, data valuta, ecc."
+        />
+      </div>
+
+      <div className="dynamic-actions" style={{ marginTop: 4 }}>
+        <button
+          className="btn btn-primary"
+          style={{ flex: 1 }}
+          disabled={!amount || parseFloat(amount) <= 0}
+          onClick={() =>
+            onConfirm({
+              amount_eur:    parseFloat(amount),
+              private_notes: notes.trim() || undefined,
+            })
+          }
+        >
+          Conferma pagamento
+        </button>
+        <button className="btn btn-ghost" onClick={onCancel}>
+          Annulla
+        </button>
+      </div>
+    </Modal>
   );
 }
 
