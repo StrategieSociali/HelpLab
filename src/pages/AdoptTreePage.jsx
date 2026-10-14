@@ -13,7 +13,7 @@
  * 2. Come funziona — tre passi del ciclo
  * 3. I tre tier — Un albero / Un boschetto / Una foresta
  * 4. Form di contatto — tier vincolato, mailto precompilato
- * 5. Dove mettiamo le radici — anagrafica per località (placeholder)
+ * 5. Dove mettiamo le radici — anagrafica per località (solo con almeno un luogo vero)
  * 6. Link a ImpactPage
  *
  * ENDPOINT
@@ -100,39 +100,12 @@ const TIERS = [
 
 /**
  * LUOGHI DI PIANTUMAZIONE
- * Dati placeholder — sostituire con dati reali prima del go-live.
+ * Solo luoghi veri, con alberi già in terra. Finché l'elenco è vuoto la
+ * sezione "Dove mettiamo le radici" non compare.
  * TODO: quando il backend esporrà GET /v1/trees, sostituire
  * questo array statico con una fetch dinamica.
  */
-const LOCATIONS = [
-  {
-    id: 1,
-    city: "Bologna",
-    area: "Giardini Margherita",
-    type: "Parco pubblico",
-    trees: 5,
-    date: "Marzo 2025",
-    sponsor: null,
-  },
-  {
-    id: 2,
-    city: "Rimini",
-    area: "Scuola primaria G. Rodari",
-    type: "Area scolastica",
-    trees: 3,
-    date: "Aprile 2025",
-    sponsor: "Legambiente Rimini",
-  },
-  {
-    id: 3,
-    city: "Ferrara",
-    area: "Parco Massari",
-    type: "Parco pubblico",
-    trees: 4,
-    date: "Maggio 2025",
-    sponsor: null,
-  },
-];
+const LOCATIONS = [];
 
 // ─── Sotto-componenti ─────────────────────────────────────────────────────────
 
@@ -865,56 +838,58 @@ export default function AdoptTreePage() {
 
         {/* ══════════════════════════════════════════════════════════════════
             SEZIONE 5: DOVE METTIAMO LE RADICI
-            Anagrafica per località — struttura definitiva, dati placeholder.
+            Anagrafica per località: compare solo con almeno un luogo vero.
             TODO: sostituire LOCATIONS con fetch da GET /v1/trees
             quando il backend esporrà l'endpoint individuale degli alberi.
         ══════════════════════════════════════════════════════════════════ */}
-        <div style={{ marginBottom: 72 }}>
-          <div
-            style={{
-              fontSize: "0.75rem",
-              letterSpacing: "0.10em",
-              textTransform: "uppercase",
-              opacity: 0.45,
-              marginBottom: 8,
-              color: "#ffffff",
-            }}
-          >
-            Le nostre piantumazioni
-          </div>
-          <h2
-            style={{
-              fontSize: "clamp(1.3rem, 3vw, 1.8rem)",
-              fontWeight: 800,
-              color: "#ffffff",
-              marginBottom: 8,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Dove mettiamo le radici
-          </h2>
-          <p style={{ opacity: 0.55, marginBottom: 32, color: "#ffffff", maxWidth: 520 }}>
-            Ogni albero ha un indirizzo. Ecco dove sono quelli già in terra.
-          </p>
+        {LOCATIONS.length > 0 && (
+          <div style={{ marginBottom: 72 }}>
+            <div
+              style={{
+                fontSize: "0.75rem",
+                letterSpacing: "0.10em",
+                textTransform: "uppercase",
+                opacity: 0.45,
+                marginBottom: 8,
+                color: "#ffffff",
+              }}
+            >
+              Le nostre piantumazioni
+            </div>
+            <h2
+              style={{
+                fontSize: "clamp(1.3rem, 3vw, 1.8rem)",
+                fontWeight: 800,
+                color: "#ffffff",
+                marginBottom: 8,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Dove mettiamo le radici
+            </h2>
+            <p style={{ opacity: 0.55, marginBottom: 32, color: "#ffffff", maxWidth: 520 }}>
+              Ogni albero ha un indirizzo. Ecco dove sono quelli già in terra.
+            </p>
 
-          <div className="card" style={{ padding: "8px 24px" }}>
-            {LOCATIONS.map((loc) => (
-              <LocationRow key={loc.id} location={loc} />
-            ))}
-          </div>
+            <div className="card" style={{ padding: "8px 24px" }}>
+              {LOCATIONS.map((loc) => (
+                <LocationRow key={loc.id} location={loc} />
+              ))}
+            </div>
 
-          <p
-            style={{
-              fontSize: "0.78rem",
-              opacity: 0.35,
-              marginTop: 12,
-              color: "#ffffff",
-              fontStyle: "italic",
-            }}
-          >
-            * I dati vengono aggiornati con ogni nuova piantumazione.
-          </p>
-        </div>
+            <p
+              style={{
+                fontSize: "0.78rem",
+                opacity: 0.35,
+                marginTop: 12,
+                color: "#ffffff",
+                fontStyle: "italic",
+              }}
+            >
+              * I dati vengono aggiornati con ogni nuova piantumazione.
+            </p>
+          </div>
+        )}
 
         {/* ══════════════════════════════════════════════════════════════════
             SEZIONE 6: LINK A IMPACTPAGE
