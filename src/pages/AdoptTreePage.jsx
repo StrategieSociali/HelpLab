@@ -72,7 +72,7 @@ const TIERS = [
       "Cinque alberi in un unico luogo. Perfetto per gruppi, famiglie, associazioni che vogliono lasciare un segno visibile e duraturo.",
     includes: [
       "5 alberi piantati nello stesso sito",
-      "Nome del gruppo visibile sulla mappa",
+      "Nome del gruppo visibile sulla mappa (funzionalità in fase di sviluppo)",
       "Foto e report della piantumazione",
       "Aggiornamenti periodici",
     ],
@@ -85,12 +85,12 @@ const TIERS = [
     name: "Una foresta",
     price: 300,
     description:
-      "Per le imprese che vogliono fare la propria parte in modo concreto e documentato. Dati ESG verificabili, logo visibile, impatto reale.",
+      "Per le imprese che vogliono fare la propria parte in modo concreto. Logo visibile e dati dell'iniziativa documentati.",
     includes: [
       "15 alberi piantati",
       "Logo aziendale sulla pagina pubblica",
-      "Certificato di compensazione CO₂",
-      "Report ESG con dati auditabili",
+      "Attestato di piantumazione: quanti alberi, dove, quando",
+      "Report dei dati dell'iniziativa",
       "Aggiornamenti periodici",
     ],
     cta: "Contattaci per la tua impresa",
@@ -481,8 +481,9 @@ export default function AdoptTreePage() {
             }}
           >
             I volontari di HelpLab pedalano, camminano, agiscono.
-            Noi misuriamo ogni kg di CO₂ che non finisce nell'aria.
-            E poi lo trasformiamo in alberi veri, in luoghi reali,
+            Noi misuriamo la CO₂ che non finisce nell'aria e quella che
+            emettono comunque gli spostamenti per raggiungere gli eventi.
+            Gli alberi sono un passo in più: veri, in luoghi reali,
             con il tuo nome sopra.
           </p>
 
@@ -633,17 +634,17 @@ export default function AdoptTreePage() {
             <StepCard
               number="1"
               title="I volontari agiscono"
-              text="Ogni biciclettata, ogni percorso a piedi, ogni azione sostenibile viene documentata e verificata da giudici indipendenti. Nessuna stima: dati reali."
+              text="Ogni biciclettata, ogni percorso a piedi, ogni azione sostenibile viene documentata e verificata da giudici indipendenti. Le azioni sono reali e verificate; la CO₂ che ne calcoliamo è una stima, con fonti dichiarate."
             />
             <StepCard
               number="2"
               title="Noi calcoliamo la CO₂"
-              text="Per ogni azione approvata calcoliamo la CO₂ evitata usando parametri ufficiali aggiornati. Poi stabiliamo quanti alberi servono per compensarla completamente."
+              text="Per ogni azione approvata calcoliamo la CO₂ risparmiata e quella emessa per arrivare, con fattori di emissione pubblici (per la mobilità, quelli dell'ISPRA). Per la CO₂ emessa stimiamo quanti alberi servono per assorbirla."
             />
             <StepCard
               number="3"
               title="Tu pianti l'albero"
-              text="Adottando un albero contribuisci a chiudere il cerchio. Il tuo albero viene piantato in un'area pubblica reale. Ricevi foto, luogo e aggiornamenti sulla sua crescita."
+              text="Adottando un albero fai un passo in più. Il tuo albero viene piantato in un'area pubblica reale. Ricevi foto, luogo e aggiornamenti sulla sua crescita."
             />
           </div>
         </div>
@@ -684,7 +685,7 @@ export default function AdoptTreePage() {
           <div
             role="radiogroup"
             aria-label="Scegli il tier di adozione"
-            style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 48 }}
+            style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 20 }}
           >
             {TIERS.map((tier) => (
               <TierCard
@@ -695,6 +696,23 @@ export default function AdoptTreePage() {
               />
             ))}
           </div>
+
+          {/* Riga d'uso dell'attestato: documenta la piantumazione, non la
+              neutralità climatica (metodologia §5, frase 14). */}
+          <p
+            style={{
+              fontSize: "0.85rem",
+              lineHeight: 1.6,
+              opacity: 0.65,
+              color: "#ffffff",
+              maxWidth: 640,
+              marginBottom: 48,
+            }}
+          >
+            L'attestato documenta la piantumazione. Non attesta la neutralità
+            climatica di prodotti o servizi. Luogo e data te li confermiamo
+            prima di qualsiasi pagamento.
+          </p>
 
           {/* Form */}
           <div
