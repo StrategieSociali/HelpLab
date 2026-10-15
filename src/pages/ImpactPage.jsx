@@ -300,8 +300,8 @@ function EventCo2Card({ event }) {
       {needed > 0 && (
         <p style={{ fontSize: "0.85rem", opacity: 0.75, color: "#ffffff", margin: "0 0 10px", lineHeight: 1.5 }}>
           {event.historic
-            ? `Per assorbirla tutta in un anno servirebbe${needed === 1 ? "" : "ro"} ${adultTrees(needed)}. Piantati: ${fmtInt(planted)}. Stima per eccesso: comprende anche la CO₂ risparmiata.`
-            : `Per assorbirla in un anno servirebbe${needed === 1 ? "" : "ro"} ${adultTrees(needed)}. Piantati: ${fmtInt(planted)}.`}
+            ? `Per assorbirla tutta in un anno servirebbe${needed === 1 ? "" : "ro"} ${adultTrees(needed)}. Giovani alberi piantati: ${fmtInt(planted)}. Stima per eccesso: comprende anche la CO₂ risparmiata.`
+            : `Per assorbirla in un anno servirebbe${needed === 1 ? "" : "ro"} ${adultTrees(needed)}. Giovani alberi piantati: ${fmtInt(planted)}.`}
         </p>
       )}
       {savedKg > 0 && equivalent > 0 && (
@@ -641,9 +641,11 @@ export default function ImpactPage() {
               </h2>
               <p style={{ opacity: 0.6, marginBottom: 32, maxWidth: 560, color: "#ffffff", lineHeight: 1.6 }}>
                 Prima viene ridurre: la CO₂ risparmiata non si compensa, perché non è mai
-                stata emessa. Per quella emessa dagli spostamenti verso gli eventi calcoliamo
-                quanti alberi adulti la assorbirebbero in un anno, e contiamo quelli piantati
-                davvero. Piantare un albero non cancella un'emissione: la riassorbe nel tempo.
+                stata emessa. Per quella emessa dagli spostamenti verso gli eventi usiamo come
+                misura l'albero adulto: quanti ne servirebbero per assorbirla in un anno. Gli
+                alberi che contiamo come piantati sono giovani piante da vivaio, che arrivano a
+                quell'assorbimento crescendo. Piantare un albero non cancella un'emissione: la
+                riassorbe nel tempo.
               </p>
 
               {/* Fabbisogno + barra: misura la piantumazione, non dichiara

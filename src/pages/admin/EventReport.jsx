@@ -147,7 +147,7 @@ function ReportSummary({ impact }) {
       unit: "km",
       // NON "Chilometri sostenibili": la stessa etichetta serve entrambi i modi
       // del plugin mobilità. In modo `emits` — la configurazione dell'evento del
-      // 30/8 — questi km sono la trasferta da compensare, percorsa anche in auto:
+      // 30/8 — questi km sono la trasferta, CO2 emessa, percorsa anche in auto:
       // chiamarli sostenibili è una qualifica che i dati non sostengono. "Percorsi"
       // è vero in entrambi i casi, e allinea il report alla pagina evento pubblica,
       // che dice già "Km percorsi".
@@ -280,7 +280,7 @@ function ReportChallenges({ challenges }) {
  * Equivalenze CO2 (alberi, voli) mostrate solo se > 0.
  */
 function ReportImpact({ impact }) {
-  const { breakdown_by_vehicle, trees_equivalent, trees_to_compensate, flights_equivalent } = impact;
+  const { breakdown_by_vehicle, trees_equivalent, trees_to_absorb, flights_equivalent } = impact;
 
   // Calcola il valore massimo per scalare le barre CSS
   const maxCount =
@@ -288,7 +288,7 @@ function ReportImpact({ impact }) {
       ? Math.max(...breakdown_by_vehicle.map((v) => v.count))
       : 0;
 
-  const hasEquivalences = trees_equivalent > 0 || trees_to_compensate > 0 || flights_equivalent > 0;
+  const hasEquivalences = trees_equivalent > 0 || trees_to_absorb > 0 || flights_equivalent > 0;
 
   return (
     <section
@@ -334,11 +334,12 @@ function ReportImpact({ impact }) {
       {/* Equivalenze — solo se almeno una > 0 */}
       {hasEquivalences && (
         <div className={styles.equivalencesBlock}>
-          <h3 className={styles.subsectionTitle}>Equivalenze e compensazione</h3>
+          <h3 className={styles.subsectionTitle}>Equivalenze e assorbimento</h3>
           <div className={styles.equivalencesGrid}>
             {/* Alberi, due cornici per due grandezze (decisione PM 2/10/2026): la CO₂
                 risparmiata non è mai stata emessa, quindi per lei solo un paragone;
-                per la CO₂ emessa dalle trasferte, gli alberi che servono ad assorbirla. */}
+                per la CO₂ emessa dalle trasferte, gli alberi che servono ad assorbirla.
+                Alberi adulti: il fattore è quello di un albero adulto (§5, 14/10/2026). */}
             {trees_equivalent > 0 && (
               <div className={styles.equivalenceCard}>
                 <span className={styles.equivalenceIcon} aria-hidden="true">🌳</span>
@@ -346,18 +347,19 @@ function ReportImpact({ impact }) {
                   La CO₂ risparmiata equivale a quanto{" "}
                   {trees_equivalent === 1 ? "assorbe" : "assorbono"}{" "}
                   <strong>{trees_equivalent}</strong>{" "}
-                  {trees_equivalent === 1 ? "albero" : "alberi"} in un anno
+                  {trees_equivalent === 1 ? "albero adulto" : "alberi adulti"} in un anno
                 </p>
               </div>
             )}
-            {trees_to_compensate > 0 && (
+            {trees_to_absorb > 0 && (
               <div className={styles.equivalenceCard}>
                 <span className={styles.equivalenceIcon} aria-hidden="true">🌱</span>
                 <p className={styles.equivalenceText}>
-                  Per assorbire la CO₂ emessa dalle trasferte{" "}
-                  {trees_to_compensate === 1 ? "serve" : "servono"}{" "}
-                  <strong>{trees_to_compensate}</strong>{" "}
-                  {trees_to_compensate === 1 ? "albero" : "alberi"}
+                  Per assorbire in un anno la CO₂ emessa dalle trasferte{" "}
+                  {trees_to_absorb === 1 ? "servirebbe" : "servirebbero"}{" "}
+                  <strong>{trees_to_absorb}</strong>{" "}
+                  {trees_to_absorb === 1 ? "albero adulto" : "alberi adulti"}: è un'unità di
+                  misura, non il numero di alberi da piantare
                 </p>
               </div>
             )}
@@ -372,6 +374,11 @@ function ReportImpact({ impact }) {
               </div>
             )}
           </div>
+          {/* Riga d'uso per gli sponsor (decisione PM 12/10/2026, frase 16) */}
+          <p className={styles.equivalenceText} style={{ marginTop: 12, opacity: 0.75 }}>
+            Questi dati descrivono il contributo all'iniziativa. Non attestano la neutralità
+            climatica di prodotti o servizi.
+          </p>
         </div>
       )}
     </section>
@@ -611,8 +618,9 @@ function ReportMethodology({ generatedAt }) {
         </p>
         <p>
           Le stime non costituiscono una certificazione delle emissioni ai sensi della
-          norma ISO 14064 né una dichiarazione ambientale verificata ai sensi della
-          Direttiva 2024/825/UE (Green Claims Directive). Il documento è destinato a uso
+          norma ISO 14064 né un'asserzione di neutralità climatica di prodotti o servizi,
+          che la compensazione non può sostenere (art. 23, lett. d-quater, del Codice del
+          consumo). Il documento è destinato a uso
           informativo e di rendicontazione interna.
         </p>
       </div>
