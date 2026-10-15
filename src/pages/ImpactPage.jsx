@@ -640,8 +640,8 @@ export default function ImpactPage() {
                 Quanti alberi servono per assorbire la CO₂ emessa
               </h2>
               <p style={{ opacity: 0.6, marginBottom: 32, maxWidth: 560, color: "#ffffff", lineHeight: 1.6 }}>
-                Prima viene ridurre: la CO₂ risparmiata non si compensa, perché non è mai
-                stata emessa. Per quella emessa dagli spostamenti verso gli eventi usiamo come
+                Per prima cosa evitiamo di emettere: la CO₂ che non emettiamo non ha bisogno
+                di alberi che la assorbano. Per quella emessa dagli spostamenti verso gli eventi usiamo come
                 misura l'albero adulto: quanti ne servirebbero per assorbirla in un anno. Gli
                 alberi che contiamo come piantati sono giovani piante da vivaio, che arrivano a
                 quell'assorbimento crescendo. Piantare un albero non cancella un'emissione: la
