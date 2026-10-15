@@ -381,8 +381,9 @@ export default function AdoptTreePage() {
     api
       .get("/v1/impact/global-summary")
       .then(({ data }) => {
-        setTreesPlanted(data?.compensation?.trees_planted ?? null);
-        setTreesPending(data?.compensation?.trees_pending ?? null);
+        // Fabbisogno sulla CO2 emessa, non compensazione (BE 0.33.0, §5)
+        setTreesPlanted(data?.trees?.planted ?? null);
+        setTreesPending(data?.trees?.pending ?? null);
       })
       .catch(() => {
         setTreesPlanted(null);

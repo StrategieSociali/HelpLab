@@ -6,10 +6,14 @@
  *
  * SCOPO
  * Mostrare a cittadini e potenziali sostenitori:
- * - I tre numeri chiave (CO₂ risparmiata, volontari, azioni completate)
- * - Il gap di compensazione (alberi piantati vs alberi necessari)
- * - Lo stato di compensazione per ogni evento
+ * - I numeri chiave (CO₂ risparmiata, CO₂ emessa, dato storico, volontari, azioni)
+ * - Il fabbisogno di alberi per assorbire la CO₂ emessa, e quelli piantati
+ * - La CO₂ di ogni evento
  * - Una CTA per adottare un albero
+ *
+ * Fabbisogno, non compensazione (be-impact-metodologia.md §5, 14/10/2026): niente
+ * eventi «compensati» né CO₂ «da compensare» (art. 23, lett. d-quater, del Codice
+ * del consumo). Tre indicatori separati, mai sottratti l'uno dall'altro.
  *
  * ENDPOINT
  * GET /v1/impact/global-summary — pubblico, nessun token richiesto
@@ -23,10 +27,8 @@
  * Pubblica — nessuna autenticazione richiesta.
  *
  * NOTE
- * - Il frontend non calcola mai fattori CO₂ o formule di business.
- * - L'unico valore derivato è co2_pending_kg / trees_pending per il
- *   micro-copy del CTA: è una divisione di due valori già calcolati
- *   dal backend, non un algoritmo proprietario.
+ * - Il frontend non calcola mai fattori CO₂ o formule di business, e nessun
+ *   rapporto tra valori del backend può far risalire al fattore albero.
  * - Il grafico storico è un placeholder: verrà popolato quando
  *   il backend esporrà l'endpoint /impact/history.
  */
@@ -126,7 +128,7 @@ function HeroCounter({ label, value, unit, accent = false }) {
 /**
  * ProgressBar
  * Barra di avanzamento orizzontale con percentuale.
- * Usata nella sezione compensazione.
+ * Usata nella sezione alberi: misura la piantumazione rispetto al fabbisogno.
  */
 function ProgressBar({ current, total }) {
   const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
@@ -145,7 +147,7 @@ function ProgressBar({ current, total }) {
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label={`${pct}% degli alberi già piantati`}
+        aria-label={`${pct}% degli alberi del fabbisogno piantati`}
       >
         <div
           style={{
@@ -172,41 +174,45 @@ function ProgressBar({ current, total }) {
   );
 }
 
+/** «N albero adulto» / «N alberi adulti» */
+function adultTrees(n) {
+  return n === 1 ? "1 albero adulto" : `${fmtInt(n)} alberi adulti`;
+}
+
 /**
- * EventCompensationCard
- * Card per ogni evento nell'array by_event.
- * Mostra nome, CO₂, stato compensazione e mini-progress.
+ * EventCo2Card
+ * Card per ogni evento nell'array by_event: la CO₂ nelle sue grandezze, mai
+ * sommate, e gli alberi. Nessuno stato «compensato» (be-impact-metodologia.md §5,
+ * frasi 9 e 10): il fabbisogno dice quanti alberi adulti assorbirebbero in un anno
+ * la CO₂ emessa, e quanti ne sono stati piantati.
  */
-function EventCompensationCard({ event }) {
-  const savedKg   = event.co2_saved_kg ?? 0;
-  const emittedKg = event.co2_emitted_kg ?? 0;
+function EventCo2Card({ event }) {
+  const savedKg    = event.co2_saved_kg ?? 0;
+  const emittedKg  = event.co2_emitted_kg ?? 0;
+  const historicKg = event.co2_historic_kg ?? 0;
+  const needed     = event.trees_needed ?? 0;
+  const planted    = event.trees_planted ?? 0;
+  const equivalent = event.trees_equivalent ?? 0;
 
-  // Un evento in modo `emits` (il partecipante dichiara come e' arrivato) misura
-  // l'impronta della trasferta, non un risparmio: ha trees_needed 0 e il backend
-  // lo marca "compensated". Dirgli "Compensato" sarebbe falso, perche' quella CO2
-  // e' stata emessa e non compensata da nessuno. Terzo stato, neutro.
-  const isFootprintOnly = savedKg <= 0 && emittedKg > 0;
-  const isCompensated = !isFootprintOnly && event.status === "compensated";
+  const pct = needed > 0 ? Math.min(100, Math.round((planted / needed) * 100)) : 0;
 
-  const pct =
-    event.trees_needed > 0
-      ? Math.min(100, Math.round((event.trees_planted / event.trees_needed) * 100))
-      : 0;
+  // Un chip per grandezza presente: un evento misto li mostra entrambi.
+  const chips = [];
+  if (event.historic)  chips.push({ cls: "chip-warning", text: "Dato storico" });
+  if (emittedKg > 0)   chips.push({ cls: "chip-neutral", text: "Impronta misurata" });
+  if (savedKg > 0)     chips.push({ cls: "chip-success", text: "CO₂ risparmiata" });
 
   return (
     <div
       className="card"
       style={{
-        /* Bordo colorato a sinistra come indicatore visivo rapido */
-        borderLeft: isFootprintOnly
+        borderLeft: needed > 0
           ? "3px solid rgba(255,255,255,0.35)"
-          : isCompensated
-          ? "3px solid rgb(74,222,128)"
-          : "3px solid rgb(250,204,21)",
+          : "3px solid rgb(74,222,128)",
         padding: "20px 20px 20px 18px",
       }}
     >
-      {/* Intestazione card: nome evento + badge stato */}
+      {/* Intestazione card: nome evento + chip delle grandezze */}
       <div
         style={{
           display: "flex",
@@ -228,21 +234,11 @@ function EventCompensationCard({ event }) {
         >
           {event.event_name}
         </h3>
-        {/* Badge stato: usa le classi chip semantiche già in styles.css */}
-        <span
-          className={`chip ${
-            isFootprintOnly ? "chip-neutral" : isCompensated ? "chip-success" : "chip-warning"
-          }`}
-          aria-label={
-            isFootprintOnly
-              ? "Impronta misurata"
-              : isCompensated
-              ? "Evento compensato"
-              : "Compensazione in corso"
-          }
-        >
-          {isFootprintOnly ? "Impronta misurata" : isCompensated ? "✓ Compensato" : "⏳ In attesa"}
-        </span>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {chips.map((c) => (
+            <span key={c.text} className={`chip ${c.cls}`}>{c.text}</span>
+          ))}
+        </div>
       </div>
 
       {/* Dati numerici in riga */}
@@ -268,8 +264,8 @@ function EventCompensationCard({ event }) {
           </div>
         )}
 
-        {/* Le due grandezze non si sommano mai: una e' CO2 non emessa grazie a
-            una scelta, l'altra e' CO2 emessa per raggiungere l'evento. */}
+        {/* Le grandezze non si sommano mai: una e' CO2 non emessa grazie a una
+            scelta, l'altra e' CO2 emessa per raggiungere l'evento. */}
         {emittedKg > 0 && (
           <div>
             <div
@@ -284,25 +280,39 @@ function EventCompensationCard({ event }) {
           </div>
         )}
 
-        {event.trees_needed > 0 && (
+        {historicKg > 0 && (
           <div>
             <div
               style={{ fontSize: "1.4rem", fontWeight: 800, color: "#ffffff", lineHeight: 1 }}
             >
-              {event.trees_planted}
-              <span style={{ opacity: 0.45, fontSize: "0.65em" }}> / {event.trees_needed}</span>
+              {fmt(historicKg)}
+              <span style={{ fontSize: "0.5em", marginLeft: 4, opacity: 0.7 }}>kg CO₂</span>
             </div>
             <div style={{ fontSize: "0.75rem", opacity: 0.55, marginTop: 4, color: "#ffffff" }}>
-              Alberi piantati / necessari
+              CO₂ misurata, risparmio e impronta non separati
             </div>
           </div>
         )}
       </div>
 
-      {/* Mini barra progresso: solo dove c'e' qualcosa da compensare. Su un
-          evento di sola impronta la barra a 0% suggerirebbe un ritardo, mentre
-          non c'e' alcun obiettivo da raggiungere. */}
-      {event.trees_needed > 0 && (
+      {/* Alberi: fabbisogno sulla CO2 emessa (sul dato storico, tutta la CO2
+          misurata: stima per eccesso); per il solo risparmio un'equivalenza. */}
+      {needed > 0 && (
+        <p style={{ fontSize: "0.85rem", opacity: 0.75, color: "#ffffff", margin: "0 0 10px", lineHeight: 1.5 }}>
+          {event.historic
+            ? `Per assorbirla tutta in un anno servirebbe${needed === 1 ? "" : "ro"} ${adultTrees(needed)}. Piantati: ${fmtInt(planted)}. Stima per eccesso: comprende anche la CO₂ risparmiata.`
+            : `Per assorbirla in un anno servirebbe${needed === 1 ? "" : "ro"} ${adultTrees(needed)}. Piantati: ${fmtInt(planted)}.`}
+        </p>
+      )}
+      {savedKg > 0 && equivalent > 0 && (
+        <p style={{ fontSize: "0.85rem", opacity: 0.75, color: "#ffffff", margin: "0 0 10px", lineHeight: 1.5 }}>
+          {`Equivale a quanto ${equivalent === 1 ? "assorbe" : "assorbono"} ${adultTrees(equivalent)} in un anno.`}
+        </p>
+      )}
+
+      {/* Mini barra: solo dove c'e' un fabbisogno. Misura la piantumazione,
+          non dichiara nessun evento «compensato». */}
+      {needed > 0 && (
       <div
         style={{
           height: 6,
@@ -314,14 +324,13 @@ function EventCompensationCard({ event }) {
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
+        aria-label={`${pct}% degli alberi del fabbisogno piantati`}
       >
         <div
           style={{
             height: "100%",
             width: `${pct}%`,
-            background: isCompensated
-              ? "linear-gradient(90deg, var(--accent-green-2), var(--accent-green-1))"
-              : "linear-gradient(90deg, #b45309, #d97706)",
+            background: "linear-gradient(90deg, var(--accent-green-2), var(--accent-green-1))",
             borderRadius: "var(--radius-pill)",
             transition: "width 0.6s ease",
           }}
@@ -430,26 +439,20 @@ export default function ImpactPage() {
   const totalCo2Emitted = data?.total_co2_emitted_kg ?? 0;
   const totalVolunteers = data?.total_volunteers ?? 0;
   const totalSubmissions = data?.total_submissions ?? 0;
-  const treesPlanted = data?.compensation?.trees_planted ?? 0;
-  const treesNeeded  = data?.compensation?.trees_needed_total ?? 0;
-  const treesPending = data?.compensation?.trees_pending ?? 0;
-  const co2Pending   = data?.compensation?.co2_pending_kg ?? 0;
+  const totalCo2Historic = data?.total_co2_historic_kg ?? 0;
+  const treesPlanted = data?.trees?.planted ?? 0;
+  const treesNeeded  = data?.trees?.needed_total ?? 0;
+  const allPlanted   = treesNeeded > 0 && treesPlanted >= treesNeeded;
 
   // Filtro eventi: si mostra un evento che ha misurato qualcosa, in una delle
-  // due grandezze. Con il solo risparmio restavano fuori gli eventi in modo
+  // tre grandezze. Con il solo risparmio restavano fuori gli eventi in modo
   // `emits`, che misurano l'impronta: Wear The Future spariva dalla pagina pur
   // avendo 682 km e cinque contributi. Restano fuori gli eventi davvero a zero,
   // come La Social Pedaleda, che non ha avuto partecipanti.
   const events = (data?.by_event ?? []).filter(
-    (e) => (e.co2_saved_kg ?? 0) > 0 || (e.co2_emitted_kg ?? 0) > 0
+    (e) => (e.co2_saved_kg ?? 0) > 0 || (e.co2_emitted_kg ?? 0) > 0 || (e.co2_historic_kg ?? 0) > 0
   );
-
-  // Calcolo micro-copy CTA: kg di CO₂ per albero necessario
-  // Divisione di due valori già calcolati dal backend — non è IP.
-  const co2PerTree =
-    treesPending > 0 && co2Pending > 0
-      ? Math.round(co2Pending / treesPending)
-      : null;
+  const anyHistoric = events.some((e) => e.historic);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -478,8 +481,8 @@ export default function ImpactPage() {
               </h1>
               <p style={{ opacity: 0.65, maxWidth: 520, lineHeight: 1.6, color: "#ffffff" }}>
                 Ogni viaggio in bici, ogni azione sostenibile dei nostri volontari diventa
-                CO₂ evitata misurabile. Qui teniamo traccia di quanto abbiamo fatto insieme
-                — e di quanto manca per compensare tutto con alberi veri.
+                CO₂ evitata misurabile. Qui teniamo traccia di quanto abbiamo fatto insieme,
+                e della CO₂ che gli spostamenti verso gli eventi hanno comunque emesso.
               </p>
             </div>
 
@@ -590,10 +593,17 @@ export default function ImpactPage() {
                   value={fmtInt(totalSubmissions)}
                 />
               </div>
+              {/* Il dato storico sta fuori dal risparmio: la stessa CO2 non vale
+                  «risparmiata» qui e «da assorbire» nella sezione alberi. */}
+              {totalCo2Historic > 0 && (
+                <div style={{ fontSize: "0.85rem", opacity: 0.6, marginTop: 14, color: "#ffffff" }}>
+                  Dato storico (risparmio e impronta non separati): {fmt(totalCo2Historic)} kg
+                </div>
+              )}
             </div>
 
             {/* ══════════════════════════════════════════════════════════════
-                SEZIONE 2: IL GAP — Compensazione con alberi
+                SEZIONE 2: ALBERI — fabbisogno per assorbire la CO2 emessa
                 Questa è la sezione narrativa chiave e il funnel principale.
             ══════════════════════════════════════════════════════════════ */}
             <div
@@ -616,7 +626,7 @@ export default function ImpactPage() {
                   color: "#ffffff",
                 }}
               >
-                Compensazione CO₂
+                Alberi e CO₂ emessa
               </div>
               <h2
                 style={{
@@ -627,72 +637,50 @@ export default function ImpactPage() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                Ogni kg di CO₂ risparmiata, la compensiamo piantando alberi
+                Quanti alberi servono per assorbire la CO₂ emessa
               </h2>
               <p style={{ opacity: 0.6, marginBottom: 32, maxWidth: 560, color: "#ffffff", lineHeight: 1.6 }}>
-                Non basta ridurre: vogliamo anche compensare. Per ogni evento, calcoliamo
-                gli alberi necessari e li piantiamo davvero. Ecco a che punto siamo.
+                Prima viene ridurre: la CO₂ risparmiata non si compensa, perché non è mai
+                stata emessa. Per quella emessa dagli spostamenti verso gli eventi calcoliamo
+                quanti alberi adulti la assorbirebbero in un anno, e contiamo quelli piantati
+                davvero. Piantare un albero non cancella un'emissione: la riassorbe nel tempo.
               </p>
 
-              {/* Numeri alberi + barra progresso */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: 40,
-                  alignItems: "flex-start",
-                  flexWrap: "wrap",
-                  marginBottom: 32,
-                }}
-              >
-                {/* Colonna sinistra: numeri */}
-                <div style={{ display: "flex", gap: 32, flexWrap: "wrap", flex: "1 1 280px" }}>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: "clamp(2rem, 5vw, 3rem)",
-                        fontWeight: 800,
-                        color: "rgb(74,222,128)",
-                        lineHeight: 1,
-                        letterSpacing: "-0.03em",
-                      }}
-                    >
-                      {fmtInt(treesPlanted)}
-                      <span style={{ fontSize: "0.4em", marginLeft: 6, opacity: 0.65 }}>🌳</span>
-                    </div>
-                    <div style={{ fontSize: "0.82rem", opacity: 0.55, marginTop: 8, color: "#ffffff" }}>
-                      Alberi già piantati
-                    </div>
+              {/* Fabbisogno + barra: misura la piantumazione, non dichiara
+                  neutralità né promette un obiettivo (frase 5). */}
+              {treesNeeded > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 40,
+                    alignItems: "flex-start",
+                    flexWrap: "wrap",
+                    marginBottom: 32,
+                  }}
+                >
+                  <div style={{ flex: "1 1 280px", fontSize: "1.05rem", lineHeight: 1.5, color: "#ffffff" }}>
+                    {allPlanted ? (
+                      <>
+                        Piantati tutti gli alberi del fabbisogno. La CO₂ emessa resta quella
+                        misurata: gli alberi la riassorbono crescendo.
+                      </>
+                    ) : (
+                      <>
+                        Alberi piantati:{" "}
+                        <strong style={{ fontSize: "1.6em", color: "rgb(74,222,128)" }}>{fmtInt(treesPlanted)}</strong>{" "}
+                        su <strong style={{ fontSize: "1.6em" }}>{fmtInt(treesNeeded)}</strong>{" "}
+                        che servono ad assorbire in un anno la CO₂ emessa
+                      </>
+                    )}
                   </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: "clamp(2rem, 5vw, 3rem)",
-                        fontWeight: 800,
-                        color: "rgb(250,204,21)",
-                        lineHeight: 1,
-                        letterSpacing: "-0.03em",
-                      }}
-                    >
-                      {fmtInt(treesPending)}
-                      <span style={{ fontSize: "0.4em", marginLeft: 6, opacity: 0.65 }}>🌱</span>
-                    </div>
-                    <div style={{ fontSize: "0.82rem", opacity: 0.55, marginTop: 8, color: "#ffffff" }}>
-                      Alberi ancora necessari
-                    </div>
+                  <div style={{ flex: "1 1 240px", minWidth: 200 }}>
+                    <ProgressBar current={treesPlanted} total={treesNeeded} />
                   </div>
                 </div>
+              )}
 
-                {/* Colonna destra: barra progresso */}
-                <div style={{ flex: "1 1 240px", minWidth: 200 }}>
-                  <ProgressBar current={treesPlanted} total={treesNeeded} />
-                  <div style={{ fontSize: "0.8rem", opacity: 0.5, marginTop: 10, color: "#ffffff" }}>
-                    {fmtInt(treesPlanted)} di {fmtInt(treesNeeded)} alberi totali necessari
-                  </div>
-                </div>
-              </div>
-
-              {/* CO₂ residua */}
-              {co2Pending > 0 && (
+              {/* CO2 emessa vera, dalla somma delle righe: mai alberi × fattore (frase 6) */}
+              {(totalCo2Emitted > 0 || totalCo2Historic > 0) && (
                 <div
                   style={{
                     background: "rgba(250,204,21,0.08)",
@@ -707,9 +695,9 @@ export default function ImpactPage() {
                     gap: 8,
                   }}
                 >
-                  <span>⚠️</span>
                   <span>
-                    Ancora <strong>{fmt(co2Pending)} kg di CO₂</strong> da compensare
+                    CO₂ emessa misurata: <strong>{fmt(totalCo2Emitted + totalCo2Historic)} kg</strong>
+                    {totalCo2Historic > 0 && <>, di cui {fmt(totalCo2Historic)} kg da dati storici non separabili</>}
                   </span>
                 </div>
               )}
@@ -723,24 +711,22 @@ export default function ImpactPage() {
                 >
                   🌳 Adotta un albero
                 </Link>
-                {/* Micro-copy motivazionale derivato da valori API */}
-                {co2PerTree && (
-                  <p
-                    style={{
-                      marginTop: 12,
-                      fontSize: "0.82rem",
-                      opacity: 0.55,
-                      color: "#ffffff",
-                    }}
-                  >
-                    Ogni albero che adotti compensa circa {fmtInt(co2PerTree)} kg di CO₂
-                  </p>
-                )}
+                <p
+                  style={{
+                    marginTop: 12,
+                    fontSize: "0.82rem",
+                    opacity: 0.55,
+                    color: "#ffffff",
+                  }}
+                >
+                  Un albero appena piantato assorbe poca CO₂ e cresce per decenni: adottarlo
+                  è un contributo, non uno sconto sulle emissioni.
+                </p>
               </div>
             </div>
 
             {/* ══════════════════════════════════════════════════════════════
-                SEZIONE 3: STATO PER EVENTO
+                SEZIONE 3: CO2 PER EVENTO
             ══════════════════════════════════════════════════════════════ */}
             {events.length > 0 && (
               <div style={{ marginBottom: 56 }}>
@@ -765,44 +751,31 @@ export default function ImpactPage() {
                     letterSpacing: "-0.01em",
                   }}
                 >
-                  Stato compensazione per evento
+                  CO₂ per evento
                 </h2>
 
                 <div className="grid-cards">
                   {events.map((event) => (
-                    <EventCompensationCard key={event.event_id} event={event} />
+                    <EventCo2Card key={event.event_id} event={event} />
                   ))}
                 </div>
 
-                {/* Legenda badge */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 20,
-                    marginTop: 20,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span className="chip chip-success" style={{ fontSize: "0.72rem" }}>✓ Compensato</span>
+                {/* Legenda: solo il chip che non si spiega da sé */}
+                {anyHistoric && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 20, flexWrap: "wrap" }}>
+                    <span className="chip chip-warning" style={{ fontSize: "0.72rem" }}>Dato storico</span>
                     <span style={{ fontSize: "0.78rem", opacity: 0.5, color: "#ffffff" }}>
-                      Tutti gli alberi necessari sono stati piantati
+                      Raccolto prima che distinguessimo la CO₂ risparmiata da quella emessa
                     </span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span className="chip chip-warning" style={{ fontSize: "0.72rem" }}>⏳ In attesa</span>
-                    <span style={{ fontSize: "0.78rem", opacity: 0.5, color: "#ffffff" }}>
-                      Mancano ancora alcuni alberi
-                    </span>
-                  </div>
-                </div>
+                )}
               </div>
             )}
 
             {/* Stato vuoto: nessun evento con CO₂ > 0 */}
             {events.length === 0 && (
               <div className="callout neutral" style={{ marginBottom: 56 }}>
-                Nessun evento con dati di compensazione disponibili al momento.
+                Nessun evento con dati di CO₂ disponibili al momento.
                 I dati compariranno non appena i volontari completeranno le prime azioni.
               </div>
             )}
@@ -862,7 +835,7 @@ export default function ImpactPage() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                Vuoi aiutarci a piantare gli alberi mancanti?
+                Vuoi piantare un albero con noi?
               </h2>
               <p
                 style={{
@@ -873,9 +846,8 @@ export default function ImpactPage() {
                   color: "#ffffff",
                 }}
               >
-                Non serve essere sviluppatori o esperti. Bastano pochi euro per contribuire
-                alla compensazione reale e misurabile di tutta la CO₂ che i nostri volontari
-                hanno evitato insieme.
+                Ti diciamo dove e quando prima di confermare l'adozione, e lo contiamo qui
+                tra quelli piantati.
               </p>
               <Link
                 to={routes.impact.adoptTree}
