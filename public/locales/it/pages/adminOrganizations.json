@@ -1,0 +1,58 @@
+{
+  "_comment": "/src/pages/admin/AdminOrganizations.jsx (8a, passo 2)",
+  "title": "Gestione enti",
+  "subtitle": "Le richieste di registrare un ente e gli enti già attivi.",
+  "loading": "Caricamento…",
+  "refresh": "Aggiorna",
+  "tabs": {
+    "requests": "Richieste",
+    "organizations": "Enti"
+  },
+  "requests": {
+    "filterAll": "Tutti gli stati",
+    "filterPending": "In attesa",
+    "filterApproved": "Approvate",
+    "filterRejected": "Rifiutate",
+    "empty": "Nessuna richiesta per il filtro scelto.",
+    "loadError": "Errore nel caricamento delle richieste.",
+    "requestedBy": "Richiesta di",
+    "motivation": "Motivazione",
+    "declaration": "Dichiarazione accettata",
+    "status": {
+      "pending": "In attesa",
+      "approved": "Approvata",
+      "rejected": "Rifiutata"
+    },
+    "approve": "Approva",
+    "reject": "Rifiuta",
+    "approveConfirm": "Approvare la richiesta? Nasce l'ente «{{name}}» e chi l'ha chiesto ne diventa il referente. Il suo ruolo sulla piattaforma non cambia.",
+    "approveError": "Errore nell'approvazione.",
+    "rejectError": "Errore nel rifiuto.",
+    "rejectTitle": "Rifiuta la richiesta",
+    "rejectLabel": "Risposta all'utente (la riceve anche per email)",
+    "rejectPlaceholder": "es. Indicate il sito o lo statuto dell'ente, così possiamo verificarlo",
+    "confirm": "Conferma",
+    "cancel": "Annulla",
+    "rejectionReason": "Risposta inviata:",
+    "createdOrganization": "Ente creato: #{{id}}",
+    "loadMore": "Carica altri"
+  },
+  "organizations": {
+    "empty": "Nessun ente registrato.",
+    "loadError": "Errore nel caricamento degli enti.",
+    "members": "{{count}} membri attivi",
+    "referents": "Referenti",
+    "noReferents": "Nessun referente attivo",
+    "sponsor": "Profilo sponsor collegato",
+    "noSponsor": "Nessuno",
+    "sponsorHelp": "Serve a sapere cosa sponsorizza l'ente. Un profilo sponsor si collega a un solo ente.",
+    "sponsorSearch": "Cerca uno sponsor per nome",
+    "name": "Nome dell'ente",
+    "edit": "Modifica",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "cancel": "Annulla",
+    "saveError": "Errore nel salvataggio.",
+    "createdAt": "Registrato il"
+  }
+}

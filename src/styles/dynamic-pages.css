@@ -499,3 +499,26 @@
 .progress-bar__fill--danger {
   background: rgb(239,68,68);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CAMPI VALIDI NEI MODULI (.form-group)
+   Il verde della creazione della sfida (.create-challenge .input-valid), qui per i
+   moduli in .form-group: il campo diventa verde quando il valore basta, il bordo
+   resta rosso tenue finché non basta. Classi esplicite messe dal componente, non
+   :valid del browser (rilievo PM 19/11/2026, richiesta di ente).
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.form-group input.input-valid,
+.form-group textarea.input-valid {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16,185,129,.35);
+}
+
+.form-group input.input-invalid,
+.form-group textarea.input-invalid {
+  border-color: rgba(239,68,68,.5);
+}
+
+.hint.ok {
+  color: #6ee7b7;
+}

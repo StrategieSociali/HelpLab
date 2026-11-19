@@ -47,6 +47,9 @@ import SponsorGuide from "./pages/sponsors/SponsorGuide";
 import SponsorshipRequestForm from "./pages/sponsors/SponsorshipRequestForm";
 import MySponsorships from "./pages/sponsors/MySponsorships";
 import AdminSponsorships from "./pages/admin/AdminSponsorships";
+import AdminOrganizations from "./pages/admin/AdminOrganizations";
+import OrganizerRequest from "./pages/organizations/OrganizerRequest";
+import OrganizationPage from "./pages/organizations/OrganizationPage";
 
 // ──  EVENTI (sprint events v1.1) ──────────────────────────────────────────
 import EventsList from './pages/events/EventsList';
@@ -178,6 +181,25 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
                     <UserProfile />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* ===== ENTI ORGANIZZATORI (8a) ===== */}
+              {/* Tutti i ruoli: i permessi sull'ente li decide l'appartenenza, lato BE */}
+              <Route
+                path={routes.organizations.request}
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'judge', 'sponsor']}>
+                    <OrganizerRequest />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={routes.organizations.detail()}
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
+                    <OrganizationPage />
                   </ProtectedRoute>
                 }
               />
@@ -317,6 +339,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminSponsorships />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={routes.admin.organizations}
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminOrganizations />
                   </ProtectedRoute>
                 }
               />

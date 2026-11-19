@@ -151,4 +151,16 @@ export const API_PATHS = {
   adminRoleRequests:       (q = "") => `/v1/admin/role-requests${q}`,
   adminRoleRequestApprove: (id)     => `/v1/admin/role-requests/${id}/approve`,
   adminRoleRequestReject:  (id)     => `/v1/admin/role-requests/${id}/reject`,
+
+  // enti organizzatori (8a)
+  organizationsDeclaration:  ()             => `/v1/organizations/declaration`,
+  organizationsMine:         ()             => `/v1/organizations/mine`,
+  organization:              (id)           => `/v1/organizations/${id}`,
+  organizationMembers:       (id)           => `/v1/organizations/${id}/members`,
+  organizationInvites:       (id)           => `/v1/organizations/${id}/invites`,
+  organizationMember:        (id, memberId) => `/v1/organizations/${id}/members/${memberId}`,
+  myOrganizationInvites:     ()             => `/v1/me/organization-invites`,
+  myOrganizationInviteAnswer: (memberId, action) => `/v1/me/organization-invites/${memberId}/${action}`,
+  adminOrganizations:        ()             => `/v1/admin/organizations`,
+  adminOrganization:         (id)           => `/v1/admin/organizations/${id}`,
 };

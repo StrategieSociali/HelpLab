@@ -17,6 +17,7 @@ import { isJudge } from "@/utils/roles";
 import { getJudgeScore } from "@/api/judge.api";
 import { useTranslation } from "react-i18next";
 import LogoutButton from "@/components/common/LogoutButton";
+import MyOrganizationsCard from "@/components/organizations/MyOrganizationsCard";
 import "../styles/dynamic-pages.css";
 
 
@@ -150,6 +151,9 @@ useEffect(() => {
             <LogoutButton />
           </div>
         </div>
+
+        {/* Enti organizzatori (8a): enti di cui faccio parte e inviti in attesa */}
+        <MyOrganizationsCard isAdmin={user.role === "admin"} />
 
         {/* Submissions utente */}
         {dashboard?.submissions?.length > 0 && (

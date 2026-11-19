@@ -393,6 +393,14 @@ export default function Header() {
                         >
                           {t("auth.admin.sponsorships", "Gestione sponsorizzazioni")}
                         </NavLink>
+                        {/* Gestione enti (8a) */}
+                        <NavLink
+                          to={routes.admin.organizations}
+                          className="btn btn-ghost"
+                          onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
+                        >
+                          {t("auth.admin.organizations", "Gestione enti")}
+                        </NavLink>
                       </div>
                     )}
                   </div>
@@ -507,6 +515,14 @@ export default function Header() {
                       >
                         {t("auth.admin.sponsorships", "Gestione sponsorizzazioni")}
                       </NavLink>
+                      {/* Gestione enti (8a) */}
+                      <NavLink
+                        to={routes.admin.organizations}
+                        className="btn btn-ghost"
+                        onClick={() => setAdminDesktopOpen(false)}
+                      >
+                        {t("auth.admin.organizations", "Gestione enti")}
+                      </NavLink>
                     </div>
                   )}
                 </div>
@@ -557,6 +573,7 @@ export default function Header() {
  *   auth.admin.events      → "Gestione eventi"   (IT) / "Manage events"  (EN)
  *   auth.admin.learningPaths  → "Gestione corsi"            (IT) / "Manage courses"       (EN)
  *   auth.admin.sponsorships   → "Gestione sponsorizzazioni" (IT) / "Manage sponsorships"  (EN)
+ *   auth.admin.organizations  → "Gestione enti"             (IT) / "Manage organizations" (EN)
  *
  * Le chiavi con fallback hardcodato (secondo parametro di t()) funzionano
  * già senza aggiornare i file di traduzione — l'aggiornamento è comunque

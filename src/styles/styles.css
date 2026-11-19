@@ -1066,6 +1066,16 @@ label:has(input[type="checkbox"]) > span {
   box-shadow: 0 10px 25px -5px rgba(16,185,129,.4); 
 }
 
+/* Pulsante spento: deve sembrare spento. Prima restava identico all'acceso e il
+   clic non faceva nulla senza dire perché (rilievo PM 19/11/2026, richiesta di ente) */
+.submit-button:disabled,
+.submit-button:disabled:hover {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* Form Grid (2 colonne) */
 .form-grid {
   display: grid;

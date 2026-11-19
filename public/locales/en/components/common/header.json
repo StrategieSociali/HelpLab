@@ -32,7 +32,8 @@
       "label": "Admin",
       "proposals": "Manage proposals",
       "assignJudges": "Assign judges",
-      "events": "Manage events"
+      "events": "Manage events",
+      "organizations": "Manage organizations"
     },
     "actions": {
       "createChallenge": "Create challenge",

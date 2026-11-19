@@ -80,6 +80,14 @@ export const routes = {
   },
 
   /* ======================
+   * ENTI ORGANIZZATORI (8a)
+   * ====================== */
+  organizations: {
+    request: '/dashboard/enti/richiesta',
+    detail:  (id = ':id') => `/dashboard/enti/${id}`,
+  },
+
+  /* ======================
    * BUSINESS
    * ====================== */
   business: {
@@ -106,6 +114,7 @@ export const routes = {
     events:      '/dashboard/admin/eventi',
     learningPaths: '/dashboard/admin/corsi',
     sponsorships: '/dashboard/admin/sponsorships',
+    organizations: '/dashboard/admin/enti',
     // Report evento: percorso con ID dinamico
     eventReport:  (id = ':id') => `/dashboard/admin/events/${id}/report`,
   },

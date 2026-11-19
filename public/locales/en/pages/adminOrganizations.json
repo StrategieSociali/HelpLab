@@ -1,0 +1,58 @@
+{
+  "_comment": "/src/pages/admin/AdminOrganizations.jsx (8a, step 2)",
+  "title": "Manage organizations",
+  "subtitle": "Requests to register an organization, and the organizations already active.",
+  "loading": "Loading…",
+  "refresh": "Refresh",
+  "tabs": {
+    "requests": "Requests",
+    "organizations": "Organizations"
+  },
+  "requests": {
+    "filterAll": "All statuses",
+    "filterPending": "Pending",
+    "filterApproved": "Approved",
+    "filterRejected": "Rejected",
+    "empty": "No requests for the selected filter.",
+    "loadError": "Error loading the requests.",
+    "requestedBy": "Requested by",
+    "motivation": "Motivation",
+    "declaration": "Declaration accepted",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "approve": "Approve",
+    "reject": "Reject",
+    "approveConfirm": "Approve the request? The organization «{{name}}» is created and the person who requested it becomes its coordinator. Their role on the platform does not change.",
+    "approveError": "Error approving the request.",
+    "rejectError": "Error rejecting the request.",
+    "rejectTitle": "Reject the request",
+    "rejectLabel": "Reply to the user (they also receive it by email)",
+    "rejectPlaceholder": "e.g. Please provide the organization's website or statute, so we can verify it",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "rejectionReason": "Reply sent:",
+    "createdOrganization": "Organization created: #{{id}}",
+    "loadMore": "Load more"
+  },
+  "organizations": {
+    "empty": "No organizations registered.",
+    "loadError": "Error loading the organizations.",
+    "members": "{{count}} active members",
+    "referents": "Coordinators",
+    "noReferents": "No active coordinator",
+    "sponsor": "Linked sponsor profile",
+    "noSponsor": "None",
+    "sponsorHelp": "Used to know what the organization sponsors. A sponsor profile can be linked to only one organization.",
+    "sponsorSearch": "Search a sponsor by name",
+    "name": "Organization name",
+    "edit": "Edit",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "saveError": "Error saving.",
+    "createdAt": "Registered on"
+  }
+}
