@@ -42,6 +42,7 @@ const EMPTY_DRAFT = {
   end_date:         "",
   location_address: "",
   logo_url:         "",
+  organization_id:  null, // 8a, passo 3: null = evento «a nome mio»
   challengeIds:     [], // non va al BE — usato solo internamente
 };
 
@@ -201,7 +202,7 @@ export default function CreateEvent() {
         {/* Contenuto step */}
         <div className="card" style={{ padding: "20px 24px" }}>
           {step === 1 && <StepEventDetails value={draft} onChange={set} />}
-          {step === 2 && <StepEventChallenges value={draft} onChange={set} />}
+          {step === 2 && <StepEventChallenges value={draft} onChange={set} isAdmin={isAdminUser} />}
         </div>
 
         {/* Errore submit */}
@@ -291,6 +292,7 @@ function buildEventPayload(draft) {
   if (draft.end_date)                 payload.end_date         = draft.end_date;
   if (draft.location_address?.trim()) payload.location_address = draft.location_address.trim();
   if (draft.logo_url?.trim())         payload.logo_url         = draft.logo_url.trim();
+  if (draft.organization_id != null)  payload.organization_id  = Number(draft.organization_id);
 
   // challengeIds è solo interno al wizard — non va al BE
   // location_geo non è gestito in questo form (vedi decisione UX — opzione e)

@@ -13,6 +13,7 @@
 
 import React from "react";
 import { challengeDatesOk } from "../schema";
+import OrganizationChoice from "@/components/organizations/OrganizationChoice";
 
 export default function StepDetails({ value = {}, onChange }) {
   const v = value || {};
@@ -34,6 +35,14 @@ export default function StepDetails({ value = {}, onChange }) {
       <h3>1) Dettagli base</h3>
 
       <div className="form-grid">
+        {/* A NOME DI CHI (8a, passo 3): solo per chi è membro di un ente.
+            All'approvazione la sfida nasce dell'ente. */}
+        <OrganizationChoice
+          value={v.organization_id ?? null}
+          onChange={(id) => set({ organization_id: id })}
+          context="proposal"
+        />
+
         {/* TITOLO */}
         <label>
           Titolo

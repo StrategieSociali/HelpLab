@@ -85,6 +85,8 @@ export const routes = {
   organizations: {
     request: '/dashboard/enti/richiesta',
     detail:  (id = ':id') => `/dashboard/enti/${id}`,
+    // 8a, passo 3: i testi di una sfida dell'ente (referenti e admin)
+    challengeEdit: (id = ':id', challengeId = ':challengeId') => `/dashboard/enti/${id}/sfide/${challengeId}/modifica`,
   },
 
   /* ======================

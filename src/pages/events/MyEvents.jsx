@@ -2,7 +2,8 @@
 /**
  * MyEvents.jsx
  * ------------
- * Lista degli eventi creati dall'utente corrente.
+ * Lista degli eventi creati dall'utente corrente, più quelli degli enti di cui
+ * è membro (8a, passo 3): un evento dell'ente lo gestiscono tutti i membri.
  * Mostra stato, motivazione rifiuto e CTA contestuali.
  *
  * ACCESSO: qualsiasi utente autenticato
@@ -101,7 +102,7 @@ export default function MyEvents() {
           <div className="dynamic-empty">
             <div className="dynamic-empty__icon">📅</div>
             <div className="dynamic-empty__text">
-              Non hai ancora creato nessun evento.
+              Non hai ancora eventi, né tuoi né degli enti di cui fai parte.
             </div>
             <button
               className="btn btn-primary"
@@ -125,6 +126,15 @@ export default function MyEvents() {
                 </div>
                 <StatusBadge status={ev.status} />
               </div>
+
+              {/* Ente (8a, passo 3) */}
+              {ev.organization && (
+                <div className="small" style={{ marginBottom: 4 }}>
+                  <span className="chip chip-role" style={{ whiteSpace: "nowrap" }}>
+                    Ente: {ev.organization.name}
+                  </span>
+                </div>
+              )}
 
               {/* Meta info */}
               <div className="muted small" style={{ marginBottom: 8 }}>

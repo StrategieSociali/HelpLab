@@ -91,6 +91,65 @@
     "leave": "Leave organization",
     "leaveConfirm": "Leave the organization «{{name}}»? To rejoin you will need a new invitation.",
     "lastReferentNote": "You are the only coordinator: to leave, first make another member coordinator.",
-    "membersLoadError": "The members could not be loaded."
+    "membersLoadError": "The members could not be loaded.",
+    "challengesTitle": "Organisation challenges",
+    "challengesIntroReferent": "Challenges proposed on behalf of the organization. You can change title, place, description and deadline; type, targets and status are managed by the HelpLab team.",
+    "challengesIntroMember": "Challenges proposed on behalf of the organization. The texts are edited by the coordinators.",
+    "challengesEmpty": "No challenges yet. Propose one from «Create a challenge», choosing «on behalf of the organization».",
+    "challengesLoadError": "I can't load the organization's challenges.",
+    "challengeEdit": "Edit challenge",
+    "challengeDeadline": "deadline {{date}}",
+    "challengeStatus": {
+      "open": "Open",
+      "in_review": "In review",
+      "closed": "Closed"
+    },
+    "eventStatus": {
+      "draft": "draft",
+      "published": "published",
+      "rejected": "rejected",
+      "ended": "ended"
+    },
+    "adminTitle": "Assignment (admin only)",
+    "adminIntro": "To give the organization challenges and events that already exist, for example those organised before the organization was registered.",
+    "adminEventsTitle": "Organisation events",
+    "adminNoEvents": "No events of the organization among the 100 most recent.",
+    "adminPickEvent": "Choose an event without organization",
+    "adminEventHelp": "An ended event can be assigned if it has no organization, but not changed. A published event with consents already given does not change organization.",
+    "adminChallengesTitle": "Assign a challenge",
+    "adminPickChallenge": "Choose a challenge without organization",
+    "adminChallengeHelp": "Among the 50 most recently updated challenges without an organization.",
+    "adminAssign": "Assign to the organization",
+    "adminAssigned": "Assigned to «{{name}}».",
+    "adminUnassign": "Remove from the organization",
+    "adminUnassignConfirm": "Remove «{{title}}» from the organization? The challenge stays, without organization.",
+    "adminListsError": "I can't load the challenges and events to assign."
+  },
+  "choice": {
+    "label": "On behalf of",
+    "mine": "Myself",
+    "org": "The organization «{{name}}»",
+    "pick": "Choose the organization",
+    "helpEvent": "With an organization, all its members can see and edit the event, and the public page shows the organization as organiser.",
+    "helpProposal": "With an organization, once approved the challenge belongs to it: its coordinators edit the texts and members link it to the organization's events.",
+    "loadError": "I can't load your organizations: for now you can only act on your own behalf."
+  },
+  "challengeEdit": {
+    "back": "Back to the organization",
+    "title": "Edit challenge",
+    "subtitle": "Challenge of the organization «{{name}}»",
+    "notFound": "Challenge not found among the organization's, or you are not a member.",
+    "notAllowed": "The challenge texts are edited by the organization's coordinators.",
+    "scopeNote": "Here you change title, place, description and deadline. Type, targets and status are managed by the HelpLab team, because they decide impact and points.",
+    "titleLabel": "Title",
+    "titleHint": "At least {{min}} characters ({{count}}/{{min}})",
+    "locationLabel": "Place",
+    "rulesLabel": "Description",
+    "rulesHelp": "Shown on the public challenge card.",
+    "deadlineLabel": "Deadline",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Challenge updated.",
+    "reset": "Discard changes"
   }
 }

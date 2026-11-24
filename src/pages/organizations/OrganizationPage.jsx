@@ -10,6 +10,11 @@
  *   L'ultimo referente non si toglie e non si declassa: la regola la fa il BE,
  *   qui si nasconde solo il pulsante che darebbe un rifiuto certo.
  * - Chi non è membro riceve 404 dal BE: qui un unico messaggio «non trovato».
+ * - Sfide dell'ente (8a, passo 3): le vedono i membri e l'admin; i referenti (e
+ *   l'admin) ne cambiano titolo, luogo, descrizione e scadenza da «Modifica sfida».
+ *   Il resto della sfida (tipo, obiettivi, calcolatori, stato) resta all'admin.
+ * - Solo admin: assegna all'ente sfide ed eventi che esistono già (es. quelli di
+ *   un ente che organizzava prima che gli enti esistessero) e li toglie.
  */
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -23,7 +28,11 @@ import {
   inviteMember,
   removeMember,
   updateOrganization,
+  getOrganizationChallenges,
+  adminSetChallengeOrganization,
 } from "@/api/organizations.api";
+import { getAdminEvents, updateEvent } from "@/api/events.api";
+import { api, API_PATHS } from "@/api/client";
 import "../../styles/dynamic-pages.css";
 
 const beError = (err) => err?.response?.data?.error || null;
@@ -62,6 +71,10 @@ export default function OrganizationPage() {
   const [inviting, setInviting] = useState(false);
   const [busyMember, setBusyMember] = useState(null);
 
+  // Sfide dell'ente (8a, passo 3)
+  const [challenges, setChallenges] = useState([]);
+  const [challengesError, setChallengesError] = useState(false);
+
   const loadMembers = useCallback(async () => {
     try {
       setMembers(await getOrganizationMembers(id));
@@ -71,17 +84,26 @@ export default function OrganizationPage() {
     }
   }, [id]);
 
+  const loadChallenges = useCallback(async () => {
+    try {
+      setChallenges(await getOrganizationChallenges(id));
+      setChallengesError(false);
+    } catch {
+      setChallengesError(true);
+    }
+  }, [id]);
+
   const load = useCallback(async () => {
     setNotFound(false);
     setLoadError(false);
     try {
       setOrg(await getOrganization(id));
-      await loadMembers();
+      await Promise.all([loadMembers(), loadChallenges()]);
     } catch (err) {
       if (err?.response?.status === 404) setNotFound(true);
       else setLoadError(true);
     }
-  }, [id, loadMembers]);
+  }, [id, loadMembers, loadChallenges]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -338,7 +360,163 @@ export default function OrganizationPage() {
             </form>
           )}
         </div>
+
+        {/* ---------------- Sfide dell'ente ---------------- */}
+        <div className="card" style={{ padding: 16, marginTop: 24 }}>
+          <h3 className="dynamic-title" style={{ marginTop: 0 }}>{t("detail.challengesTitle")}</h3>
+          <p className="muted">{isReferent || user?.role === "admin" ? t("detail.challengesIntroReferent") : t("detail.challengesIntroMember")}</p>
+          {challengesError && <div className="callout error">{t("detail.challengesLoadError")}</div>}
+          {!challengesError && challenges.length === 0 && <p className="muted small">{t("detail.challengesEmpty")}</p>}
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
+            {challenges.map((ch) => (
+              <li key={ch.id} style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 10, display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                <div>
+                  <strong>{ch.title}</strong>{" "}
+                  <span className="chip chip-role" style={{ whiteSpace: "nowrap" }}>{t(`detail.challengeStatus.${ch.status}`, ch.status)}</span>
+                  <div className="small muted">
+                    {[ch.location, ch.deadline && t("detail.challengeDeadline", { date: new Date(ch.deadline).toLocaleDateString() })].filter(Boolean).join(" · ")}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                  {ch.can_edit_texts && (
+                    <Link className="btn btn-outline btn-small" to={routes.organizations.challengeEdit(id, ch.id)}>{t("detail.challengeEdit")}</Link>
+                  )}
+                  {user?.role === "admin" && (
+                    <AdminUnassignChallenge t={t} challenge={ch} onDone={loadChallenges} onError={(text) => setNotice({ type: "error", text })} />
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {user?.role === "admin" && (
+          <AdminAssignPanel t={t} orgId={id} orgName={org.name} onChallengeAssigned={loadChallenges} setNotice={setNotice} />
+        )}
       </div>
     </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Solo admin: togliere una sfida all'ente
+// ---------------------------------------------------------------------------
+function AdminUnassignChallenge({ t, challenge, onDone, onError }) {
+  const [busy, setBusy] = useState(false);
+  const go = async () => {
+    if (!window.confirm(t("detail.adminUnassignConfirm", { title: challenge.title }))) return;
+    setBusy(true);
+    try {
+      await adminSetChallengeOrganization(challenge.id, null);
+      await onDone();
+    } catch (err) {
+      onError(beError(err) || t("common.genericError"));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <button className="btn btn-ghost btn-small" disabled={busy} onClick={go}>{t("detail.adminUnassign")}</button>;
+}
+
+// ---------------------------------------------------------------------------
+// Solo admin: assegnare all'ente sfide ed eventi che esistono già
+//   - sfide: le 50 più recenti senza ente (l'elenco pubblico ne dà al massimo 50)
+//   - eventi: i 100 più recenti senza ente, anche conclusi (decisione C: un
+//     evento concluso si assegna se non ha ente, non si cambia)
+// ---------------------------------------------------------------------------
+function AdminAssignPanel({ t, orgId, orgName, onChallengeAssigned, setNotice }) {
+  const [freeChallenges, setFreeChallenges] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [challengeId, setChallengeId] = useState("");
+  const [eventId, setEventId] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const loadLists = useCallback(async () => {
+    try {
+      const [{ data }, ev] = await Promise.all([
+        api.get(API_PATHS.challenges("?limit=50")),
+        getAdminEvents({ limit: 100 }),
+      ]);
+      setFreeChallenges((data?.items ?? []).filter((c) => !c.organization));
+      setEvents(ev?.items ?? []);
+    } catch {
+      setNotice({ type: "error", text: t("detail.adminListsError") });
+    }
+  }, [setNotice, t]);
+
+  useEffect(() => { loadLists(); }, [loadLists]);
+
+  const orgEvents = events.filter((e) => String(e.organization?.id ?? "") === String(orgId));
+  const freeEvents = events.filter((e) => !e.organization);
+
+  const assignChallenge = async () => {
+    if (!challengeId) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      await adminSetChallengeOrganization(Number(challengeId), Number(orgId));
+      setChallengeId("");
+      await Promise.all([onChallengeAssigned(), loadLists()]);
+      setNotice({ type: "success", text: t("detail.adminAssigned", { name: orgName }) });
+    } catch (err) {
+      setNotice({ type: "error", text: beError(err) || t("common.genericError") });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const assignEvent = async () => {
+    if (!eventId) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      await updateEvent(Number(eventId), { organization_id: Number(orgId) });
+      setEventId("");
+      await loadLists();
+      setNotice({ type: "success", text: t("detail.adminAssigned", { name: orgName }) });
+    } catch (err) {
+      setNotice({ type: "error", text: beError(err) || t("common.genericError") });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="card" style={{ padding: 16, marginTop: 24 }}>
+      <h3 className="dynamic-title" style={{ marginTop: 0 }}>{t("detail.adminTitle")}</h3>
+      <p className="muted">{t("detail.adminIntro")}</p>
+
+      <h4 style={{ margin: "12px 0 4px" }}>{t("detail.adminEventsTitle")}</h4>
+      {orgEvents.length === 0
+        ? <p className="small muted">{t("detail.adminNoEvents")}</p>
+        : (
+          <ul className="small" style={{ marginTop: 0 }}>
+            {orgEvents.map((e) => <li key={e.id}>{e.name} <span className="muted">({t(`detail.eventStatus.${e.status}`, e.status)})</span></li>)}
+          </ul>
+        )}
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+        <select className="control" style={{ flex: "1 1 260px" }} value={eventId} onChange={(e) => setEventId(e.target.value)} disabled={busy} aria-label={t("detail.adminPickEvent")}>
+          <option value="">{t("detail.adminPickEvent")}</option>
+          {freeEvents.map((e) => (
+            <option key={e.id} value={e.id}>{e.name} ({t(`detail.eventStatus.${e.status}`, e.status)})</option>
+          ))}
+        </select>
+        <button className="btn btn-outline" onClick={assignEvent} disabled={busy || !eventId}>{t("detail.adminAssign")}</button>
+      </div>
+      <p className="small muted" style={{ marginTop: 4 }}>{t("detail.adminEventHelp")}</p>
+
+      <h4 style={{ margin: "16px 0 4px" }}>{t("detail.adminChallengesTitle")}</h4>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <select className="control" style={{ flex: "1 1 260px" }} value={challengeId} onChange={(e) => setChallengeId(e.target.value)} disabled={busy} aria-label={t("detail.adminPickChallenge")}>
+          <option value="">{t("detail.adminPickChallenge")}</option>
+          {freeChallenges.map((c) => (
+            <option key={c.id} value={c.id}>{c.title} ({t(`detail.challengeStatus.${c.status}`, c.status)})</option>
+          ))}
+        </select>
+        <button className="btn btn-outline" onClick={assignChallenge} disabled={busy || !challengeId}>{t("detail.adminAssign")}</button>
+      </div>
+      <p className="small muted" style={{ marginTop: 4 }}>{t("detail.adminChallengeHelp")}</p>
+    </div>
   );
 }

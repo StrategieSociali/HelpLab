@@ -116,3 +116,29 @@ export async function adminUpdateOrganization(id, body) {
   const res = await api.patch(API_PATHS.adminOrganization(id), body);
   return res.data;
 }
+
+// ---------------------------------------------------------------------------
+// Sfide dell'ente (8a, passo 3)
+//   - le vedono i membri e l'admin; `can_edit_texts` dice se chi guarda può
+//     cambiarne i testi (solo i referenti e l'admin, decisione D del PM)
+//   - i testi sono titolo, luogo, descrizione (`rules`) e scadenza: tipo,
+//     obiettivi, calcolatori e stato restano all'admin, e il BE li rifiuta
+// ---------------------------------------------------------------------------
+
+/** [{ id, slug, title, location, rules, deadline, status, can_edit_texts }] */
+export async function getOrganizationChallenges(id) {
+  const res = await api.get(API_PATHS.organizationChallenges(id));
+  return res.data?.items ?? [];
+}
+
+/** @param {{ title?: string, location?: string|null, rules?: string, deadline?: string|null }} body */
+export async function updateChallengeTexts(challengeId, body) {
+  const res = await api.patch(API_PATHS.challengeTexts(challengeId), body);
+  return res.data;
+}
+
+/** Admin: ente proprietario di una sfida esistente; null lo toglie. */
+export async function adminSetChallengeOrganization(challengeId, organizationId) {
+  const res = await api.patch(API_PATHS.adminChallengeOrganization(challengeId), { organization_id: organizationId });
+  return res.data;
+}

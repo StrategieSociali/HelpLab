@@ -1,5 +1,5 @@
 {
-  "_comment": "/src/pages/organizations/*, /src/components/organizations/MyOrganizationsCard.jsx (8a, passo 2)",
+  "_comment": "/src/pages/organizations/*, /src/components/organizations/MyOrganizationsCard.jsx (8a, passi 2 e 3)",
   "common": {
     "loading": "Caricamento…",
     "genericError": "Si è verificato un errore. Riprova tra poco.",
@@ -91,6 +91,65 @@
     "leave": "Esci dall'ente",
     "leaveConfirm": "Uscire dall'ente «{{name}}»? Per rientrare servirà un nuovo invito.",
     "lastReferentNote": "Sei l'unico referente: per uscire, prima nomina referente un altro membro.",
-    "membersLoadError": "Non riesco a caricare i membri."
+    "membersLoadError": "Non riesco a caricare i membri.",
+    "challengesTitle": "Sfide dell'ente",
+    "challengesIntroReferent": "Le sfide proposte a nome dell'ente. Ne cambi titolo, luogo, descrizione e scadenza; tipo, obiettivi e stato li gestisce il team di HelpLab.",
+    "challengesIntroMember": "Le sfide proposte a nome dell'ente. I testi li cambiano i referenti.",
+    "challengesEmpty": "Nessuna sfida dell'ente. Si propone dal percorso «Crea una sfida», scegliendo «a nome dell'ente».",
+    "challengesLoadError": "Non riesco a caricare le sfide dell'ente.",
+    "challengeEdit": "Modifica sfida",
+    "challengeDeadline": "scadenza {{date}}",
+    "challengeStatus": {
+      "open": "Aperta",
+      "in_review": "In revisione",
+      "closed": "Chiusa"
+    },
+    "eventStatus": {
+      "draft": "bozza",
+      "published": "pubblicato",
+      "rejected": "rifiutato",
+      "ended": "concluso"
+    },
+    "adminTitle": "Assegnazione (solo admin)",
+    "adminIntro": "Per dare all'ente sfide ed eventi che esistono già, ad esempio quelli organizzati prima che l'ente fosse registrato.",
+    "adminEventsTitle": "Eventi dell'ente",
+    "adminNoEvents": "Nessun evento dell'ente tra i 100 più recenti.",
+    "adminPickEvent": "Scegli un evento senza ente",
+    "adminEventHelp": "Un evento concluso si può assegnare se non ha un ente, non si può cambiare. Un evento pubblicato con consensi già dati non cambia ente.",
+    "adminChallengesTitle": "Assegna una sfida",
+    "adminPickChallenge": "Scegli una sfida senza ente",
+    "adminChallengeHelp": "Tra le 50 sfide modificate più di recente che non hanno un ente.",
+    "adminAssign": "Assegna all'ente",
+    "adminAssigned": "Assegnato a «{{name}}».",
+    "adminUnassign": "Togli dall'ente",
+    "adminUnassignConfirm": "Togliere «{{title}}» dall'ente? La sfida resta, senza ente.",
+    "adminListsError": "Non riesco a caricare sfide ed eventi da assegnare."
+  },
+  "choice": {
+    "label": "A nome di",
+    "mine": "A nome mio",
+    "org": "A nome dell'ente «{{name}}»",
+    "pick": "Scegli l'ente",
+    "helpEvent": "Con un ente, l'evento lo vedono e lo modificano tutti i suoi membri, e nella pagina pubblica compare l'ente come organizzatore.",
+    "helpProposal": "Con un ente, una volta approvata la sfida è dell'ente: i suoi referenti ne cambiano i testi e i membri la collegano agli eventi dell'ente.",
+    "loadError": "Non riesco a caricare i tuoi enti: per ora puoi agire solo a nome tuo."
+  },
+  "challengeEdit": {
+    "back": "Torna all'ente",
+    "title": "Modifica sfida",
+    "subtitle": "Sfida dell'ente «{{name}}»",
+    "notFound": "Sfida non trovata tra quelle dell'ente, oppure non fai parte dell'ente.",
+    "notAllowed": "I testi della sfida li cambiano i referenti dell'ente.",
+    "scopeNote": "Qui si cambiano titolo, luogo, descrizione e scadenza. Tipo, obiettivi e stato della sfida li gestisce il team di HelpLab, perché decidono impatto e punti.",
+    "titleLabel": "Titolo",
+    "titleHint": "Minimo {{min}} caratteri ({{count}}/{{min}})",
+    "locationLabel": "Luogo",
+    "rulesLabel": "Descrizione",
+    "rulesHelp": "Compare nella scheda pubblica della sfida.",
+    "deadlineLabel": "Scadenza",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "saved": "Sfida aggiornata.",
+    "reset": "Annulla le modifiche"
   }
 }

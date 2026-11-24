@@ -276,6 +276,13 @@ export default function AdminEvents() {
                   <div style={{ fontWeight: 600, color: "#fff", marginBottom: 4 }}>
                     {ev.name || "(senza nome)"}
                   </div>
+                  {ev.organization && (
+                    <div className="small" style={{ marginBottom: 2 }}>
+                      <span className="chip chip-role" style={{ whiteSpace: "nowrap" }}>
+                        Ente: {ev.organization.name}
+                      </span>
+                    </div>
+                  )}
                   <div className="muted small">
                     ID: {ev.id}
                     {ev.slug && ` · slug: ${ev.slug}`}

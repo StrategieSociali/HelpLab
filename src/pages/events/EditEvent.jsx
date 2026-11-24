@@ -24,6 +24,15 @@
  *   POST   /events/:id/challenges           → collega challenge
  *   DELETE /events/:id/challenges/:cId      → scollega challenge
  *
+ * ENTE E CO-ORGANIZZATORI (8a, passo 3; regole del BE in proprieta.ts):
+ *   - evento di un ente: lo gestiscono tutti i membri attivi, non solo chi l'ha creato
+ *   - l'ente si cambia finché l'evento è in bozza (o rifiutato, che torna in bozza);
+ *     toglierlo («a nome mio») solo chi l'ha creato, perché l'evento torna suo;
+ *     l'admin lo cambia anche dopo, tranne con consensi già dati (409 dal BE)
+ *   - co-organizzatori (al massimo 5, solo da mostrare): in bozza, l'admin anche dopo
+ *   - le sfide da collegare vengono da GET /events/:id/linkable-challenges, cioè
+ *     quelle che il BE accetterebbe; chi non è admin collega e scollega solo in bozza
+ *
  * UX NOTE:
  *   - Caricamento iniziale: mostra spinner, poi form già compilato
  *   - Salvataggio: feedback inline (nessun navigate) — l'utente resta sulla pagina
@@ -34,12 +43,28 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { api, API_PATHS } from "@/api/client";
+import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/utils/roles";
-import { updateEvent, linkChallengeToEvent, unlinkChallengeFromEvent } from "@/api/events.api";
+import { updateEvent, linkChallengeToEvent, unlinkChallengeFromEvent, getLinkableChallenges } from "@/api/events.api";
+import { adminGetOrganizations } from "@/api/organizations.api";
+import OrganizationChoice from "@/components/organizations/OrganizationChoice";
 import { routes } from "@/routes";
 import { apiErrorMessage } from "@/utils/apiError";
+
+const MAX_COORGANIZERS = 5;
+const EMPTY_COORG = { name: "", website: "", logo_url: "" };
+
+// Co-organizzatori come li vuole il BE: nome obbligatorio, sito e logo o null
+function cleanCoorganizers(list) {
+  return (list || [])
+    .map((c) => ({
+      name:     (c.name || "").trim(),
+      website:  (c.website || "").trim() || null,
+      logo_url: (c.logo_url || "").trim() || null,
+    }))
+    .filter((c) => c.name.length > 0);
+}
 
 // Badge colore per stato evento
 function StatusBadge({ status }) {
@@ -83,9 +108,13 @@ export default function EditEvent() {
   const [challengeBusy, setChallengeBusy] = useState({}); // { [challengeId]: bool }
   const [challengeError, setChallengeError] = useState("");
 
+  // ── Co-organizzatori (8a, passo 3) ───────────────────────────────────
+  const [coorgs, setCoorgs] = useState([]);
+
   // ── Carica evento ────────────────────────────────────────────────────
-  const loadEvent = useCallback(async () => {
-    setLoading(true);
+  // silent: rilettura dopo un salvataggio, senza la schermata di caricamento
+  const loadEvent = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     setLoadError("");
     try {
       const { data } = await api.get(`/v1/events/${id}`);
@@ -98,7 +127,11 @@ export default function EditEvent() {
         end_date:         data.end_date          ? data.end_date.slice(0, 10)   : "",
         location_address: data.location_address  || "",
         logo_url:         data.logo_url          || "",
+        organization_id:  data.organization_id   ?? null,
       });
+      setCoorgs((data.coorganizers || []).map((c) => ({
+        name: c.name || "", website: c.website || "", logo_url: c.logo_url || "",
+      })));
     } catch (err) {
       setLoadError(
         err?.response?.status === 404
@@ -114,24 +147,35 @@ export default function EditEvent() {
 
   useEffect(() => { loadEvent(); }, [loadEvent]);
 
-  // ── Carica challenge disponibili per il collegamento ─────────────────
-  useEffect(() => {
-    async function loadChallenges() {
-      setLoadingChallenges(true);
-      try {
-        const { data } = await api.get(API_PATHS.challenges("?status=open&limit=50"));
-        setAvailable(Array.isArray(data?.items) ? data.items : []);
-      } catch {
-        // non bloccante — la sezione mostra semplicemente la select vuota
-      } finally {
-        setLoadingChallenges(false);
-      }
+  // ── Carica le sfide collegabili ──────────────────────────────────────
+  // Dipendono dall'ente dell'evento e da quelle già collegate: si rileggono
+  // a ogni cambio dell'evento.
+  const loadLinkable = useCallback(async () => {
+    setLoadingChallenges(true);
+    try {
+      setAvailable(await getLinkableChallenges(Number(id)));
+    } catch {
+      // non bloccante — la sezione mostra semplicemente la select vuota
+      setAvailable([]);
+    } finally {
+      setLoadingChallenges(false);
     }
-    loadChallenges();
-  }, []);
+  }, [id]);
+
+  useEffect(() => { if (event) loadLinkable(); }, [event, loadLinkable]);
 
   // ── Guard: evento ended non modificabile ─────────────────────────────
   const canEdit = event && event.status !== "ended";
+  const inDraft = event && (event.status === "draft" || event.status === "rejected");
+  // Collegare e scollegare: chi non è admin solo in bozza (regola del BE)
+  const canLink = event && (isAdminUser || event.status === "draft");
+  // Ente: chi non è admin lo cambia solo in bozza; l'admin anche dopo
+  const canChangeOrg = event && canEdit && (isAdminUser || inDraft);
+  // Toglierlo («a nome mio») solo chi ha creato l'evento, o l'admin
+  const isCreator = event && user && String(event.created_by) === String(user.id);
+  const canCoorg = event && canEdit && (isAdminUser || inDraft);
+  const coorgsChanged = event && JSON.stringify(cleanCoorganizers(coorgs)) !==
+    JSON.stringify(cleanCoorganizers(event.coorganizers));
 
   // ── Salva modifiche dati evento ──────────────────────────────────────
   async function handleSave() {
@@ -146,6 +190,13 @@ export default function EditEvent() {
       if (form.end_date)                 payload.end_date         = form.end_date;
       if (form.location_address?.trim()) payload.location_address = form.location_address.trim();
       if (form.logo_url?.trim())         payload.logo_url         = form.logo_url.trim();
+      // Ente e co-organizzatori solo se cambiati: il BE ha regole sue per ciascuno,
+      // e mandarli invariati darebbe un rifiuto a chi non può cambiarli
+      // (confronto come testo: l'id può arrivare dal BE come stringa)
+      if (canChangeOrg && String(form.organization_id ?? "") !== String(event.organization_id ?? "")) {
+        payload.organization_id = form.organization_id == null ? null : Number(form.organization_id);
+      }
+      if (canCoorg && coorgsChanged) payload.coorganizers = cleanCoorganizers(coorgs);
 
       if (Object.keys(payload).length === 0) {
         setSaveResult({ ok: false, msg: "Nessuna modifica da salvare." });
@@ -154,8 +205,9 @@ export default function EditEvent() {
 
       const updated = await updateEvent(id, payload);
 
-      // Aggiorna evento locale con la response
-      setEvent(updated);
+      // La PATCH restituisce l'evento senza ente esteso, co-organizzatori e sfide:
+      // si rilegge il dettaglio completo (e con lui le sfide collegabili)
+      await loadEvent({ silent: true });
 
       // Caso speciale: creatore modifica rejected → BE resetta a draft
       const wasRejected   = event.status === "rejected";
@@ -184,8 +236,8 @@ export default function EditEvent() {
     setChallengeBusy((b) => ({ ...b, [selectedToAdd]: true }));
     try {
       await linkChallengeToEvent(Number(id), Number(selectedToAdd));
-      // Ricarica evento per aggiornare la lista challenge collegate
-      await loadEvent();
+      // Ricarica evento per aggiornare la lista challenge collegate (e le collegabili)
+      await loadEvent({ silent: true });
       setSelectedToAdd("");
     } catch (err) {
       const status = err?.response?.status;
@@ -205,7 +257,7 @@ export default function EditEvent() {
     setChallengeBusy((b) => ({ ...b, [challengeId]: true }));
     try {
       await unlinkChallengeFromEvent(Number(id), challengeId);
-      await loadEvent();
+      await loadEvent({ silent: true });
     } catch (err) {
       setChallengeError(err?.response?.data?.error || "Errore durante la rimozione.");
     } finally {
@@ -304,6 +356,24 @@ export default function EditEvent() {
 
               <div className="form-grid">
 
+                {/* Ente proprietario (8a, passo 3) */}
+                {canChangeOrg ? (
+                  <OrganizationChoice
+                    key={isAdminUser ? "admin" : "member"}
+                    value={form.organization_id ?? null}
+                    onChange={(orgId) => setForm((f) => ({ ...f, organization_id: orgId }))}
+                    context="event"
+                    allowMine={isAdminUser || isCreator || event.organization_id == null}
+                    extraOrg={event.organization || null}
+                    loader={isAdminUser ? adminGetOrganizations : undefined}
+                  />
+                ) : event.organization ? (
+                  <div className="muted small">
+                    A nome dell'ente <strong>{event.organization.name}</strong>. L'ente si
+                    cambia solo finché l'evento è in bozza.
+                  </div>
+                ) : null}
+
                 <label>
                   Nome evento *
                   <input
@@ -367,6 +437,83 @@ export default function EditEvent() {
 
               </div>
 
+              {/* ── Co-organizzatori (8a, passo 3) ───────────────────── */}
+              <div style={{ marginTop: 20 }}>
+                <h4 style={{ margin: "0 0 4px" }}>Co-organizzatori</h4>
+                <p className="muted small" style={{ marginTop: 0 }}>
+                  Associazioni, scuole o imprese che organizzano l'evento insieme a voi.
+                  Compaiono nella pagina dell'evento; non hanno accesso alla piattaforma.
+                  Al massimo {MAX_COORGANIZERS}.
+                  {!canCoorg && " Si cambiano solo finché l'evento è in bozza."}
+                </p>
+                {coorgs.length === 0 && (
+                  <div className="muted small" style={{ marginBottom: 8 }}>Nessun co-organizzatore.</div>
+                )}
+                {coorgs.map((c, i) => (
+                  <div key={i} className="form-row" style={{ alignItems: "flex-end", marginBottom: 8 }}>
+                    <label style={{ flex: 2 }}>
+                      Nome *
+                      <input
+                        className={`control ${c.name.trim().length >= 2 ? "input-valid" : c.name ? "input-invalid" : ""}`}
+                        maxLength={180}
+                        value={c.name}
+                        disabled={!canCoorg}
+                        onChange={(e) => setCoorgs((l) => l.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
+                      />
+                    </label>
+                    <label style={{ flex: 2 }}>
+                      Sito
+                      <input
+                        className="control"
+                        type="url"
+                        placeholder="https://"
+                        maxLength={255}
+                        value={c.website}
+                        disabled={!canCoorg}
+                        onChange={(e) => setCoorgs((l) => l.map((x, j) => (j === i ? { ...x, website: e.target.value } : x)))}
+                      />
+                    </label>
+                    <label style={{ flex: 2 }}>
+                      Indirizzo del logo
+                      <input
+                        className="control"
+                        type="url"
+                        placeholder="https://"
+                        maxLength={255}
+                        value={c.logo_url}
+                        disabled={!canCoorg}
+                        onChange={(e) => setCoorgs((l) => l.map((x, j) => (j === i ? { ...x, logo_url: e.target.value } : x)))}
+                      />
+                    </label>
+                    {canCoorg && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-small"
+                        onClick={() => setCoorgs((l) => l.filter((_, j) => j !== i))}
+                        aria-label={`Togli il co-organizzatore ${c.name || i + 1}`}
+                        style={{ flexShrink: 0 }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {canCoorg && coorgs.length < MAX_COORGANIZERS && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-small"
+                    onClick={() => setCoorgs((l) => [...l, { ...EMPTY_COORG }])}
+                  >
+                    + Aggiungi co-organizzatore
+                  </button>
+                )}
+                {coorgsChanged && (
+                  <div className="hint warn" style={{ marginTop: 6 }}>
+                    Modifiche ai co-organizzatori non ancora salvate.
+                  </div>
+                )}
+              </div>
+
               {/* Feedback salvataggio */}
               {saveResult && (
                 <div
@@ -397,7 +544,13 @@ export default function EditEvent() {
               </h3>
               <p className="muted small" style={{ marginBottom: 16 }}>
                 Le sfide collegate sono visibili ai partecipanti nella pagina evento.
-                Puoi aggiungerne o rimuoverne in qualsiasi momento.
+                {canLink
+                  ? event.organization_id != null && !isAdminUser
+                    ? " Qui trovi le sfide aperte dell'ente: le altre le collega l'admin."
+                    : !isAdminUser
+                    ? " Qui trovi le sfide aperte che hai proposto tu: le altre le collega l'admin."
+                    : ""
+                  : " Si aggiungono e si tolgono finché l'evento è in bozza."}
               </p>
 
               {/* Errore challenge */}
@@ -440,7 +593,7 @@ export default function EditEvent() {
                           </span>
                         )}
                       </div>
-                      <button
+                      {canLink && <button
                         className="btn btn-ghost btn-small"
                         onClick={() => handleUnlink(ch.id)}
                         disabled={!!challengeBusy[ch.id]}
@@ -448,13 +601,14 @@ export default function EditEvent() {
                         style={{ flexShrink: 0, color: "rgb(248,113,113)" }}
                       >
                         {challengeBusy[ch.id] ? "…" : "Rimuovi"}
-                      </button>
+                      </button>}
                     </li>
                   ))}
                 </ul>
               )}
 
               {/* Aggiungi challenge */}
+              {canLink && <>
               <div style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
                 <select
                   className="control"
@@ -485,9 +639,11 @@ export default function EditEvent() {
 
               {addable.length === 0 && !loadingChallenges && (
                 <div className="muted small" style={{ marginTop: 8 }}>
-                  Tutte le sfide aperte sono già collegate, oppure non ce ne sono di disponibili.
+                  Nessuna sfida da collegare: quelle che puoi collegare sono già collegate,
+                  oppure non ce ne sono di aperte.
                 </div>
               )}
+              </>}
             </div>
           </>
         )}

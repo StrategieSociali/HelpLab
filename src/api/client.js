@@ -163,4 +163,9 @@ export const API_PATHS = {
   myOrganizationInviteAnswer: (memberId, action) => `/v1/me/organization-invites/${memberId}/${action}`,
   adminOrganizations:        ()             => `/v1/admin/organizations`,
   adminOrganization:         (id)           => `/v1/admin/organizations/${id}`,
+  // 8a, passo 3: sfide dell'ente
+  organizationChallenges:    (id)           => `/v1/organizations/${id}/challenges`,
+  challengeTexts:            (id)           => `/v1/challenges/${id}/texts`,
+  adminChallengeOrganization: (id)          => `/v1/admin/challenges/${id}/organization`,
+  eventLinkableChallenges:   (id)           => `/v1/events/${id}/linkable-challenges`,
 };

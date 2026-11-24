@@ -127,6 +127,15 @@ export function AdminProposals() {
                   <div className="muted small">
                     {p.author ? `Proposta da ${p.author.name}` : "Autore non indicato"} • Stato: {p.status}
                   </div>
+                  {/* 8a, passo 3: proposta a nome di un ente. All'approvazione la sfida
+                      nasce dell'ente, con chi l'ha proposta come autore. */}
+                  {p.organization && (
+                    <div className="small" style={{ marginTop: 4 }}>
+                      <span className="chip chip-role" style={{ whiteSpace: "nowrap" }}>
+                        A nome dell'ente: {p.organization.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div style={{ textAlign: "right", display: "flex", gap: 8, justifyContent: "flex-end" }}>
                   {p.status === "pending_review" ? (

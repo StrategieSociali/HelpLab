@@ -15,6 +15,7 @@
  */
 
 import React from "react";
+import OrganizationChoice from "@/components/organizations/OrganizationChoice";
 
 // Soglie validazione (allineate con i requisiti BE — handoff §8)
 const NAME_MIN = 5;
@@ -46,6 +47,15 @@ export default function StepEventDetails({ value = {}, onChange }) {
       </h3>
 
       <div className="form-grid">
+
+        {/* A NOME DI CHI (8a, passo 3): compare solo a chi è membro di un ente.
+            Cambiare ente toglie le sfide scelte al passo 2: quelle collegabili
+            dipendono dall'ente dell'evento. */}
+        <OrganizationChoice
+          value={v.organization_id ?? null}
+          onChange={(id) => set({ organization_id: id, challengeIds: [] })}
+          context="event"
+        />
 
         {/* NOME */}
         <label>

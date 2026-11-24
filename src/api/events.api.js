@@ -218,6 +218,18 @@ export async function linkChallengeToEvent(eventId, challengeId) {
 }
 
 /**
+ * Le sfide che il collegamento accetterebbe (8a, passo 3): aperte, e per chi non è
+ * admin solo quelle dell'ente dell'evento, o per un evento senza ente quelle senza
+ * ente proposte da chi chiama. Così la scelta non propone sfide che il BE rifiuta.
+ * @param {number} eventId
+ * @returns {Promise<Array>}
+ */
+export async function getLinkableChallenges(eventId) {
+  const { data } = await api.get(`/v1/events/${eventId}/linkable-challenges`);
+  return Array.isArray(data?.items) ? data.items : [];
+}
+
+/**
  * Scollega una challenge da un evento.
  * @param {number} eventId
  * @param {number} challengeId

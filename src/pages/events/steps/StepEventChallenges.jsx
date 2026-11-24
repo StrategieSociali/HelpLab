@@ -16,8 +16,17 @@
  * - L'admin può aggiungere righe con "+ Aggiungi sfida" (UX a lista)
  * - Ogni riga ha una select + bottone rimuovi
  *
+ * QUALI SFIDE SI PROPONGONO (8a, passo 3, regola del BE in verificaCollegamento):
+ * - admin: tutte le aperte
+ * - evento a nome di un ente: solo le aperte dello stesso ente (l'elenco pubblico
+ *   porta `organization`)
+ * - evento a nome mio, non admin: solo le sfide senza ente proposte da chi crea.
+ *   L'elenco pubblico non dice chi ha proposto una sfida, e l'evento non esiste
+ *   ancora per chiedere `linkable-challenges`: qui non si propone niente e le si
+ *   collega dopo, dalla modifica dell'evento, dove l'elenco è quello del BE.
+ *
  * NOTA:
- * Questo step non fa chiamate API — raccoglie solo gli ID.
+ * Questo step non fa chiamate API di scrittura — raccoglie solo gli ID.
  * Le chiamate POST /events/:id/challenges le fa CreateEvent.jsx
  * dopo aver ottenuto l'id dell'evento appena creato.
  */
@@ -25,9 +34,12 @@
 import React, { useEffect, useState } from "react";
 import { api, API_PATHS } from "@/api/client";
 
-export default function StepEventChallenges({ value = {}, onChange }) {
+export default function StepEventChallenges({ value = {}, onChange, isAdmin = false }) {
   const v   = value || {};
   const set = (patch) => onChange(patch);
+  const orgId = v.organization_id ?? null;
+  // A nome mio e non admin: l'elenco giusto lo dà solo il BE a evento creato
+  const linkLater = !isAdmin && orgId == null;
 
   // Lista challenge disponibili (status=open, caricata una volta)
   const [available, setAvailable]   = useState([]);
@@ -47,15 +59,23 @@ export default function StepEventChallenges({ value = {}, onChange }) {
         const { data } = await api.get(
           API_PATHS.challenges("?status=open&limit=50")
         );
-        setAvailable(Array.isArray(data?.items) ? data.items : []);
+        const items = Array.isArray(data?.items) ? data.items : [];
+        setAvailable(
+          isAdmin
+            ? items
+            : orgId != null
+            ? items.filter((ch) => String(ch.organization?.id ?? "") === String(orgId))
+            : []
+        );
       } catch (err) {
         setListError("Impossibile caricare le sfide. Riprova.");
       } finally {
         setLoadingList(false);
       }
     }
+    if (linkLater) { setAvailable([]); return; }
     load();
-  }, []);
+  }, [isAdmin, orgId, linkLater]);
 
   // ── Aggiunge una riga vuota ─────────────────────────────────────────────
   function addRow() {
@@ -91,6 +111,20 @@ export default function StepEventChallenges({ value = {}, onChange }) {
         anche dopo la creazione. Una sfida può appartenere a più eventi.
       </p>
 
+      {linkLater && (
+        <div className="callout neutral">
+          Le sfide che hai proposto tu si collegano dopo la creazione, dalla pagina
+          di modifica dell'evento: lì trovi solo quelle che puoi collegare.
+        </div>
+      )}
+
+      {!linkLater && orgId != null && (
+        <p className="muted small" style={{ marginBottom: 12 }}>
+          A un evento dell'ente si collegano solo le sfide aperte dell'ente. Le altre
+          le collega l'admin.
+        </p>
+      )}
+
       {/* Stato caricamento lista */}
       {loadingList && (
         <div className="callout neutral">Caricamento sfide disponibili…</div>
@@ -100,7 +134,7 @@ export default function StepEventChallenges({ value = {}, onChange }) {
       )}
 
       {/* Lista righe di selezione */}
-      {!loadingList && !listError && (
+      {!loadingList && !listError && !linkLater && (
         <div className="dynamic-list" style={{ marginBottom: 16 }}>
           {selectedIds.length === 0 && (
             <div className="dynamic-empty" style={{ padding: "20px 0" }}>
@@ -177,7 +211,7 @@ export default function StepEventChallenges({ value = {}, onChange }) {
       )}
 
       {/* Bottone aggiungi riga */}
-      {!loadingList && !listError && (
+      {!loadingList && !listError && !linkLater && (
         <button
           type="button"
           className="btn btn-outline"

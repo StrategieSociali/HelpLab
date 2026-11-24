@@ -22,6 +22,7 @@ export const EMPTY_CHALLENGE = {
   visibility_options: { logo: false, social_mentions: false, press_event: false },
   organizer_visibility: "public",
   terms_consent: false,
+  organization_id: null,    // 8a, passo 3: null = proposta «a nome mio»
 };
 
 // Una sfida può iniziare e finire lo stesso giorno (PM-1, 2/10/2026): è il caso di

@@ -50,6 +50,7 @@ import AdminSponsorships from "./pages/admin/AdminSponsorships";
 import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import OrganizerRequest from "./pages/organizations/OrganizerRequest";
 import OrganizationPage from "./pages/organizations/OrganizationPage";
+import EditOrganizationChallenge from "./pages/organizations/EditOrganizationChallenge";
 
 // ──  EVENTI (sprint events v1.1) ──────────────────────────────────────────
 import EventsList from './pages/events/EventsList';
@@ -200,6 +201,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
                     <OrganizationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={routes.organizations.challengeEdit()}
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
+                    <EditOrganizationChallenge />
                   </ProtectedRoute>
                 }
               />

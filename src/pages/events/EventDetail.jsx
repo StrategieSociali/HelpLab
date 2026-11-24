@@ -195,7 +195,15 @@ export default function EventDetail() {
     location_geo,
     sponsors = [],
     challenges = [],
+    organization = null,   // 8a, passo 3: l'ente che organizza, se c'è
+    coorganizers = [],     // e chi organizza con lui (solo da mostrare)
   } = event;
+
+  // Chi organizza: l'ente per primo, poi i co-organizzatori nell'ordine scelto
+  const organizers = [
+    ...(organization ? [{ key: `org-${organization.id}`, ...organization }] : []),
+    ...coorganizers.map((c) => ({ key: `co-${c.id}`, ...c })),
+  ];
 
   const mapUrl =
     location_geo?.lat && location_geo?.lon
@@ -406,6 +414,48 @@ export default function EventDetail() {
             (`sponsor_id` + `challenge_sponsorships`), non dall'evento. Un
             sostenitore dell'evento che non sponsorizza una singola sfida non ha
             oggi alcun modo di comparire qui. Vedi `bug-e-todo.md`. */}
+        {/* ── Chi organizza (8a, passo 3) ──────────────────────────────────
+            Stesse piastre degli sponsor: l'ente e i co-organizzatori sono
+            «loghi presentati» quanto gli sponsor. Senza logo, il nome. */}
+        {organizers.length > 0 && (
+          <div className="card glass ev-section">
+            <h2 className="dynamic-subtitle ev-section__title">
+              {organizers.length > 1 ? "Organizzano" : "Organizza"}
+            </h2>
+            <div className="ev-sponsors__grid">
+              {organizers.map((o) => {
+                const plate = (
+                  <div className="ev-sponsor__plate">
+                    {o.logo_url ? (
+                      <img src={o.logo_url} alt={o.name} className="ev-sponsor__logo" />
+                    ) : (
+                      <span className="ev-sponsor__name">{o.name}</span>
+                    )}
+                  </div>
+                );
+                return (
+                  <div key={o.key} className="ev-sponsor">
+                    {o.website ? (
+                      <a
+                        href={o.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ width: "100%" }}
+                        aria-label={`Sito di ${o.name}`}
+                      >
+                        {plate}
+                      </a>
+                    ) : (
+                      plate
+                    )}
+                    <span className="muted small">{o.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {sponsors.length > 0 && (
           <div className="card glass ev-section">
             <h2 className="dynamic-subtitle ev-section__title">
