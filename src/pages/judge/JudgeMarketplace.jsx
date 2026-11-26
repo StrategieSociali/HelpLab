@@ -61,6 +61,8 @@ function emptyMessage(explain) {
   const mine        = (ch.alreadyJudge || 0) + (ev.alreadyJudge || 0);
   const covered     = (ch.covered || 0) + (ev.covered || 0);
   const participant = ch.participant || 0;
+  // 8a passo 4 (BE 1.0.0-alpha.4): esclusi perché se ne è parte, su sfide ed eventi.
+  const conflict    = (ch.conflict || 0) + (ev.conflict || 0);
 
   const reasons = [];
   if (mine > 0)    reasons.push(`sei già giudice su ${mine}`);
@@ -68,6 +70,11 @@ function emptyMessage(explain) {
   if (participant > 0) {
     reasons.push(
       `a ${participant} partecipi come volontario, e non si può giudicare una sfida a cui si partecipa`
+    );
+  }
+  if (conflict > 0) {
+    reasons.push(
+      `di ${conflict} sei parte (le hai create tu, o sono del tuo ente o di un suo sponsor), e chi è parte non giudica`
     );
   }
 

@@ -136,8 +136,9 @@ export default function AdminCoverage() {
    *
    * Prima elencava tutti i giudici, compresi quelli già assegnati: l'admin non
    * aveva modo di sapere quale scegliere e scopriva l'errore solo dopo il clic,
-   * con un 409. Si escludono i già assegnati (`assignedUserIds`) e, per le sfide,
-   * chi vi partecipa come volontario (`ineligibleUserIds`, §7.1).
+   * con un 409. Si escludono i già assegnati (`assignedUserIds`) e chi è in
+   * conflitto (`ineligibleUserIds`: partecipa, ha creato la sfida o è membro
+   * dell'ente che ne ha parte; §7.1 e 8a passo 4, anche sugli eventi).
    *
    * I due elenchi arrivano da `GET /admin/coverage` (BE ≥ 0.18.2); con un backend
    * precedente sono `undefined` e la tendina resta completa come prima.
@@ -153,7 +154,8 @@ export default function AdminCoverage() {
       return (
         <span className="muted small">
           Nessun giudice assegnabile: sono già tutti su questa riga o esclusi perché
-          vi partecipano.
+          ne sono parte (partecipano, l'hanno creata o sono membri dell'ente che ne
+          ha parte).
         </span>
       );
     }

@@ -250,11 +250,9 @@ export default function App() {
                       da quando la prop non veniva letta da nessuno, quindi il limite
                       non era mai stato applicato né verificato — e il menu la offre
                       anche ai giudici.
-                      REGOLA DA IMPLEMENTARE DOPO IL 30/8: un giudice non può
-                      giudicare una sfida creata da lui, né una in cui è volontario.
-                      Il secondo caso è già coperto lato BE (§7.1, `canReview`
-                      esclude i partecipanti); il primo — "creata da lui" — NON è
-                      ancora coperto e va aggiunto. Vedi bug-e-todo.md. */
+                      Un giudice non giudica una sfida creata da lui, né una in cui
+                      è volontario o di cui il suo ente è parte: lo decide il BE
+                      (`conflitti.ts`, 8a passo 4, BE 1.0.0-alpha.4). */
                   <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
                     <CreateChallenge />
                   </ProtectedRoute>
