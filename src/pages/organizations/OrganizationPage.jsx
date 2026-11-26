@@ -16,8 +16,8 @@
  * - Solo admin: assegna all'ente sfide ed eventi che esistono già (es. quelli di
  *   un ente che organizzava prima che gli enti esistessero) e li toglie.
  */
-import React, { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { routes } from "@/routes";
 import { useAuth } from "@/context/AuthContext";
@@ -446,6 +446,13 @@ function AdminAssignPanel({ t, orgId, orgName, onChallengeAssigned, setNotice })
 
   useEffect(() => { loadLists(); }, [loadLists]);
 
+  // Da «Gestione enti», pulsante «Assegna» (scelta 2 del passo 3): si arriva qui
+  const { hash } = useLocation();
+  const panelRef = useRef(null);
+  useEffect(() => {
+    if (hash === "#assegnazione") panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [hash]);
+
   const orgEvents = events.filter((e) => String(e.organization?.id ?? "") === String(orgId));
   const freeEvents = events.filter((e) => !e.organization);
 
@@ -482,7 +489,7 @@ function AdminAssignPanel({ t, orgId, orgName, onChallengeAssigned, setNotice })
   };
 
   return (
-    <div className="card" style={{ padding: 16, marginTop: 24 }}>
+    <div id="assegnazione" ref={panelRef} className="card" style={{ padding: 16, marginTop: 24, scrollMarginTop: 80 }}>
       <h3 className="dynamic-title" style={{ marginTop: 0 }}>{t("detail.adminTitle")}</h3>
       <p className="muted">{t("detail.adminIntro")}</p>
 

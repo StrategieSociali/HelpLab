@@ -113,8 +113,9 @@ export default function StepEventChallenges({ value = {}, onChange, isAdmin = fa
 
       {linkLater && (
         <div className="callout neutral">
-          Le sfide che hai proposto tu si collegano dopo la creazione, dalla pagina
-          di modifica dell'evento: lì trovi solo quelle che puoi collegare.
+          Le sfide che hai proposto tu si collegano dopo la creazione: appena crei
+          l'evento si apre la pagina di modifica, e lì trovi solo quelle che puoi
+          collegare.
         </div>
       )}
 

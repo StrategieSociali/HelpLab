@@ -242,7 +242,13 @@ function OrganizationRow({ org, t, onSaved }) {
           <Link className="link-accent" to={routes.organizations.detail(org.id)}>{org.name}</Link>
           <div className="small muted">{t("organizations.members", { count: org.members_count })}</div>
         </div>
-        {!editing && <button className="btn btn-outline btn-small" onClick={() => setEditing(true)}>{t("organizations.edit")}</button>}
+        {!editing && (
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+            {/* 8a, passo 3, scelta 2: il pannello di assegnazione sta nella pagina dell'ente */}
+            <Link className="btn btn-outline btn-small" to={`${routes.organizations.detail(org.id)}#assegnazione`}>{t("organizations.assign")}</Link>
+            <button className="btn btn-outline btn-small" onClick={() => setEditing(true)}>{t("organizations.edit")}</button>
+          </div>
+        )}
       </div>
 
       <div className="small" style={{ marginTop: 8 }}>

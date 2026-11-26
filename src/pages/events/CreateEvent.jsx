@@ -117,6 +117,13 @@ export default function CreateEvent() {
       : (draft.challengeIds || []).filter(Boolean);
 
     if (idsToLink.length === 0) {
+      // 8a, passo 3, scelta 1 approvata dal PM il 26/11/2026: chi non è admin e
+      // crea «a nome mio» le sfide le collega dalla modifica (l'elenco delle
+      // collegabili lo dà il BE solo per un evento che esiste), e ci arriva subito.
+      if (!isAdminUser && draft.organization_id == null) {
+        navigate(routes.events.edit(eventId));
+        return;
+      }
       // Nessuna challenge da collegare — naviga alla destinazione corretta per ruolo
       navigate(postCreateRoute);
       return;
