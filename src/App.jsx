@@ -48,6 +48,7 @@ import SponsorshipRequestForm from "./pages/sponsors/SponsorshipRequestForm";
 import MySponsorships from "./pages/sponsors/MySponsorships";
 import AdminSponsorships from "./pages/admin/AdminSponsorships";
 import AdminOrganizations from "./pages/admin/AdminOrganizations";
+import AdminConsents from "./pages/admin/AdminConsents";
 import OrganizerRequest from "./pages/organizations/OrganizerRequest";
 import OrganizationPage from "./pages/organizations/OrganizationPage";
 import EditOrganizationChallenge from "./pages/organizations/EditOrganizationChallenge";
@@ -354,6 +355,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminOrganizations />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={routes.admin.consents}
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminConsents />
                   </ProtectedRoute>
                 }
               />

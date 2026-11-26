@@ -107,5 +107,15 @@
       "placeholder": "Es. 20",
       "hint": "Facoltativo. Indica quante persone hai coinvolto o raggiunto con la tua attività (partecipanti, pubblico)."
     }
+  },
+  "consent": {
+    "title": "I tuoi contatti e chi organizza",
+    "intro": "Questa sfida fa parte di un evento organizzato da un ente. Puoi scegliere se fargli avere il tuo nickname e la tua email, per gestire la tua partecipazione.",
+    "optional": "È facoltativo: partecipi comunque. Puoi cambiare idea quando vuoi dalla pagina dell'evento.",
+    "privacy": "Privacy Policy",
+    "confirm": "Conferma e continua",
+    "saving": "Salvataggio…",
+    "saveError": "Non è stato possibile salvare la tua scelta. Puoi partecipare comunque: te la chiederemo di nuovo la prossima volta.",
+    "continueAnyway": "Continua"
   }
 }

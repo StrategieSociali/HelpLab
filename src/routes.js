@@ -117,6 +117,7 @@ export const routes = {
     learningPaths: '/dashboard/admin/corsi',
     sponsorships: '/dashboard/admin/sponsorships',
     organizations: '/dashboard/admin/enti',
+    consents:     '/dashboard/admin/consensi', // 8a, passo 5
     // Report evento: percorso con ID dinamico
     eventReport:  (id = ':id') => `/dashboard/admin/events/${id}/report`,
   },

@@ -16,8 +16,9 @@
  *   POST   /events                        → crea evento (auth)
  *   GET    /events/mine                   → miei eventi (auth)
  *   PATCH  /events/:id                    → modifica (auth, solo draft)
- *   POST   /events/:id/consent            → accetta consenso (auth)
- *   DELETE /events/:id/consent            → revoca consenso (auth)
+ *   GET    /events/:id/consent            → testo, ente e stato (auth; 8a passo 5)
+ *   POST   /events/:id/consent            → risposta { answer } (auth; il testo lo scrive il server)
+ *   DELETE /events/:id/consent            → revoca, la riga resta (auth)
  *   POST   /events/:id/challenges         → collega challenge (admin)
  *   DELETE /events/:id/challenges/:cId    → scollega challenge (admin)
  *   GET    /admin/events                  → lista admin
@@ -124,26 +125,73 @@ export async function updateEvent(id, patch) {
   return data;
 }
 
+// ─── CONSENSI (8a, passo 5) ──────────────────────────────────────────────────
+// Il testo lo scrive il SERVER (decisione B del 26/11/2026): il client manda solo
+// la risposta, così quello che si salva è per forza quello che la persona ha letto.
+
 /**
- * Accetta il consenso privacy per un evento.
- * Il testo DEVE essere esattamente quello mostrato all'utente (compliance GDPR).
- * Importare sempre EVENT_CONSENT da config/eventConsent.js.
+ * Stato del consenso della persona per un evento: testo, ente, stato
+ * ("none" | "yes" | "no" | "revoked"), `has_sharing` (false se l'evento non ha ente).
  * @param {number} id
- * @param {string} consentText - testo verbatim del consenso accettato
  */
-export async function acceptEventConsent(id, consentText) {
-  const { data } = await api.post(`/v1/events/${id}/consent`, {
-    consent_text: consentText,
-  });
+export async function getEventConsent(id) {
+  const { data } = await api.get(`/v1/events/${id}/consent`);
   return data;
 }
 
 /**
- * Revoca il consenso privacy per un evento.
+ * Risposta della persona: "yes" o "no". Un «no» su un «sì» attivo è una revoca.
+ * @param {number} id
+ * @param {"yes"|"no"} answer
+ */
+export async function answerEventConsent(id, answer) {
+  const { data } = await api.post(`/v1/events/${id}/consent`, { answer });
+  return data;
+}
+
+/**
+ * Revoca il consenso: la riga resta, con la data della revoca.
  * @param {number} id
  */
 export async function revokeEventConsent(id) {
   await api.delete(`/v1/events/${id}/consent`);
+}
+
+/**
+ * Eventi in corso con un ente, collegati alla sfida, che aspettano ancora una
+ * risposta da chi apre il modulo. `{ items: [{ event_id, event_name, organization, text }] }`
+ * @param {number|string} challengeId
+ */
+export async function getConsentRequests(challengeId) {
+  const { data } = await api.get(`/v1/challenges/${challengeId}/consent-requests`);
+  return data?.items ?? [];
+}
+
+/**
+ * Scarica il CSV dei contatti (admin o referente dell'ente). Ogni scaricamento
+ * resta registrato sul server.
+ * @param {number} id
+ * @param {string} [nomeFile]
+ */
+export async function downloadEventContacts(id, nomeFile) {
+  const res = await api.get(`/v1/events/${id}/consents/export`, { responseType: "blob" });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nomeFile || `contatti_evento_${id}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Storia dei consensi di una persona (solo admin): per id, email o nickname esatti.
+ * @param {string} chiave
+ */
+export async function getPersonConsents(chiave) {
+  const { data } = await api.get(`/v1/admin/users/${encodeURIComponent(chiave)}/consents`);
+  return data;
 }
 
 // ─── ADMIN ───────────────────────────────────────────────────────────────────

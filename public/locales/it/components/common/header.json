@@ -22,7 +22,8 @@
       "label": "Admin",
       "proposals": "Gestione proposte",
       "assignJudges": "Assegna giudici",
-      "organizations": "Gestione enti"
+      "organizations": "Gestione enti",
+      "consents": "Consensi di una persona"
     },
     "actions": {
       "createChallenge": "Crea sfida",

@@ -30,6 +30,8 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/api/client";
 import { routes } from "@/routes";
+import { getConsentRequests } from "@/api/events.api";
+import ConsentRequestsModal from "@/components/events/ConsentRequestsModal";
 import "../../styles/dynamic-pages.css";
 
 // ─── Costanti Cloudinary ──────────────────────────────────────────────────────
@@ -214,6 +216,21 @@ export default function ChallengeSubmitPage() {
   }, [challengeId]);
 
   const challengeIsOpen = challengeStatus === null || challengeStatus === "open";
+
+  // Consenso all'ente organizzatore (8a, passo 5, scelta 6): si chiede all'apertura
+  // del modulo, PRIMA della compilazione, così sul telefono non si perde quanto
+  // compilato. Solo se la sfida è in eventi in corso con un ente a cui la persona
+  // non ha ancora risposto: lo decide il BE. Non blocca mai: un errore qui non
+  // mostra nulla e il modulo resta usabile.
+  const [consentItems, setConsentItems] = useState([]);
+  useEffect(() => {
+    if (!challengeId || !token) return;
+    let alive = true;
+    getConsentRequests(challengeId)
+      .then((items) => { if (alive) setConsentItems(items); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [challengeId, token]);
 
   // ── Caricamento task della challenge ──────────────────────────────────────
   useEffect(() => {
@@ -609,6 +626,9 @@ export default function ChallengeSubmitPage() {
           </form>
         )}
       </div>
+      {consentItems.length > 0 && (
+        <ConsentRequestsModal items={consentItems} onDone={() => setConsentItems([])} />
+      )}
     </section>
   );
 }

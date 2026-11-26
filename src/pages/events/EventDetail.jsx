@@ -15,9 +15,10 @@
  *
  * FLUSSO PARTECIPAZIONE:
  *   1. Utente non loggato  → clic "Partecipa" → redirect a /login?next=<slug>
- *   2. Utente loggato      → apre EventConsentModal
- *   3. Modal confermato    → redirect alla prima sfida aperta dell'evento
- *                            (o alla lista sfide dell'evento se ce ne sono più di una)
+ *   2. Utente loggato      → con una sola sfida aperta va al suo modulo, dove si
+ *                            chiede il consenso all'ente (8a passo 5); con più
+ *                            sfide resta qui, dove le sfide sono già elencate
+ *   Consenso dato o revocato dalla pagina: riquadro EventContactsBox.
  *
  * UX NOTE (200 volontari da mobile):
  * - CTA "Partecipa" visibile immediatamente senza scroll
@@ -32,7 +33,7 @@ import { getEventDetail } from "@/api/events.api";
 import EventLeaderboard from "@/components/events/EventLeaderboard";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes";
-import EventConsentModal from "@/components/events/EventConsentModal";
+import EventContactsBox from "@/components/events/EventContactsBox";
 import "../../styles/event-detail.css";
 
 // ─── Cosa misura la piattaforma, per tipo di sfida ────────────────────────────
@@ -98,7 +99,6 @@ export default function EventDetail() {
   const [event, setEvent]           = useState(null);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState("");
-  const [showConsent, setShowConsent] = useState(false);
 
   // ── Carica dettaglio evento ─────────────────────────────────────────────
   const fetchEvent = useCallback(async () => {
@@ -126,33 +126,21 @@ export default function EventDetail() {
   }, [fetchEvent]);
 
   // ── Click su "Partecipa" ────────────────────────────────────────────────
+  // Dall'8a passo 5 (decisione E, 26/11/2026) qui non si chiede più il consenso:
+  // la domanda arriva all'apertura del modulo della sfida, che sa a quali eventi
+  // appartiene. Con 1 sfida aperta → submission diretta; con più sfide o nessuna
+  // si resta sulla pagina, che mostra già le sfide con «Vai alla sfida».
   function handlePartecipa() {
     if (!isAuthenticated) {
       // Salva la destinazione post-login nella query string
       navigate(`${routes.auth.login}?next=${encodeURIComponent(routes.events.detail(slug))}`);
       return;
     }
-    setShowConsent(true);
-  }
-
-  // ── Dopo conferma del modal consenso ───────────────────────────────────
-  // Con 1 sfida aperta → submission diretta (zero clic aggiuntivi)
-  // Con più sfide aperte → rimane sulla pagina evento, che mostra già
-  //   le sfide con i bottoni "Vai alla sfida" — nessun redirect esterno
-  // Con nessuna sfida → rimane sulla pagina con messaggio
-  function handleConsentSuccess() {
-    setShowConsent(false);
     if (!event) return;
-
     const openChallenges = (event.challenges ?? []).filter((ch) => ch.status === "open");
-
     if (openChallenges.length === 1) {
-      // Una sola sfida aperta → vai direttamente alla submission
       navigate(`/challenges/${openChallenges[0].id}/submit`);
     }
-    // Con più sfide o nessuna: rimane sulla pagina evento.
-    // Le sfide sono già visibili nella sezione "Sfide dell'evento"
-    // con i rispettivi bottoni "Vai alla sfida".
   }
 
   // ── Render stati ────────────────────────────────────────────────────────
@@ -456,6 +444,14 @@ export default function EventDetail() {
           </div>
         )}
 
+        {/* ── I tuoi contatti e l'ente (8a, passo 5) ─────────────────────── */}
+        <EventContactsBox
+          eventId={id}
+          eventSlug={slug}
+          eventStatus={status}
+          organization={organization}
+        />
+
         {sponsors.length > 0 && (
           <div className="card glass ev-section">
             <h2 className="dynamic-subtitle ev-section__title">
@@ -500,15 +496,6 @@ export default function EventDetail() {
 
       </div>
 
-      {/* ── Modal consenso GDPR ──────────────────────────────────────── */}
-      {showConsent && (
-        <EventConsentModal
-          eventId={id}
-          eventName={name}
-          onSuccess={handleConsentSuccess}
-          onClose={() => setShowConsent(false)}
-        />
-      )}
 
     </section>
   );

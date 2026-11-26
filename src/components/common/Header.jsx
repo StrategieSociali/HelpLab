@@ -401,6 +401,14 @@ export default function Header() {
                         >
                           {t("auth.admin.organizations", "Gestione enti")}
                         </NavLink>
+                        {/* Consensi di una persona (8a, passo 5) */}
+                        <NavLink
+                          to={routes.admin.consents}
+                          className="btn btn-ghost"
+                          onClick={() => { setMenuOpen(false); setAdminOpen(false); }}
+                        >
+                          {t("auth.admin.consents", "Consensi di una persona")}
+                        </NavLink>
                       </div>
                     )}
                   </div>
@@ -523,6 +531,14 @@ export default function Header() {
                       >
                         {t("auth.admin.organizations", "Gestione enti")}
                       </NavLink>
+                      {/* Consensi di una persona (8a, passo 5) */}
+                      <NavLink
+                        to={routes.admin.consents}
+                        className="btn btn-ghost"
+                        onClick={() => setAdminDesktopOpen(false)}
+                      >
+                        {t("auth.admin.consents", "Consensi di una persona")}
+                      </NavLink>
                     </div>
                   )}
                 </div>
@@ -574,6 +590,7 @@ export default function Header() {
  *   auth.admin.learningPaths  → "Gestione corsi"            (IT) / "Manage courses"       (EN)
  *   auth.admin.sponsorships   → "Gestione sponsorizzazioni" (IT) / "Manage sponsorships"  (EN)
  *   auth.admin.organizations  → "Gestione enti"             (IT) / "Manage organizations" (EN)
+ *   auth.admin.consents       → "Consensi di una persona"   (IT) / "A person's consents" (EN)
  *
  * Le chiavi con fallback hardcodato (secondo parametro di t()) funzionano
  * già senza aggiornare i file di traduzione — l'aggiornamento è comunque

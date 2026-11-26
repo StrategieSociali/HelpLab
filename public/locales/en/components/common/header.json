@@ -33,7 +33,8 @@
       "proposals": "Manage proposals",
       "assignJudges": "Assign judges",
       "events": "Manage events",
-      "organizations": "Manage organizations"
+      "organizations": "Manage organizations",
+      "consents": "A person's consents"
     },
     "actions": {
       "createChallenge": "Create challenge",

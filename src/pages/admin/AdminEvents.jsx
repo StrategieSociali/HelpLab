@@ -42,7 +42,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/utils/roles";
-import { getAdminEvents, rejectEvent, endEvent } from "@/api/events.api";
+import { getAdminEvents, rejectEvent, endEvent, downloadEventContacts } from "@/api/events.api";
 import { getPointsIntegrity } from "@/api/points.api";
 import PointsIntegrityButton from "@/components/admin/PointsIntegrityButton";
 import EventPreflightModal from "@/components/admin/EventPreflightModal";
@@ -400,6 +400,18 @@ export default function AdminEvents() {
 >
   📄 Report
 </Link>
+{/* Contatti di chi ha acconsentito (8a, passo 5): all'admin anche i consensi
+    vecchi. Ogni scaricamento resta registrato sul server. */}
+{(ev.status === "published" || ev.status === "ended") && (
+  <button
+    className="btn btn-ghost btn-small"
+    title="Scarica i contatti di chi ha acconsentito (lo scaricamento resta registrato)"
+    onClick={() => downloadEventContacts(ev.id, `contatti_${ev.slug || ev.id}.csv`)
+      .catch(() => alert("Scaricamento dei contatti non riuscito."))}
+  >
+    📥 Contatti
+  </button>
+)}
                 </div>
               </div>
             </li>
