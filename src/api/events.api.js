@@ -39,6 +39,7 @@
  */
 
 import { api } from "@/api/client";
+import i18n from "@/i18n";
 
 // ─── PUBBLICI ────────────────────────────────────────────────────────────────
 
@@ -128,6 +129,15 @@ export async function updateEvent(id, patch) {
 // ─── CONSENSI (8a, passo 5) ──────────────────────────────────────────────────
 // Il testo lo scrive il SERVER (decisione B del 26/11/2026): il client manda solo
 // la risposta, così quello che si salva è per forza quello che la persona ha letto.
+// Il testo è nella lingua dell'interfaccia (PM, 27/11/2026). La lingua con cui un
+// testo è stato CARICATO viaggia con lui (`lang`) e torna nella risposta: se la
+// persona cambia lingua a finestra aperta, si salva comunque il testo che ha visto.
+
+/** «en» se l'interfaccia è in inglese, altrimenti «it». */
+export function linguaConsenso() {
+  const l = i18n.resolvedLanguage || i18n.language || "it";
+  return l.toLowerCase().startsWith("en") ? "en" : "it";
+}
 
 /**
  * Stato del consenso della persona per un evento: testo, ente, stato
@@ -135,18 +145,20 @@ export async function updateEvent(id, patch) {
  * @param {number} id
  */
 export async function getEventConsent(id) {
-  const { data } = await api.get(`/v1/events/${id}/consent`);
-  return data;
+  const lang = linguaConsenso();
+  const { data } = await api.get(`/v1/events/${id}/consent`, { params: { lang } });
+  return { ...data, lang };
 }
 
 /**
  * Risposta della persona: "yes" o "no". Un «no» su un «sì» attivo è una revoca.
  * @param {number} id
  * @param {"yes"|"no"} answer
+ * @param {"it"|"en"} lang - la lingua in cui il testo è stato mostrato
  */
-export async function answerEventConsent(id, answer) {
-  const { data } = await api.post(`/v1/events/${id}/consent`, { answer });
-  return data;
+export async function answerEventConsent(id, answer, lang = linguaConsenso()) {
+  const { data } = await api.post(`/v1/events/${id}/consent`, { answer, lang });
+  return { ...data, lang };
 }
 
 /**
@@ -163,8 +175,9 @@ export async function revokeEventConsent(id) {
  * @param {number|string} challengeId
  */
 export async function getConsentRequests(challengeId) {
-  const { data } = await api.get(`/v1/challenges/${challengeId}/consent-requests`);
-  return data?.items ?? [];
+  const lang = linguaConsenso();
+  const { data } = await api.get(`/v1/challenges/${challengeId}/consent-requests`, { params: { lang } });
+  return (data?.items ?? []).map((it) => ({ ...it, lang }));
 }
 
 /**

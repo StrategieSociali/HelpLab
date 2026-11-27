@@ -56,7 +56,7 @@ export default function EventContactsBox({ eventId, eventSlug, eventStatus, orga
     setBusy(true); setErr(""); setMsg("");
     try {
       const s = answer === "revoke" ? (await revokeEventConsent(eventId), await getEventConsent(eventId))
-                                    : await answerEventConsent(eventId, answer);
+                                    : await answerEventConsent(eventId, answer, stato.lang);
       setStato(s);
       setMsg(answer === "yes" ? "Consenso registrato." : "Consenso revocato.");
     } catch (e) {

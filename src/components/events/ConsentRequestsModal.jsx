@@ -46,7 +46,8 @@ export default function ConsentRequestsModal({ items, onDone }) {
     setBusy(true);
     setError("");
     const esiti = await Promise.allSettled(
-      items.map((it) => answerEventConsent(it.event_id, scelte[it.event_id] ? "yes" : "no"))
+      // Con la lingua in cui il testo è stato caricato: si salva quello mostrato.
+      items.map((it) => answerEventConsent(it.event_id, scelte[it.event_id] ? "yes" : "no", it.lang))
     );
     setBusy(false);
     if (esiti.some((e) => e.status === "rejected")) {
