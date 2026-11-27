@@ -892,3 +892,64 @@
     color: #dc2626;
   }
 }
+
+/* ── Intestazione dell'ente (8a, passo 6) ───────────────────────────────────
+   L'ente in alto a sinistra, HelpLab piccolo a destra. Il logo dell'ente sta su
+   una piastrina bianca: i loghi arrivano a colori e sul fondo scuro dello schermo
+   si perderebbero (in stampa il fondo è già bianco). */
+.enteHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.enteLogo {
+  height: 44px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.enteName {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--report-text);
+  line-height: 1.2;
+}
+
+.enteSite {
+  font-size: 0.85rem;
+  color: var(--report-text-muted);
+  word-break: break-all;
+}
+
+.helplabSmall {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  opacity: 0.85;
+}
+
+.helplabSmall .helplabLogoImg {
+  height: 24px;
+}
+
+.helplabSmall .logoText {
+  font-size: 1rem;
+}
+
+.coverSubtitle {
+  font-size: 0.9rem;
+  color: var(--report-text-muted);
+  margin: -0.75rem 0 1.5rem;
+}
+
+@media print {
+  .enteLogo {
+    padding: 0;
+  }
+}

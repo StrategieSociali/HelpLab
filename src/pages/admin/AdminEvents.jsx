@@ -394,7 +394,7 @@ export default function AdminEvents() {
                   )}
 {/* Report evento — accessibile dall'admin per tutti gli stati */}
 <Link
-  to={routes.admin.eventReport(ev.id)}
+  to={routes.events.report(ev.id)}
   className="btn btn-ghost btn-small"
   title="Visualizza report di impatto"
 >

@@ -17,7 +17,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import { api, API_PATHS } from "../../api/client";
 import styles from "../../styles/EventReport.module.css";
 
@@ -57,72 +56,80 @@ function formatDateTimeIT(isoString) {
 // ─── Sottocomponenti ──────────────────────────────────────────────────────────
 
 /**
- * ReportCover
- * Prima pagina: logo HelpLab, eventuale logo sponsor principale,
- * nome evento, date, sede, organizzatore.
+ * ReportCover — intestazione dell'ente (8a, passo 6; scelta 5 e decisioni del 27/11/2026)
+ * In alto a sinistra l'ente (logo piccolo, nome, sito), HelpLab piccolo a destra;
+ * titolo «Rapporto d'impatto dell'evento …»; sotto «Preparato per … · Misura e
+ * metodo HelpLab» e il periodo; come organizzatori l'ente e i co-organizzatori,
+ * mai il nickname di una persona. Gli sponsor stanno nella loro sezione (decisione B);
+ * tolta la scritta «Rendicontazione di impatto verificata» (decisione C).
+ * Evento senza ente (solo admin): HelpLab a sinistra, nessun «Preparato per».
  */
-function ReportCover({ event, sponsors }) {
-  const primarySponsor = sponsors && sponsors.length > 0 ? sponsors[0] : null;
+function ReportCover({ event }) {
+  const ente = event.organization;
+  const [logoOk, setLogoOk] = useState(true);
   const dateRange =
     event.start_date && event.end_date
       ? `${formatDateIT(event.start_date)} — ${formatDateIT(event.end_date)}`
       : event.start_date
       ? formatDateIT(event.start_date)
       : "";
+  const organizzatori = [
+    ...(ente ? [ente.name] : []),
+    ...(event.coorganizers ?? []).map((c) => c.name),
+  ];
+  const sito = ente?.website ? ente.website.replace(/^https?:\/\//, "").replace(/\/$/, "") : null;
+
+  const helplab = (
+    <div className={ente ? styles.helplabSmall : styles.helplabLogo} aria-label="HelpLab">
+      <img src="/assets/logo_helplab.png" alt="HelpLab" className={styles.helplabLogoImg} />
+      <span className={styles.logoText}>HelpLab</span>
+    </div>
+  );
 
   return (
     <section className={`${styles.section} ${styles.cover}`} aria-label="Copertina report">
-      {/* Header con loghi */}
       <div className={styles.coverLogos}>
-        {/* Logo HelpLab testuale — sostituire con <img> quando disponibile l'asset */}
-       <div className={styles.helplabLogo} aria-label="HelpLab">
-  <img
-    src="/assets/logo_helplab.png"
-    alt="HelpLab"
-    className={styles.helplabLogoImg}
-  />
-  <span className={styles.logoText}>HelpLab</span>
-</div>
-
-        {primarySponsor && primarySponsor.logo_url && (
-          <img
-            src={primarySponsor.logo_url}
-            alt={`Logo ${primarySponsor.name}`}
-            className={styles.sponsorLogoMain}
-            onError={(e) => {
-              /* Nasconde l'immagine se non caricabile */
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        )}
-      </div>
-
-      {/* Badge tipo documento */}
-      <div className={styles.coverBadge}>
-        Rendicontazione di impatto verificata
-      </div>
-
-      {/* Titolo evento */}
-      <h1 className={styles.coverTitle}>{event.name}</h1>
-
-      {/* Metadati evento */}
-      <div className={styles.coverMeta}>
-        {dateRange && (
-          <div className={styles.coverMetaItem}>
-            <span className={styles.coverMetaLabel}>Periodo</span>
-            <span className={styles.coverMetaValue}>{dateRange}</span>
+        {ente ? (
+          <div className={styles.enteHeader}>
+            {ente.logo_url && logoOk && (
+              <img
+                src={ente.logo_url}
+                alt={`Logo ${ente.name}`}
+                className={styles.enteLogo}
+                onError={() => setLogoOk(false)}
+              />
+            )}
+            <div>
+              <div className={styles.enteName}>{ente.name}</div>
+              {sito && <div className={styles.enteSite}>{sito}</div>}
+            </div>
           </div>
+        ) : (
+          helplab
         )}
+        {ente && helplab}
+      </div>
+
+      <h1 className={styles.coverTitle}>Rapporto d'impatto dell'evento {event.name}</h1>
+
+      <p className={styles.coverSubtitle}>
+        {ente ? <>Preparato per {ente.name} · Misura e metodo HelpLab</> : <>Misura e metodo HelpLab</>}
+        {dateRange && <> · {dateRange}</>}
+      </p>
+
+      <div className={styles.coverMeta}>
         {event.location_address && (
           <div className={styles.coverMetaItem}>
             <span className={styles.coverMetaLabel}>Sede</span>
             <span className={styles.coverMetaValue}>{event.location_address}</span>
           </div>
         )}
-        {event.creator && (
+        {organizzatori.length > 0 && (
           <div className={styles.coverMetaItem}>
-            <span className={styles.coverMetaLabel}>Organizzatore</span>
-            <span className={styles.coverMetaValue}>{event.creator.nickname}</span>
+            <span className={styles.coverMetaLabel}>
+              {organizzatori.length > 1 ? "Organizzano" : "Organizza"}
+            </span>
+            <span className={styles.coverMetaValue}>{organizzatori.join(", ")}</span>
           </div>
         )}
       </div>
@@ -134,14 +141,16 @@ function ReportCover({ event, sponsors }) {
  * ReportSummary
  * 4 KPI principali: partecipanti con consenso, km, CO2, submission approvate.
  */
-function ReportSummary({ impact }) {
+function ReportSummary({ impact, hasEnte }) {
   const kpis = [
-    {
+    // Persone di cui l'ente può scaricare i contatti (8a passo 6, decisione E):
+    // stessa regola dell'export. Senza ente non c'è condivisione: niente riquadro.
+    ...(hasEnte ? [{
       value: impact.consent_count,
       unit: "",
-      label: "Partecipanti con consenso",
+      label: "Persone che condividono i contatti con l'ente",
       icon: "👥",
-    },
+    }] : []),
     {
       value: impact.total_km,
       unit: "km",
@@ -390,7 +399,7 @@ function ReportImpact({ impact }) {
  * Conteggi anonimi aggregati: partecipanti, consensi, submission.
  * Nessun dato personale esposto.
  */
-function ReportParticipants({ impact }) {
+function ReportParticipants({ impact, hasEnte }) {
   const {
     participants,
     consent_count,
@@ -420,12 +429,14 @@ function ReportParticipants({ impact }) {
             Volontari con almeno un contributo approvato
           </span>
         </div>
-        <div className={styles.participantStat}>
-          <span className={styles.participantValue}>{consent_count}</span>
-          <span className={styles.participantLabel}>
-            Partecipanti con consenso alla raccolta dati
-          </span>
-        </div>
+        {hasEnte && (
+          <div className={styles.participantStat}>
+            <span className={styles.participantValue}>{consent_count}</span>
+            <span className={styles.participantLabel}>
+              Persone che condividono i contatti con l'ente
+            </span>
+          </div>
+        )}
         {completionRate !== null && (
           <div className={styles.participantStat}>
             <span className={styles.participantValue}>{completionRate}%</span>
@@ -657,43 +668,28 @@ function ReportFooter({ eventId, generatedAt }) {
  * Pagina principale del report evento.
  * Gestisce fetch, loading, error, e orchestrazione dei sottocomponenti.
  *
- * Da registrare in App.jsx come:
- *   <Route
- *     path={routes.admin.eventReport(':id')}
- *     element={
- *       <ProtectedRoute role="admin">
- *         <EventReport />
- *       </ProtectedRoute>
- *     }
- *   />
+ * Rotta: routes.events.report (/dashboard/eventi/:id/report), con il solo login;
+ * chi può leggerlo lo decide il BE (8a, passo 6). Il vecchio indirizzo admin
+ * rimanda qui (RedirectReport in App.jsx).
  */
 export default function EventReport() {
   const { id } = useParams();
-  const { user } = useAuth();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Accesso consentito ad admin e creatore dell'evento.
-// Il controllo sul creatore avviene dopo il fetch, quando abbiamo event.creator.
-
+    // Chi può leggere il report lo decide il BE (8a passo 6): l'admin, e i membri
+    // dell'ente proprietario a evento pubblicato o concluso. Agli altri risponde
+    // 404, senza dire se il report esiste.
     const fetchReportData = async () => {
       try {
-        // API_PATHS.eventDetail ritorna /v1/events/:id — usiamo un path dedicato
-        // che segue lo stesso pattern: /v1/events/:id/report-data
         const res = await api.get(`/v1/events/${id}/report-data`);
-        // Guard: solo admin o creatore dell'evento
-        if (user?.role !== "admin" && res.data?.event?.creator?.email !== user?.email) {
-        setError("Non hai i permessi per visualizzare questo report.");
-        setLoading(false);
-       return;
-       }
         setData(res.data);
       } catch (err) {
         if (err.response?.status === 404) {
-          setError("Evento non trovato o dati del report non disponibili.");
+          setError("Report non disponibile: l'evento non esiste, è ancora in bozza, oppure il report è riservato all'ente che lo organizza.");
         } else {
           setError("Impossibile caricare i dati del report. Riprova più tardi.");
         }
@@ -703,7 +699,7 @@ export default function EventReport() {
     };
 
     fetchReportData();
-  }, [id, user]);
+  }, [id]);
 
   // ── Stati di caricamento ed errore ────────────────────────────────────────
 
@@ -751,11 +747,11 @@ export default function EventReport() {
 
       {/* Contenitore stampabile */}
       <main className={styles.reportContainer} aria-label="Report evento">
-        <ReportCover event={event} sponsors={sponsors} />
-        <ReportSummary impact={impact} />
+        <ReportCover event={event} />
+        <ReportSummary impact={impact} hasEnte={!!event.organization} />
         <ReportChallenges challenges={challenges} />
         <ReportImpact impact={impact} />
-        <ReportParticipants impact={impact} />
+        <ReportParticipants impact={impact} hasEnte={!!event.organization} />
         <ReportVerification impact={impact} />
         <ReportSponsors sponsors={sponsors} />
         <ReportMethodology generatedAt={generated_at} />

@@ -34,6 +34,7 @@ import EventLeaderboard from "@/components/events/EventLeaderboard";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes";
 import EventContactsBox from "@/components/events/EventContactsBox";
+import { getMyOrganizations } from "@/api/organizations.api";
 import "../../styles/event-detail.css";
 
 // ─── Cosa misura la piattaforma, per tipo di sfida ────────────────────────────
@@ -94,11 +95,13 @@ function ChallengeBadge({ status }) {
 export default function EventDetail() {
   const { slug }       = useParams();
   const navigate       = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const [event, setEvent]           = useState(null);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState("");
+  // Membro dell'ente che organizza: vede il pulsante del report (8a, passo 6).
+  const [membroEnte, setMembroEnte] = useState(false);
 
   // ── Carica dettaglio evento ─────────────────────────────────────────────
   const fetchEvent = useCallback(async () => {
@@ -124,6 +127,16 @@ export default function EventDetail() {
   useEffect(() => {
     fetchEvent();
   }, [fetchEvent]);
+
+  const orgId = event?.organization?.id ?? null;
+  useEffect(() => {
+    if (!isAuthenticated || !orgId || user?.role === "admin") { setMembroEnte(false); return; }
+    let alive = true;
+    getMyOrganizations()
+      .then((items) => { if (alive) setMembroEnte(items.some((o) => String(o.id) === String(orgId))); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [isAuthenticated, orgId, user?.role]);
 
   // ── Click su "Partecipa" ────────────────────────────────────────────────
   // Dall'8a passo 5 (decisione E, 26/11/2026) qui non si chiede più il consenso:
@@ -305,6 +318,15 @@ export default function EventDetail() {
                 className="btn btn-outline"
               >
                 {isActive ? "📊 Segui l'impatto live" : "📊 Guarda i risultati"}
+              </Link>
+            )}
+
+            {/* Report dell'evento (8a, passo 6): ai membri dell'ente che lo
+                organizza, a evento pubblicato o concluso, e all'admin. Il BE
+                fa comunque il suo controllo. */}
+            {(user?.role === "admin" || (membroEnte && (isActive || status === "ended"))) && (
+              <Link to={routes.events.report(id)} className="btn btn-outline">
+                📄 Rapporto d'impatto
               </Link>
             )}
             </div>

@@ -58,6 +58,8 @@ export const routes = {
     create:    '/dashboard/eventi/crea',
     edit:      (id = ':id') => `/dashboard/eventi/${id}/modifica`,
     adminList: '/dashboard/admin/eventi',
+    // 8a, passo 6: il report si apre per l'ente (membri) e per l'admin
+    report:    (id = ':id') => `/dashboard/eventi/${id}/report`,
   },
 
   /* ======================
@@ -119,6 +121,7 @@ export const routes = {
     organizations: '/dashboard/admin/enti',
     consents:     '/dashboard/admin/consensi', // 8a, passo 5
     // Report evento: percorso con ID dinamico
+    // Indirizzo vecchio del report: rimanda a events.report (8a, passo 6)
     eventReport:  (id = ':id') => `/dashboard/admin/events/${id}/report`,
   },
 

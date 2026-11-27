@@ -1,6 +1,6 @@
 // src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 
 import { routes } from './routes';
 
@@ -66,6 +66,12 @@ import Privacy from './pages/Privacy';
 
 // ── REPORT ──────────────────────────────────────────
 import EventReport from "./pages/admin/EventReport";
+
+// L'indirizzo vecchio del report (solo admin) rimanda a quello comune (8a, passo 6).
+function RedirectReport() {
+  const { id } = useParams();
+  return <Navigate to={routes.events.report(id)} replace />;
+}
 
 // ── PAGINE CALCOLO IMPATTO E ADOZIONE ALBERI───────────────────────────────────
 import ImpactPage    from './pages/ImpactPage';
@@ -374,14 +380,17 @@ export default function App() {
                  </ProtectedRoute>
                  }
                />
-               <Route
-  path={routes.admin.eventReport()}
-  element={
-    <ProtectedRoute role="admin">
-      <EventReport />
-    </ProtectedRoute>
-  }
-/>
+              {/* Report di evento (8a, passo 6): chi lo legge lo decide il BE
+                  (admin, e i membri dell'ente proprietario). Qui basta il login. */}
+              <Route
+                path={routes.events.report()}
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'judge', 'admin', 'sponsor']}>
+                    <EventReport />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path={routes.admin.eventReport()} element={<RedirectReport />} />
 
               {/* ===== 404 ===== */}
               <Route path="*" element={<NotFound />} />
