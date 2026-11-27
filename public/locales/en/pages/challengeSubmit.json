@@ -112,9 +112,11 @@
     "intro": "This challenge is part of an event run by an organisation. You can choose whether to share your nickname and email with them, to manage your participation.",
     "optional": "It's optional: you can take part either way. You can change your mind at any time from the event page.",
     "privacy": "Privacy Policy",
-    "confirm": "Confirm and continue",
     "saving": "Saving…",
     "saveError": "We couldn't save your choice. You can still take part; we'll ask you again next time.",
-    "continueAnyway": "Continue"
+    "continueAnyway": "Continue",
+    "continueWithout": "Continue without sharing my contact details",
+    "acceptAndContinue": "I agree, continue",
+    "confirmMixed": "Confirm my choices and continue"
   }
 }

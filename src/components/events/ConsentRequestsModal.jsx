@@ -12,8 +12,12 @@
  * REGOLE:
  * - Il testo accanto alla casella è QUELLO del server, parola per parola: il
  *   client manda solo «sì» o «no» e il server salva il suo testo (decisione B).
- * - Non blocca mai la partecipazione: «Conferma» registra sì per le caselle
+ * - Non blocca mai la partecipazione: il pulsante registra sì per le caselle
  *   spuntate e no per le altre; anche se il salvataggio fallisce si continua.
+ * - Il pulsante dice cosa succede (prova a schermo del 27/11/2026: con la casella
+ *   vuota «Conferma e continua» è stato letto come un consenso). Casella vuota:
+ *   «Continua senza condividere i contatti»; tutte spuntate: «Acconsento e
+ *   continua»; con più eventi e scelte miste: «Conferma le scelte e continua».
  * - Chiudere senza confermare non registra nulla: la domanda torna la prossima volta.
  *
  * PROPS:
@@ -30,6 +34,13 @@ export default function ConsentRequestsModal({ items, onDone }) {
   const [scelte, setScelte] = useState({}); // { [event_id]: true }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const spuntate = items.filter((it) => scelte[it.event_id]).length;
+  const etichetta = spuntate === 0
+    ? t("consent.continueWithout")
+    : spuntate === items.length
+      ? t("consent.acceptAndContinue")
+      : t("consent.confirmMixed");
 
   async function conferma() {
     setBusy(true);
@@ -99,7 +110,7 @@ export default function ConsentRequestsModal({ items, onDone }) {
           </button>
         ) : (
           <button className="btn btn-primary" onClick={conferma} disabled={busy} aria-busy={busy} style={{ flex: 1 }}>
-            {busy ? t("consent.saving") : t("consent.confirm")}
+            {busy ? t("consent.saving") : etichetta}
           </button>
         )}
       </div>

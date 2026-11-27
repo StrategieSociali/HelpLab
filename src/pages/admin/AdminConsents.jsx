@@ -18,9 +18,14 @@ function quando(d) {
   return d ? new Date(d).toLocaleString("it-IT", { dateStyle: "medium", timeStyle: "short" }) : "—";
 }
 
+// Una riga per risposta, dalla più vecchia. L'ora della risposta viene PRIMA,
+// la revoca dopo (prova a schermo del 27/11/2026: con la revoca davanti la riga
+// sembrava al contrario).
 function risposta(c) {
-  if (c.answer === "no") return "No";
-  return c.revoked_at ? `Sì, revocato il ${quando(c.revoked_at)}` : "Sì";
+  if (c.answer === "no") return `${quando(c.answered_at)} · No`;
+  return c.revoked_at
+    ? `${quando(c.answered_at)} · Sì · revocato il ${quando(c.revoked_at)}`
+    : `${quando(c.answered_at)} · Sì`;
 }
 
 export default function AdminConsents() {
@@ -75,7 +80,7 @@ export default function AdminConsents() {
             </div>
 
             <div className="card glass">
-              <h2 className="dynamic-subtitle">Risposte ({dati.consents.length})</h2>
+              <h2 className="dynamic-subtitle">Risposte ({dati.consents.length}), dalla più vecchia</h2>
               {dati.consents.length === 0 ? (
                 <p className="muted">Nessuna risposta.</p>
               ) : (
@@ -85,8 +90,12 @@ export default function AdminConsents() {
                       <strong>{c.event_name || `Evento ${c.event_id}`}</strong>
                       {" · "}{c.organization?.name ? `ente «${c.organization.name}»` : "nessun ente (testo generico, versione 1.0)"}
                       <br />
-                      {risposta(c)} · {quando(c.answered_at)} · testo versione {c.text_version}
-                      <p className="muted small" style={{ margin: "4px 0 0" }}>{c.text}</p>
+                      {risposta(c)} · testo versione {c.text_version}
+                      {/* Il testo è quello letto dalla persona: sotto un «No» va detto
+                          che non l'ha accettato, altrimenti «Acconsento…» inganna. */}
+                      <p className="muted small" style={{ margin: "4px 0 0" }}>
+                        <em>{c.answer === "no" ? "Testo letto e non accettato:" : "Testo accettato:"}</em> {c.text}
+                      </p>
                     </li>
                   ))}
                 </ul>
