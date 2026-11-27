@@ -15,6 +15,11 @@
  *   Il resto della sfida (tipo, obiettivi, calcolatori, stato) resta all'admin.
  * - Solo admin: assegna all'ente sfide ed eventi che esistono già (es. quelli di
  *   un ente che organizzava prima che gli enti esistessero) e li toglie.
+ * - Proposte degli sponsor (8a, passo 7): le proposte di sponsorizzazione sugli
+ *   eventi dell'ente, con l'esito. Le vedono i membri e l'admin; accetta o declina
+ *   un referente (`can_answer` dal BE), e il primo che risponde decide. Il messaggio
+ *   del rifiuto è facoltativo e lo legge lo sponsor. L'admin le vede ma non risponde
+ *   al posto dell'ente. Dopo il sì decide HelpLab.
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -33,6 +38,11 @@ import {
 } from "@/api/organizations.api";
 import { getAdminEvents, updateEvent } from "@/api/events.api";
 import { api, API_PATHS } from "@/api/client";
+import {
+  getOrganizationSponsorshipRequests,
+  answerOrganizationSponsorshipRequest,
+} from "@/api/sponsorship.api";
+import Modal from "@/components/UI/Modal";
 import "../../styles/dynamic-pages.css";
 
 const beError = (err) => err?.response?.data?.error || null;
@@ -390,6 +400,9 @@ export default function OrganizationPage() {
           </ul>
         </div>
 
+        {/* ---------------- Proposte degli sponsor (8a, passo 7) ---------------- */}
+        <SponsorProposals t={t} orgId={id} />
+
         {user?.role === "admin" && (
           <AdminAssignPanel t={t} orgId={id} orgName={org.name} onChallengeAssigned={loadChallenges} setNotice={setNotice} />
         )}
@@ -524,6 +537,178 @@ function AdminAssignPanel({ t, orgId, orgName, onChallengeAssigned, setNotice })
         <button className="btn btn-outline" onClick={assignChallenge} disabled={busy || !challengeId}>{t("detail.adminAssign")}</button>
       </div>
       <p className="small muted" style={{ marginTop: 4 }}>{t("detail.adminChallengeHelp")}</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Proposte degli sponsor sugli eventi dell'ente (8a, passo 7)
+// ---------------------------------------------------------------------------
+function proposalStatus(t, p) {
+  if (p.waiting_for === "organization") return { cls: "chip-warning", text: t("sponsors.status.waitingOrg") };
+  if (p.waiting_for === "admin") return { cls: "chip-role", text: t("sponsors.status.waitingAdmin") };
+  if (p.organization_answer?.answer === "declined") return { cls: "chip-error", text: t("sponsors.status.declined") };
+  if (p.status === "approved") return { cls: "chip-success", text: t("sponsors.status.approved") };
+  if (p.status === "withdrawn") return { cls: "chip-role", text: t("sponsors.status.withdrawn") };
+  return { cls: "chip-error", text: t("sponsors.status.rejectedByAdmin") };
+}
+
+function SponsorProposals({ t, orgId }) {
+  const [items, setItems] = useState(null); // null = caricamento
+  const [error, setError] = useState(false);
+  const [modal, setModal] = useState(null); // { type: "accept"|"decline", item }
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [actionError, setActionError] = useState(null);
+  const [done, setDone] = useState(null);
+
+  const load = useCallback(async () => {
+    setError(false);
+    try {
+      const data = await getOrganizationSponsorshipRequests(orgId);
+      setItems(data?.items ?? []);
+    } catch {
+      setError(true);
+      setItems([]);
+    }
+  }, [orgId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const close = () => { setModal(null); setMessage(""); setActionError(null); };
+
+  const answer = async () => {
+    setSending(true);
+    setActionError(null);
+    try {
+      const accept = modal.type === "accept";
+      await answerOrganizationSponsorshipRequest(orgId, modal.item.id, {
+        answer: accept ? "accept" : "decline",
+        ...(!accept && message.trim() ? { message: message.trim() } : {}),
+      });
+      setDone(t(accept ? "sponsors.acceptedNotice" : "sponsors.declinedNotice", { sponsor: modal.item.sponsor.name }));
+      close();
+      load();
+    } catch (err) {
+      setActionError(beError(err) || t("common.genericError"));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString() : "");
+  const anyAnswerable = (items || []).some((p) => p.can_answer);
+
+  return (
+    <div className="card" style={{ padding: 16, marginTop: 24 }}>
+      <h3 className="dynamic-title" style={{ marginTop: 0 }}>{t("sponsors.title")}</h3>
+      <p className="muted">{t("sponsors.intro")}</p>
+
+      {done && <div className="callout success" style={{ marginBottom: 12 }}>{done}</div>}
+      {items === null && <p className="muted small">{t("common.loading")}</p>}
+      {error && (
+        <div className="callout error">
+          {t("sponsors.loadError")}{" "}
+          <button className="btn btn-ghost btn-small" onClick={load}>{t("sponsors.retry")}</button>
+        </div>
+      )}
+      {!error && items && items.length === 0 && <p className="muted small">{t("sponsors.empty")}</p>}
+
+      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
+        {(items || []).map((p) => {
+          const st = proposalStatus(t, p);
+          const a = p.organization_answer;
+          return (
+            <li key={p.id} style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                <div>
+                  <strong>{p.sponsor.name}</strong>{" "}
+                  <span className={`chip ${st.cls}`} style={{ whiteSpace: "nowrap" }}>{st.text}</span>
+                  <div className="small muted">
+                    {t("sponsors.forEvent", { event: p.event?.name ?? "", date: fmt(p.event?.start_date) })}
+                    {" · "}{t("sponsors.sentOn", { date: fmt(p.created_at) })}
+                    {p.budget_proposed_eur ? ` · ${t("sponsors.budget", { amount: p.budget_proposed_eur })}` : ""}
+                  </div>
+                  {p.sponsor.website && (
+                    <a className="small link-accent" href={p.sponsor.website} target="_blank" rel="noopener noreferrer">
+                      {p.sponsor.website.replace(/^https?:\/\//, "")}
+                    </a>
+                  )}
+                  {a && (
+                    <div className="small muted">
+                      {t(a.answer === "accepted" ? "sponsors.acceptedBy" : "sponsors.declinedBy", {
+                        name: a.by?.name ?? "—", date: fmt(a.at),
+                      })}
+                      {a.message && <div style={{ whiteSpace: "pre-wrap", fontStyle: "italic" }}>«{a.message}»</div>}
+                    </div>
+                  )}
+                </div>
+                {p.can_answer && (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                    <button className="btn btn-primary btn-small" onClick={() => setModal({ type: "accept", item: p })}>
+                      {t("sponsors.accept")}
+                    </button>
+                    <button className="btn btn-outline btn-small" onClick={() => setModal({ type: "decline", item: p })}>
+                      {t("sponsors.decline")}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <details style={{ marginTop: 6 }}>
+                <summary className="small muted" style={{ cursor: "pointer" }}>{t("sponsors.details")}</summary>
+                <p className="small" style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{p.motivation}</p>
+                {p.report_requests && (
+                  <p className="small" style={{ whiteSpace: "pre-wrap" }}>
+                    <strong>{t("sponsors.reportRequests")}</strong> {p.report_requests}
+                  </p>
+                )}
+              </details>
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* Chi non è referente vede le proposte ma non risponde */}
+      {items && items.some((p) => p.waiting_for === "organization") && !anyAnswerable && (
+        <p className="small muted" style={{ marginTop: 10 }}>{t("sponsors.onlyReferents")}</p>
+      )}
+
+      {modal && (
+        <Modal
+          title={t(modal.type === "accept" ? "sponsors.acceptTitle" : "sponsors.declineTitle")}
+          onClose={close}
+        >
+          <p>
+            {t(modal.type === "accept" ? "sponsors.acceptText" : "sponsors.declineText", {
+              sponsor: modal.item.sponsor.name, event: modal.item.event?.name ?? "",
+            })}
+          </p>
+          {modal.type === "decline" && (
+            <div className="form-group">
+              <label htmlFor="decline-message">{t("sponsors.messageLabel")}</label>
+              <textarea
+                id="decline-message"
+                rows={4}
+                maxLength={1000}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder={t("sponsors.messagePlaceholder")}
+                style={{ width: "100%" }}
+              />
+              <p className="small muted" style={{ marginTop: 4 }}>{t("sponsors.messageHelp")}</p>
+            </div>
+          )}
+          {actionError && <div className="card-info error">{actionError}</div>}
+          <div className="dynamic-actions" style={{ marginTop: 4 }}>
+            <button className="btn btn-primary" style={{ flex: 1 }} disabled={sending} onClick={answer}>
+              {sending
+                ? t("sponsors.sending")
+                : t(modal.type === "accept" ? "sponsors.acceptConfirm" : "sponsors.declineConfirm")}
+            </button>
+            <button className="btn btn-ghost" onClick={close} disabled={sending}>{t("detail.cancel")}</button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

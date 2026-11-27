@@ -130,6 +130,11 @@ export const API_PATHS = {
   adminSponsorshipApprove:        (id) => `/v1/admin/sponsorship-requests/${id}/approve`,
   adminSponsorshipReject:         (id) => `/v1/admin/sponsorship-requests/${id}/reject`,
   adminSponsorshipConfirmPayment: (id) => `/v1/admin/sponsorships/${id}/confirm-payment`,
+  // 8a, passo 7: sponsor di evento
+  adminSponsorshipRemind:         (id) => `/v1/admin/sponsorship-requests/${id}/remind`,
+  adminEventSponsorshipConfirmPayment: (id) => `/v1/admin/event-sponsorships/${id}/confirm-payment`,
+  organizationSponsorshipRequests: (id) => `/v1/organizations/${id}/sponsorship-requests`,
+  organizationSponsorshipAnswer:  (id, requestId) => `/v1/organizations/${id}/sponsorship-requests/${requestId}/answer`,
 
   // ─── events (v1) ──────────────────────────────────────────────────────────
   // Le funzioni con logica più complessa (admin, consent, link challenge)

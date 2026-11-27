@@ -1,5 +1,5 @@
 {
-  "_comment": "/src/pages/organizations/*, /src/components/organizations/MyOrganizationsCard.jsx (8a, passi 2 e 3)",
+  "_comment": "/src/pages/organizations/*, /src/components/organizations/MyOrganizationsCard.jsx (8a, passi 2, 3 e 7)",
   "common": {
     "loading": "Caricamento…",
     "genericError": "Si è verificato un errore. Riprova tra poco.",
@@ -151,5 +151,42 @@
     "saving": "Salvataggio…",
     "saved": "Sfida aggiornata.",
     "reset": "Annulla le modifiche"
+  },
+  "sponsors": {
+    "title": "Proposte degli sponsor",
+    "intro": "Le aziende che propongono di sostenere un evento dell'ente. HelpLab le esamina solo dopo il sì di un referente: il primo che risponde decide per l'ente.",
+    "empty": "Nessuna proposta di sponsorizzazione per gli eventi dell'ente.",
+    "loadError": "Non è stato possibile caricare le proposte.",
+    "retry": "Riprova",
+    "forEvent": "Evento «{{event}}» del {{date}}",
+    "sentOn": "proposta il {{date}}",
+    "budget": "budget proposto {{amount}} €",
+    "details": "Motivazione e richieste dello sponsor",
+    "reportRequests": "Richieste per il report:",
+    "acceptedBy": "Accettata da {{name}} il {{date}}",
+    "declinedBy": "Declinata da {{name}} il {{date}}",
+    "accept": "Accetta",
+    "decline": "Declina",
+    "onlyReferents": "Alle proposte rispondono i referenti dell'ente.",
+    "acceptTitle": "Accettare la proposta?",
+    "acceptText": "Accetti la proposta di {{sponsor}} per l'evento «{{event}}» a nome dell'ente. Dopo il tuo sì la esamina il team di HelpLab, che si accorda con lo sponsor sul pagamento.",
+    "acceptConfirm": "Accetto a nome dell'ente",
+    "declineTitle": "Declinare la proposta?",
+    "declineText": "Declini la proposta di {{sponsor}} per l'evento «{{event}}» a nome dell'ente. La proposta si chiude e non passa a HelpLab.",
+    "messageLabel": "Messaggio per lo sponsor (facoltativo)",
+    "messagePlaceholder": "es. Grazie, per questo evento abbiamo già chi ci sostiene.",
+    "messageHelp": "Lo legge lo sponsor. Senza messaggio legge «L'ente organizzatore ha declinato la proposta».",
+    "declineConfirm": "Declino a nome dell'ente",
+    "sending": "Invio in corso…",
+    "acceptedNotice": "Hai accettato la proposta di {{sponsor}}: ora la esamina HelpLab.",
+    "declinedNotice": "Hai declinato la proposta di {{sponsor}}.",
+    "status": {
+      "waitingOrg": "Da decidere",
+      "waitingAdmin": "Accettata, la esamina HelpLab",
+      "approved": "Approvata da HelpLab",
+      "declined": "Declinata dall'ente",
+      "rejectedByAdmin": "Non approvata da HelpLab",
+      "withdrawn": "Ritirata dallo sponsor"
+    }
   }
 }

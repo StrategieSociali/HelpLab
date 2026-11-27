@@ -212,6 +212,17 @@ export default function EventDetail() {
       : null;
 
   const openChallenges = challenges.filter((ch) => ch.status === "open");
+
+  // Chi sostiene l'evento e chi le singole sfide (8a, passo 7): lo dice il BE
+  const sponsorsOfEvent = sponsors.filter((sp) => sp.for_event);
+  const sponsorsByChallenge = [];
+  for (const sp of sponsors) {
+    for (const ch of sp.challenges || []) {
+      let g = sponsorsByChallenge.find((x) => x.challenge.id === ch.id);
+      if (!g) { g = { challenge: ch, list: [] }; sponsorsByChallenge.push(g); }
+      g.list.push(sp);
+    }
+  }
   const isActive = status === "published";
 
   // Dimensioni misurate dall'evento, dedotte dai tipi delle sfide collegate.
@@ -412,18 +423,6 @@ export default function EventDetail() {
         {/* ── Classifica dell'evento (PM-5, 2/10/2026) ─────────────────── */}
         <EventLeaderboard eventId={event?.id} />
 
-        {/* ── Sponsor ──────────────────────────────────────────────────────
-            Ogni logo su una PIASTRA CHIARA. I marchi di terzi sono quasi sempre
-            disegnati per il bianco: su fondo scuro un PNG con trasparenza si
-            sporca o sparisce del tutto, e prima erano immagini nude alte 48px
-            appoggiate sul gradiente. È il dettaglio che distingue "loghi
-            presentati" da "loghi incollati", ed è la parte della pagina che uno
-            sponsor guarda per prima.
-
-            ⚠️ NOTA STRUTTURALE: gli sponsor si ricavano dalle SFIDE collegate
-            (`sponsor_id` + `challenge_sponsorships`), non dall'evento. Un
-            sostenitore dell'evento che non sponsorizza una singola sfida non ha
-            oggi alcun modo di comparire qui. Vedi `bug-e-todo.md`. */}
         {/* ── Chi organizza (8a, passo 3) ──────────────────────────────────
             Stesse piastre degli sponsor: l'ente e i co-organizzatori sono
             «loghi presentati» quanto gli sponsor. Senza logo, il nome. */}
@@ -474,51 +473,91 @@ export default function EventDetail() {
           organization={organization}
         />
 
-        {sponsors.length > 0 && (
+        {/* ── Sponsor ──────────────────────────────────────────────────────
+            Ogni logo su una PIASTRA CHIARA. I marchi di terzi sono quasi sempre
+            disegnati per il bianco: su fondo scuro un PNG con trasparenza si
+            sporca o sparisce del tutto, e prima erano immagini nude alte 48px
+            appoggiate sul gradiente. È il dettaglio che distingue "loghi
+            presentati" da "loghi incollati", ed è la parte della pagina che uno
+            sponsor guarda per prima.
+
+            8a, passo 7: «Sostengono l'evento» (le sponsorizzazioni dell'evento,
+            `for_event`) distinto da «Sostengono la sfida X» (`challenges`). Uno
+            sponsor con il pagamento scaduto non arriva dal BE: torna quando paga. */}
+        {(sponsorsOfEvent.length > 0 || sponsorsByChallenge.length > 0) && (
           <div className="card glass ev-section">
-            <h2 className="dynamic-subtitle ev-section__title">
-              Con il sostegno di
-            </h2>
-            <div className="ev-sponsors__grid">
-              {sponsors.map((sp) => {
-                const plate = (
-                  <div className="ev-sponsor__plate">
-                    {sp.logo_url ? (
-                      <img src={sp.logo_url} alt={sp.name} className="ev-sponsor__logo" />
-                    ) : (
-                      <span className="ev-sponsor__name">{sp.name}</span>
-                    )}
-                  </div>
-                );
-                return (
-                  <div key={sp.id} className="ev-sponsor">
-                    {/* Con un sito, tutta la piastra è cliccabile: un bersaglio
-                        grande è più comodo del link testuale sotto, e su telefono
-                        è la differenza fra un tocco e tre tentativi. */}
-                    {sp.website ? (
-                      <a
-                        href={sp.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ width: "100%" }}
-                        aria-label={`Sito di ${sp.name}`}
-                      >
-                        {plate}
-                      </a>
-                    ) : (
-                      plate
-                    )}
-                    <span className="muted small">{sp.name}</span>
-                  </div>
-                );
-              })}
-            </div>
+            {sponsorsOfEvent.length > 0 && (
+              <>
+                <h2 className="dynamic-subtitle ev-section__title">
+                  {sponsorsOfEvent.length > 1 ? "Sostengono l'evento" : "Sostiene l'evento"}
+                </h2>
+                <SponsorGrid sponsors={sponsorsOfEvent} />
+              </>
+            )}
+            {sponsorsByChallenge.map(({ challenge, list }) => (
+              <div key={challenge.id} style={{ marginTop: sponsorsOfEvent.length > 0 ? 20 : 0 }}>
+                <h3 className="ev-section__title" style={{ fontSize: "1rem" }}>
+                  {list.length > 1 ? "Sostengono" : "Sostiene"} la sfida «{challenge.title}»
+                </h3>
+                <SponsorGrid sponsors={list} />
+              </div>
+            ))}
           </div>
+        )}
+
+        {/* Uno sponsor può proporre di sostenere l'evento (8a, passo 7) */}
+        {user?.role === "sponsor" && isActive && (
+          <p className="small muted" style={{ textAlign: "center" }}>
+            Vuoi sostenere questo evento?{" "}
+            <Link to={routes.community.sponsorshipRequestEvent(id)} className="link-accent">
+              Proponi una sponsorizzazione
+            </Link>
+          </p>
         )}
 
       </div>
 
 
     </section>
+  );
+}
+
+// ─── Griglia di piastre degli sponsor (8a, passo 7: usata per evento e sfide) ──
+function SponsorGrid({ sponsors }) {
+  return (
+    <div className="ev-sponsors__grid">
+      {sponsors.map((sp) => {
+        const plate = (
+          <div className="ev-sponsor__plate">
+            {sp.logo_url ? (
+              <img src={sp.logo_url} alt={sp.name} className="ev-sponsor__logo" />
+            ) : (
+              <span className="ev-sponsor__name">{sp.name}</span>
+            )}
+          </div>
+        );
+        return (
+          <div key={sp.id} className="ev-sponsor">
+            {/* Con un sito, tutta la piastra è cliccabile: un bersaglio
+                grande è più comodo del link testuale sotto, e su telefono
+                è la differenza fra un tocco e tre tentativi. */}
+            {sp.website ? (
+              <a
+                href={sp.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ width: "100%" }}
+                aria-label={`Sito di ${sp.name}`}
+              >
+                {plate}
+              </a>
+            ) : (
+              plate
+            )}
+            <span className="muted small">{sp.name}</span>
+          </div>
+        );
+      })}
+    </div>
   );
 }

@@ -17,11 +17,22 @@
  *   PATCH /v1/admin/sponsorship-requests/:id/approve
  *   PATCH /v1/admin/sponsorship-requests/:id/reject
  *   PATCH /v1/admin/sponsorships/:id/confirm-payment
+ *   POST  /v1/admin/sponsorship-requests/:id/remind            (8a, passo 7)
+ *   PATCH /v1/admin/event-sponsorships/:id/confirm-payment     (8a, passo 7)
  *   GET   /v1/admin/role-requests?requested_role=sponsor
  *   PATCH /v1/admin/role-requests/:id/approve
  *   PATCH /v1/admin/role-requests/:id/reject
  *
  * MODALI: TextModal e PaymentModal su components/UI/Modal (standard grafico, 5/10/2026).
+ *
+ * 8a, passo 7 (sponsor di evento): una richiesta su un evento di un ente è prima
+ * «in attesa dell'ente, dal …», poi «in attesa dell'admin»; l'admin approva solo
+ * dopo il sì dell'ente e non risponde mai al suo posto, ma può mandare un
+ * promemoria (registrato). Sotto ogni richiesta tutti i passaggi (richiesta,
+ * promemoria, risposta dell'ente con chi, quando e messaggio, esame dell'admin):
+ * in caso di contestazione l'admin fa da arbitro.
+ * FIX 27/11/2026: titolo e sponsor leggevano `challenge_title`, `event_title` e
+ * `sponsor_name`, che il BE non manda: ogni riga diceva «Piattaforma» senza sponsor.
  */
 
 import React, { useEffect, useState, useCallback } from "react";
@@ -31,6 +42,8 @@ import {
   adminApproveSponsorshipRequest,
   adminRejectSponsorshipRequest,
   adminConfirmPayment,
+  adminConfirmEventPayment,
+  adminRemindSponsorshipRequest,
 } from "@/api/sponsorship.api";
 import {
   adminGetRoleRequests,
@@ -77,6 +90,48 @@ function fmtDateTime(iso) {
   });
 }
 
+/** Etichetta dello stato di una richiesta, con chi deve decidere (8a, passo 7). */
+function requestStatusChip(item) {
+  if (item.status === "pending_review" && item.waiting_for === "organization") {
+    return { cls: "chip-neutral", text: `In attesa dell'ente dal ${fmtDate(item.waiting_since)}` };
+  }
+  if (item.status === "pending_review") {
+    return { cls: "chip-neutral", text: `In attesa dell'admin dal ${fmtDate(item.waiting_since || item.created_at)}` };
+  }
+  if (item.status === "rejected" && item.organization_answer?.answer === "declined") {
+    return { cls: "chip-error", text: "Declinata dall'ente" };
+  }
+  const labels = { approved: "Approvata", rejected: "Rifiutata", withdrawn: "Ritirata" };
+  return {
+    cls: item.status === "approved" ? "chip-success" : item.status === "rejected" ? "chip-error" : "chip-neutral",
+    text: labels[item.status] || item.status,
+  };
+}
+
+/** Tutti i passaggi di una richiesta, in ordine di tempo (8a, passo 7). */
+function requestSteps(item) {
+  const steps = [{ at: item.created_at, text: `Richiesta di ${item.sponsor?.name || "uno sponsor"}` }];
+  for (const r of item.reminders || []) {
+    steps.push({
+      at: r.at,
+      text: `Promemoria all'ente da ${r.by?.name || "admin"} (${r.recipients} ${r.recipients === 1 ? "referente" : "referenti"})`,
+    });
+  }
+  const a = item.organization_answer;
+  if (a) {
+    steps.push({
+      at: a.at,
+      text: `${a.answer === "accepted" ? "L'ente ha accettato" : "L'ente ha declinato"}: ${a.by?.name || `utente ${a.by?.id ?? "?"}`}`,
+      message: a.message,
+    });
+  }
+  if (item.reviewed_at) {
+    const esito = item.status === "approved" ? "Approvata" : "Rifiutata";
+    steps.push({ at: item.reviewed_at, text: `${esito} dall'admin${item.reviewer?.name ? ` (${item.reviewer.name})` : ""}` });
+  }
+  return steps.sort((x, y) => String(x.at).localeCompare(String(y.at)));
+}
+
 // ---------------------------------------------------------------------------
 // Sottocomponente: modale generica per input testo (motivo rifiuto, note, ecc.)
 // ---------------------------------------------------------------------------
@@ -106,6 +161,65 @@ function TextModal({ title, label, placeholder, required = false, onConfirm, onC
           onClick={() => onConfirm(value.trim())}
         >
           Conferma
+        </button>
+        <button className="btn btn-ghost" onClick={onCancel}>
+          Annulla
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sottocomponente: modale di approvazione (8a, passo 7, decisione D)
+// La scadenza del pagamento la calcola il BE (sfida: scadenza - 7 giorni; evento:
+// inizio - 7 giorni, o approvazione + 7 se quel giorno è passato); l'admin la può
+// cambiare qui. Vuota = quella calcolata.
+// ---------------------------------------------------------------------------
+
+function ApproveModal({ onConfirm, onCancel }) {
+  const [notes, setNotes]       = useState("");
+  const [deadline, setDeadline] = useState("");
+
+  return (
+    <Modal title="Approva candidatura" onClose={onCancel}>
+      <div className="form-group">
+        <label htmlFor="approve-deadline">
+          Scadenza del pagamento <span className="muted small">(opzionale)</span>
+        </label>
+        <input
+          id="approve-deadline"
+          type="date"
+          value={deadline}
+          onChange={(e) => setDeadline(e.target.value)}
+        />
+        <p className="small muted" style={{ marginTop: 4 }}>
+          Vuota, la calcola HelpLab: 7 giorni prima dell'inizio dell'evento (o della
+          scadenza della sfida); se quel giorno è già passato, 7 giorni da oggi.
+        </p>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="approve-notes">
+          Note interne <span className="muted small">(opzionale — non visibili allo sponsor)</span>
+        </label>
+        <textarea
+          id="approve-notes"
+          rows={4}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="es. confermato budget, accordo verbale del…"
+          style={{ width: "100%" }}
+        />
+      </div>
+
+      <div className="dynamic-actions" style={{ marginTop: 4 }}>
+        <button
+          className="btn btn-primary"
+          style={{ flex: 1 }}
+          onClick={() => onConfirm({ adminNotes: notes.trim(), paymentDeadline: deadline })}
+        >
+          Approva
         </button>
         <button className="btn btn-ghost" onClick={onCancel}>
           Annulla
@@ -216,19 +330,17 @@ function SponsorshipRequestsTab() {
 
   // ── Azioni ────────────────────────────────────────────────────────────────
 
-  const handleApprove = async (adminNotes) => {
+  const handleApprove = async ({ adminNotes, paymentDeadline }) => {
     setModal(null);
     setActionError(null);
     try {
       await adminApproveSponsorshipRequest(modal.id, {
         admin_notes: adminNotes || undefined,
+        payment_deadline: paymentDeadline || undefined,
       });
-      // Aggiorno lo stato localmente
-      setItems((prev) =>
-        prev.map((i) =>
-          i.id === modal.id ? { ...i, status: "approved" } : i
-        )
-      );
+      // Si ricarica: all'approvazione nasce la sponsorizzazione, con il suo id e la
+      // scadenza, che servono al pulsante «Conferma pagamento»
+      load({ append: false });
     } catch (err) {
       setActionError(err?.response?.data?.error || "Errore nell'approvazione.");
     }
@@ -255,8 +367,13 @@ function SponsorshipRequestsTab() {
     setModal(null);
     setActionError(null);
     try {
-      // confirm-payment usa l'ID della sponsorship, non della request
-      await adminConfirmPayment(modal.sponsorshipId, { amount_eur, private_notes });
+      // confirm-payment usa l'ID della sponsorship, non della request; sfide ed
+      // eventi hanno due rotte e due campi distinti (8a, passo 7)
+      if (modal.kind === "event") {
+        await adminConfirmEventPayment(modal.sponsorshipId, { amount_eur, private_notes });
+      } else {
+        await adminConfirmPayment(modal.sponsorshipId, { amount_eur, private_notes });
+      }
       setItems((prev) =>
         prev.map((i) =>
           i.id === modal.id
@@ -274,6 +391,24 @@ function SponsorshipRequestsTab() {
       );
     } catch (err) {
       setActionError(err?.response?.data?.error || "Errore nella conferma pagamento.");
+    }
+  };
+
+  // Promemoria all'ente: niente modale, ma una riga che dice com'è andata
+  const [reminded, setReminded] = useState(null);
+  const handleRemind = async (id) => {
+    setActionError(null);
+    setReminded(null);
+    try {
+      const r = await adminRemindSponsorshipRequest(id);
+      setReminded(
+        r?.recipients > 0
+          ? `Promemoria mandato a ${r.recipients} ${r.recipients === 1 ? "referente" : "referenti"} dell'ente.`
+          : "Promemoria registrato, ma l'ente non ha referenti attivi con un'email: nessuno l'ha ricevuto."
+      );
+      load({ append: false });
+    } catch (err) {
+      setActionError(err?.response?.data?.error || "Errore nell'invio del promemoria.");
     }
   };
 
@@ -300,6 +435,9 @@ function SponsorshipRequestsTab() {
       {actionError && (
         <div className="callout error" style={{ marginBottom: 12 }}>{actionError}</div>
       )}
+      {reminded && (
+        <div className="callout success" style={{ marginBottom: 12 }}>{reminded}</div>
+      )}
 
       {loading && <div className="callout neutral">Caricamento…</div>}
 
@@ -323,15 +461,26 @@ function SponsorshipRequestsTab() {
                 <p className="small muted" style={{ margin: 0 }}>
                   #{item.id} · {fmtDateTime(item.created_at)}
                 </p>
+                <p className="small muted" style={{ margin: 0 }}>
+                  {item.target_type === "challenge" ? "Sfida" : item.target_type === "event" ? "Evento" : "Piattaforma"}
+                </p>
                 <strong>
-                  {item.challenge_title || item.event_title || `Piattaforma`}
+                  {item.challenge?.title || item.event?.name || `Piattaforma`}
                 </strong>
-                {item.sponsor_name && (
-                  <span className="small muted"> — {item.sponsor_name}</span>
+                {item.sponsor?.name && (
+                  <span className="small muted"> — {item.sponsor.name}</span>
+                )}
+                {item.organization && (
+                  <p className="small muted" style={{ margin: "2px 0 0" }}>
+                    Ente organizzatore: {item.organization.name}
+                  </p>
                 )}
               </div>
-              <span className={`chip ${item.status === "approved" ? "chip-success" : item.status === "rejected" ? "chip-error" : "chip-neutral"}`}>
-                {item.status}
+              <span
+                className={`chip ${requestStatusChip(item).cls}`}
+                style={{ whiteSpace: "nowrap" }}
+              >
+                {requestStatusChip(item).text}
               </span>
             </div>
 
@@ -370,16 +519,49 @@ function SponsorshipRequestsTab() {
               </details>
             )}
 
+            {/* Passaggi (8a, passo 7): solo per gli eventi con un ente, dove sono più d'uno */}
+            {item.organization && (
+              <details style={{ marginTop: 6 }} open={item.status === "pending_review"}>
+                <summary className="small muted" style={{ cursor: "pointer" }}>
+                  Passaggi
+                </summary>
+                <ol className="small" style={{ marginTop: 6, paddingLeft: 18 }}>
+                  {requestSteps(item).map((st, i) => (
+                    <li key={i} style={{ marginBottom: 4 }}>
+                      <span className="muted">{fmtDateTime(st.at)}</span> · {st.text}
+                      {st.message && (
+                        <div className="muted" style={{ whiteSpace: "pre-wrap", fontStyle: "italic" }}>
+                          «{st.message}»
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
+
             {/* Azioni */}
             <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+              {/* In attesa dell'ente: l'admin non approva e non risponde per l'ente,
+                  ma può ricordarglielo (8a, passo 7) */}
+              {item.status === "pending_review" && item.waiting_for === "organization" && (
+                <button
+                  className="btn btn-outline btn-small"
+                  onClick={() => handleRemind(item.id)}
+                >
+                  ✉️ Invia promemoria all'ente
+                </button>
+              )}
               {item.status === "pending_review" && (
                 <>
-                  <button
-                    className="btn btn-primary btn-small"
-                    onClick={() => setModal({ type: "approve", id: item.id })}
-                  >
-                    ✅ Approva
-                  </button>
+                  {item.waiting_for !== "organization" && (
+                    <button
+                      className="btn btn-primary btn-small"
+                      onClick={() => setModal({ type: "approve", id: item.id })}
+                    >
+                      ✅ Approva
+                    </button>
+                  )}
                   <button
                     className="btn btn-outline btn-small"
                     style={{ color: "var(--color-error, #c0392b)" }}
@@ -392,7 +574,7 @@ function SponsorshipRequestsTab() {
 
               {/* Conferma pagamento: visibile se approvata e pagamento non ancora confermato */}
               {item.status === "approved" &&
-                item.sponsorship_id &&
+                (item.sponsorship_id || item.event_sponsorship_id) &&
                 item.payment?.payment_status === "pending" && (
                   <button
                     className="btn btn-outline btn-small"
@@ -400,7 +582,8 @@ function SponsorshipRequestsTab() {
                       setModal({
                         type: "payment",
                         id: item.id,
-                        sponsorshipId: item.sponsorship_id,
+                        kind: item.event_sponsorship_id ? "event" : "challenge",
+                        sponsorshipId: item.event_sponsorship_id || item.sponsorship_id,
                       })
                     }
                   >
@@ -426,10 +609,7 @@ function SponsorshipRequestsTab() {
 
       {/* Modali */}
       {modal?.type === "approve" && (
-        <TextModal
-          title="Approva candidatura"
-          label="Note interne (opzionale — non visibili allo sponsor)"
-          placeholder="es. confermato budget, accordo verbale del…"
+        <ApproveModal
           onConfirm={handleApprove}
           onCancel={() => setModal(null)}
         />

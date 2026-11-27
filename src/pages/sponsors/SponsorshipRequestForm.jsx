@@ -1,13 +1,18 @@
 // src/pages/sponsors/SponsorshipRequestForm.jsx
 /**
- * Form di candidatura per sponsorizzare una challenge.
+ * Form di candidatura per sponsorizzare una challenge o un evento.
  * Accessibile solo a utenti con role === "sponsor".
  *
  * Comportamento:
- *   - Legge ?challenge=ID dalla query string per pre-selezionare la challenge
+ *   - Legge ?challenge=ID o ?event=ID dalla query string per pre-selezionare il bersaglio
  *   - Supporta target_type: "challenge" | "event" | "platform"
  *   - Quando target_type === "challenge", mostra un selettore challenge
  *     popolato da GET /challenges?seeking_sponsor=true
+ *   - Quando target_type === "event" (8a, passo 7), un selettore degli eventi
+ *     pubblicati e non ancora finiti (GET /events?status=published). Fino al
+ *     2.0.0-alpha.8 «Un evento» si poteva scegliere ma la richiesta non partiva:
+ *     mancava il selettore e il BE vuole event_id. Se l'evento è di un ente, la
+ *     richiesta passa prima dall'ente: lo dicono i next_steps del BE
  *   - Post-invio mostra i next_steps ricevuti dal BE
  *
  * ROUTE: /dashboard/sponsor/candidatura  (routes.community.sponsorshipRequest)
@@ -17,6 +22,7 @@
  *   GET  /v1/sponsors/me   (404 = profilo non ancora creato: lo si dice subito,
  *                           prima di far compilare il modulo — 5/10/2026)
  *   GET  /v1/challenges?seeking_sponsor=true
+ *   GET  /v1/events?status=published&limit=50
  *   POST /v1/sponsorship-requests
  */
 
@@ -45,13 +51,15 @@ export default function SponsorshipRequestForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // challenge_id pre-compilato da query param ?challenge=ID
+  // challenge_id o event_id pre-compilati da query param ?challenge=ID / ?event=ID
   const preselectedChallengeId = searchParams.get("challenge") || "";
+  const preselectedEventId     = searchParams.get("event") || "";
 
   // ── Stato form ──────────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    target_type:        "challenge",
+    target_type:        preselectedEventId ? "event" : "challenge",
     challenge_id:       preselectedChallengeId,
+    event_id:           preselectedEventId,
     motivation:         "",
     report_requests:    "",
     budget_proposed_eur: "",
@@ -60,10 +68,13 @@ export default function SponsorshipRequestForm() {
   // ── Stato UI ─────────────────────────────────────────────────────────────
   const [challenges, setChallenges]   = useState([]);
   const [chLoading, setChLoading]     = useState(false);
+  const [events, setEvents]           = useState([]);
+  const [evLoading, setEvLoading]     = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [error, setError]             = useState(null);
   const [submitted, setSubmitted]     = useState(false);
   const [nextSteps, setNextSteps]     = useState([]);
+  const [waitingFor, setWaitingFor]   = useState(null);
   const [noProfile, setNoProfile]     = useState(false);
 
   // ── Profilo sponsor: senza, il BE rifiuta la candidatura ─────────────────
@@ -91,19 +102,38 @@ export default function SponsorshipRequestForm() {
     }
   }, []);
 
+  // ── Fetch eventi pubblicati (8a, passo 7) ────────────────────────────────
+  // Si offrono solo quelli non ancora finiti: un evento concluso il BE lo rifiuta.
+  const loadEvents = useCallback(async () => {
+    setEvLoading(true);
+    try {
+      const { data } = await api.get(API_PATHS.events("?status=published&limit=50"));
+      const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, giorno locale
+      const items = Array.isArray(data?.items) ? data.items : [];
+      setEvents(items.filter((ev) => String(ev.end_date || "").slice(0, 10) >= today));
+    } catch {
+      setEvents([]);
+    } finally {
+      setEvLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (form.target_type === "challenge") {
       loadChallenges();
     }
-  }, [form.target_type, loadChallenges]);
+    if (form.target_type === "event") {
+      loadEvents();
+    }
+  }, [form.target_type, loadChallenges, loadEvents]);
 
   // ── Handlers form ─────────────────────────────────────────────────────────
   const onChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => {
       const next = { ...prev, [name]: value };
-      // Quando cambia target_type, resetta challenge_id
-      if (name === "target_type") next.challenge_id = "";
+      // Quando cambia target_type, resetta challenge_id ed event_id
+      if (name === "target_type") { next.challenge_id = ""; next.event_id = ""; }
       return next;
     });
   };
@@ -141,6 +171,16 @@ export default function SponsorshipRequestForm() {
         body.challenge_id = Number(form.challenge_id);
       }
 
+      // event_id: obbligatorio solo per target_type === "event"
+      if (form.target_type === "event") {
+        if (!form.event_id) {
+          setError("Seleziona un evento prima di continuare.");
+          setSubmitting(false);
+          return;
+        }
+        body.event_id = Number(form.event_id);
+      }
+
       // report_requests: opzionale
       if (form.report_requests.trim()) {
         body.report_requests = form.report_requests.trim();
@@ -159,12 +199,13 @@ export default function SponsorshipRequestForm() {
 
       const res = await api.post(API_PATHS.sponsorshipRequests(), body);
       setNextSteps(res.data?.next_steps || []);
+      setWaitingFor(res.data?.waiting_for || null);
       setSubmitted(true);
     } catch (err) {
       const status = err?.response?.status;
       if (status === 409) {
         setError(
-          "Hai già una candidatura attiva per questa sfida. " +
+          "Hai già una candidatura attiva per questa sfida o per questo evento. " +
           "Puoi visualizzarla nella tua dashboard candidature."
         );
       } else if (status === 403) {
@@ -190,7 +231,11 @@ export default function SponsorshipRequestForm() {
         <div className="container" style={{ maxWidth: 640 }}>
           <div className="callout success">
             <h2 style={{ marginTop: 0 }}>✅ Candidatura inviata!</h2>
-            <p>Il team di HelpLab esaminerà la tua richiesta.</p>
+            <p>
+              {waitingFor === "organization"
+                ? "L'ente che organizza l'evento leggerà la tua proposta; dopo il suo sì la esaminerà il team di HelpLab."
+                : "Il team di HelpLab esaminerà la tua richiesta."}
+            </p>
 
             {nextSteps.length > 0 && (
               <ul style={{ marginTop: 12, paddingLeft: 18 }}>
@@ -215,9 +260,11 @@ export default function SponsorshipRequestForm() {
               onClick={() => {
                 setSubmitted(false);
                 setNextSteps([]);
+                setWaitingFor(null);
                 setForm({
                   target_type:         "challenge",
                   challenge_id:        "",
+                  event_id:            "",
                   motivation:          "",
                   report_requests:     "",
                   budget_proposed_eur: "",
@@ -336,6 +383,53 @@ export default function SponsorshipRequestForm() {
                   Sfida pre-selezionata dalla pagina precedente.
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Selettore evento — visibile solo se target_type === "event" (8a, passo 7) */}
+          {form.target_type === "event" && (
+            <div className="form-group">
+              <label htmlFor="event_id">
+                Evento da sponsorizzare{" "}
+                <span className="muted small">(obbligatorio)</span>
+              </label>
+
+              {evLoading ? (
+                <p className="muted small">Caricamento eventi…</p>
+              ) : events.length === 0 ? (
+                <div className="callout neutral">
+                  Nessun evento in programma al momento.{" "}
+                  <Link to={routes.events.list} className="link-accent">
+                    Esplora gli eventi
+                  </Link>
+                  .
+                </div>
+              ) : (
+                <select
+                  id="event_id"
+                  name="event_id"
+                  value={form.event_id}
+                  onChange={onChange}
+                  required
+                  disabled={submitting}
+                >
+                  <option value="">— Seleziona un evento —</option>
+                  {events.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      {ev.name}
+                      {ev.start_date
+                        ? ` (dal ${new Date(ev.start_date).toLocaleDateString("it-IT")})`
+                        : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              <p className="small muted" style={{ marginTop: 4 }}>
+                Se l'evento è organizzato da un ente, la proposta passa prima
+                dall'ente, che la accetta o la declina; dopo il suo sì la esamina
+                il team di HelpLab.
+              </p>
             </div>
           )}
 

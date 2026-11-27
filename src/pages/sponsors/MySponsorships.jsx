@@ -7,6 +7,12 @@
  *   - Mostra stato candidatura (pending_review, approved, rejected)
  *   - Mostra stato pagamento quando disponibile (pending, confirmed, cancelled)
  *   - Permette il ritiro di candidature in stato "pending_review"
+ *   - 8a, passo 7: le candidature su un evento di un ente aspettano prima l'ente
+ *     («In attesa dell'ente»); se l'ente declina, lo sponsor legge il suo
+ *     messaggio o, senza messaggio, «L'ente organizzatore ha declinato la proposta»
+ *   - FIX 27/11/2026: il titolo leggeva `challenge_title` / `event_title`, che il BE
+ *     non manda (manda `challenge.title` ed `event.name`): ogni card diceva
+ *     «Sponsorizzazione piattaforma"
  *   - Link rapidi a: nuova candidatura, profilo sponsor, guida
  *
  * ROUTE:  /dashboard/sponsor/candidature  (routes.community.mySponsorships)
@@ -68,7 +74,14 @@ function fmtDate(iso) {
 // ---------------------------------------------------------------------------
 
 function SponsorshipCard({ item, onWithdraw, withdrawing }) {
-  const reqStatus  = requestStatusUI(item.status);
+  // 8a, passo 7: chi deve decidere e il no dell'ente cambiano l'etichetta
+  const reqStatus  =
+    item.status === "pending_review" && item.waiting_for === "organization"
+      ? { label: "In attesa dell'ente", cls: "chip chip-neutral", icon: "⏳" }
+      : item.status === "rejected" && item.organization_answer === "declined"
+        ? { label: "Declinata dall'ente", cls: "chip chip-error", icon: "❌" }
+        : requestStatusUI(item.status);
+  const title = item.challenge?.title || item.event?.name || "Sponsorizzazione piattaforma";
   const hasPayment = !!item.payment;
   const payStatus  = hasPayment ? paymentStatusUI(item.payment.payment_status) : null;
 
@@ -93,11 +106,12 @@ function SponsorshipCard({ item, onWithdraw, withdrawing }) {
             {item.target_type === "event"     && "Evento"}
             {item.target_type === "platform"  && "Piattaforma"}
           </p>
-          <h3 style={{ margin: 0 }}>
-            {item.challenge_title ||
-              item.event_title    ||
-              "Sponsorizzazione piattaforma"}
-          </h3>
+          <h3 style={{ margin: 0 }}>{title}</h3>
+          {item.event?.organization?.name && (
+            <p className="small muted" style={{ margin: "2px 0 0" }}>
+              Organizza: {item.event.organization.name}
+            </p>
+          )}
         </div>
 
         <span className={reqStatus.cls} aria-label={`Stato: ${reqStatus.label}`}>
@@ -126,6 +140,21 @@ function SponsorshipCard({ item, onWithdraw, withdrawing }) {
           </li>
         )}
       </ul>
+
+      {/* Risposta dell'ente (8a, passo 7, decisione A) */}
+      {item.status === "pending_review" && item.waiting_for === "organization" && (
+        <p className="small muted" style={{ marginTop: 12 }}>
+          L'ente che organizza l'evento deve ancora rispondere. Dopo il suo sì la
+          candidatura passa al team di HelpLab.
+        </p>
+      )}
+      {item.organization_answer === "declined" && (
+        <div className="callout neutral" style={{ marginTop: 12 }}>
+          <p className="small" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+            {item.organization_message || "L'ente organizzatore ha declinato la proposta."}
+          </p>
+        </div>
+      )}
 
       {/* Stato pagamento — visibile solo dopo approvazione */}
       {hasPayment && (
@@ -198,7 +227,7 @@ function SponsorshipCard({ item, onWithdraw, withdrawing }) {
             style={{ color: "var(--color-error, #c0392b)" }}
             disabled={withdrawing}
             onClick={() => onWithdraw(item.id)}
-            aria-label={`Ritira candidatura per ${item.challenge_title || "questa sponsorizzazione"}`}
+            aria-label={`Ritira candidatura per ${title}`}
           >
             {withdrawing ? "Ritiro in corso…" : "Ritira candidatura"}
           </button>

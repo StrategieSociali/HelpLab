@@ -15,7 +15,7 @@
  * Accesso: solo ruolo "admin" (guard tramite ProtectedRoute in App.jsx)
  */
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api, API_PATHS } from "../../api/client";
 import styles from "../../styles/EventReport.module.css";
@@ -529,13 +529,26 @@ function ReportVerification({ impact }) {
 
 /**
  * ReportSponsors
- * Lista degli sponsor con logo (se disponibile) e nome.
+ * Chi sostiene l'evento e chi le singole sfide (8a, passo 7): «Sostengono
+ * l'evento» (`for_event`) e «Sostengono la sfida X» (`challenges`), come nella
+ * pagina dell'evento. Logo (se disponibile) e nome. Gli sponsor con il pagamento
+ * scaduto non arrivano dal BE.
  * La sezione è nascosta se sponsors è array vuoto.
  * Nessun importo esposto.
  */
 function ReportSponsors({ sponsors }) {
   // Guard: non renderizzare se non ci sono sponsor
   if (!sponsors || sponsors.length === 0) return null;
+
+  const ofEvent = sponsors.filter((sp) => sp.for_event);
+  const byChallenge = [];
+  for (const sp of sponsors) {
+    for (const ch of sp.challenges || []) {
+      let g = byChallenge.find((x) => x.challenge.id === ch.id);
+      if (!g) { g = { challenge: ch, list: [] }; byChallenge.push(g); }
+      g.list.push(sp);
+    }
+  }
 
   return (
     <section
@@ -544,48 +557,69 @@ function ReportSponsors({ sponsors }) {
     >
       <h2 className={styles.sectionTitle}>Con il supporto di</h2>
 
-      <div className={styles.sponsorsGrid}>
-        {sponsors.map((sponsor) => (
-          <div key={sponsor.id} className={styles.sponsorCard}>
-            {sponsor.logo_url ? (
-              <img
-                src={sponsor.logo_url}
-                alt={`Logo ${sponsor.name}`}
-                className={styles.sponsorLogo}
-                onError={(e) => {
-                  /* Fallback testuale se l'immagine non carica */
-                  e.currentTarget.style.display = "none";
-                  e.currentTarget.nextElementSibling.style.display = "flex";
-                }}
-              />
-            ) : null}
-
-            {/* Fallback testuale — visibile se logo assente o non caricabile */}
-            <div
-              className={styles.sponsorLogoFallback}
-              style={{ display: sponsor.logo_url ? "none" : "flex" }}
-              aria-hidden={!!sponsor.logo_url}
-            >
-              {sponsor.name.charAt(0).toUpperCase()}
-            </div>
-
-            <span className={styles.sponsorName}>{sponsor.name}</span>
-
-            {/* Link solo a schermo, non cliccabile in stampa */}
-            {sponsor.website && (
-              <a
-                href={sponsor.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.sponsorWebsite}
-              >
-                {sponsor.website.replace(/^https?:\/\//, "")}
-              </a>
-            )}
-          </div>
-        ))}
-      </div>
+      {ofEvent.length > 0 && (
+        <>
+          <h3 className={styles.sponsorsGroupTitle}>
+            {ofEvent.length > 1 ? "Sostengono l'evento" : "Sostiene l'evento"}
+          </h3>
+          <ReportSponsorCards list={ofEvent} />
+        </>
+      )}
+      {byChallenge.map(({ challenge, list }) => (
+        <Fragment key={challenge.id}>
+          <h3 className={styles.sponsorsGroupTitle}>
+            {list.length > 1 ? "Sostengono" : "Sostiene"} la sfida «{challenge.title}»
+          </h3>
+          <ReportSponsorCards list={list} />
+        </Fragment>
+      ))}
     </section>
+  );
+}
+
+function ReportSponsorCards({ list }) {
+  return (
+    <div className={styles.sponsorsGrid}>
+      {list.map((sponsor) => (
+        <div key={sponsor.id} className={styles.sponsorCard}>
+          {sponsor.logo_url ? (
+            <img
+              src={sponsor.logo_url}
+              alt={`Logo ${sponsor.name}`}
+              className={styles.sponsorLogo}
+              onError={(e) => {
+                /* Fallback testuale se l'immagine non carica */
+                e.currentTarget.style.display = "none";
+                e.currentTarget.nextElementSibling.style.display = "flex";
+              }}
+            />
+          ) : null}
+
+          {/* Fallback testuale — visibile se logo assente o non caricabile */}
+          <div
+            className={styles.sponsorLogoFallback}
+            style={{ display: sponsor.logo_url ? "none" : "flex" }}
+            aria-hidden={!!sponsor.logo_url}
+          >
+            {sponsor.name.charAt(0).toUpperCase()}
+          </div>
+
+          <span className={styles.sponsorName}>{sponsor.name}</span>
+
+          {/* Link solo a schermo, non cliccabile in stampa */}
+          {sponsor.website && (
+            <a
+              href={sponsor.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.sponsorWebsite}
+            >
+              {sponsor.website.replace(/^https?:\/\//, "")}
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 

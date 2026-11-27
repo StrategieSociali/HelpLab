@@ -3,6 +3,8 @@
 // Gestisce tutte le operazioni legate alle sponsorizzazioni:
 //   - candidature sponsor (crea, lista personale, ritiro)
 //   - endpoint admin (lista, approva, rifiuta, conferma pagamento)
+//   - 8a, passo 7: promemoria all'ente, conferma del pagamento di un evento,
+//     proposte sugli eventi dell'ente e risposta del referente
 //
 // DIPENDENZE: src/api/client.js (api, API_PATHS)
 // RUOLI COINVOLTI: sponsor, admin
@@ -114,5 +116,57 @@ export async function adminRejectSponsorshipRequest(id, body = {}) {
  */
 export async function adminConfirmPayment(id, body) {
   const res = await api.patch(API_PATHS.adminSponsorshipConfirmPayment(id), body);
+  return res.data;
+}
+
+// ---------------------------------------------------------------------------
+// 8a, passo 7 — sponsor di evento
+// ---------------------------------------------------------------------------
+
+/**
+ * Promemoria all'ente (solo admin, solo mentre la richiesta aspetta l'ente).
+ * Rimanda l'email ai referenti e resta registrato (chi, quando, a quanti).
+ *
+ * @param {number} id - ID della candidatura
+ * @returns {Promise<{ id, sent_at, recipients }>}
+ */
+export async function adminRemindSponsorshipRequest(id) {
+  const res = await api.post(API_PATHS.adminSponsorshipRemind(id));
+  return res.data;
+}
+
+/**
+ * Conferma il pagamento di una sponsorizzazione di EVENTO (solo admin).
+ *
+ * @param {number} id - `event_sponsorship_id` della riga admin (non della candidatura)
+ * @param {Object} body - { amount_eur, private_notes? }
+ */
+export async function adminConfirmEventPayment(id, body) {
+  const res = await api.patch(API_PATHS.adminEventSponsorshipConfirmPayment(id), body);
+  return res.data;
+}
+
+/**
+ * Proposte degli sponsor sugli eventi dell'ente (membri attivi dell'ente).
+ * Ogni item ha `can_answer`: true solo per i referenti, mentre la proposta aspetta l'ente.
+ *
+ * @param {number} orgId
+ * @returns {Promise<{ items: Array, total: number }>}
+ */
+export async function getOrganizationSponsorshipRequests(orgId) {
+  const res = await api.get(API_PATHS.organizationSponsorshipRequests(orgId));
+  return res.data;
+}
+
+/**
+ * Risposta del referente: accetta o declina. Il messaggio vale solo per il rifiuto
+ * e lo legge lo sponsor. Il primo referente che risponde decide (409 per gli altri).
+ *
+ * @param {number} orgId
+ * @param {number} requestId
+ * @param {{ answer: "accept"|"decline", message?: string }} body
+ */
+export async function answerOrganizationSponsorshipRequest(orgId, requestId, body) {
+  const res = await api.post(API_PATHS.organizationSponsorshipAnswer(orgId, requestId), body);
   return res.data;
 }

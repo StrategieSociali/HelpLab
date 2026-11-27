@@ -151,5 +151,42 @@
     "saving": "Saving…",
     "saved": "Challenge updated.",
     "reset": "Discard changes"
+  },
+  "sponsors": {
+    "title": "Sponsor proposals",
+    "intro": "Companies offering to support one of the organisation's events. HelpLab reviews them only after a referent says yes: the first one to answer decides for the organisation.",
+    "empty": "No sponsorship proposals for the organisation's events.",
+    "loadError": "The proposals could not be loaded.",
+    "retry": "Try again",
+    "forEvent": "Event “{{event}}” on {{date}}",
+    "sentOn": "proposed on {{date}}",
+    "budget": "proposed budget €{{amount}}",
+    "details": "The sponsor's motivation and requests",
+    "reportRequests": "Report requests:",
+    "acceptedBy": "Accepted by {{name}} on {{date}}",
+    "declinedBy": "Declined by {{name}} on {{date}}",
+    "accept": "Accept",
+    "decline": "Decline",
+    "onlyReferents": "Proposals are answered by the organisation's referents.",
+    "acceptTitle": "Accept the proposal?",
+    "acceptText": "You accept {{sponsor}}'s proposal for the event “{{event}}” on behalf of the organisation. After your yes the HelpLab team reviews it and agrees the payment with the sponsor.",
+    "acceptConfirm": "I accept on behalf of the organisation",
+    "declineTitle": "Decline the proposal?",
+    "declineText": "You decline {{sponsor}}'s proposal for the event “{{event}}” on behalf of the organisation. The proposal is closed and does not go to HelpLab.",
+    "messageLabel": "Message for the sponsor (optional)",
+    "messagePlaceholder": "e.g. Thank you, this event already has its supporters.",
+    "messageHelp": "The sponsor reads it. Without a message they read “The organising body has declined the proposal”.",
+    "declineConfirm": "I decline on behalf of the organisation",
+    "sending": "Sending…",
+    "acceptedNotice": "You accepted {{sponsor}}'s proposal: HelpLab will now review it.",
+    "declinedNotice": "You declined {{sponsor}}'s proposal.",
+    "status": {
+      "waitingOrg": "To be decided",
+      "waitingAdmin": "Accepted, HelpLab is reviewing it",
+      "approved": "Approved by HelpLab",
+      "declined": "Declined by the organisation",
+      "rejectedByAdmin": "Not approved by HelpLab",
+      "withdrawn": "Withdrawn by the sponsor"
+    }
   }
 }

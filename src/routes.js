@@ -27,6 +27,8 @@ export const routes = {
       challengeId
         ? `/dashboard/sponsor/candidatura?challenge=${challengeId}`
         : `/dashboard/sponsor/candidatura`,
+    // 8a, passo 7: la stessa pagina con l'evento già scelto
+    sponsorshipRequestEvent: (eventId) => `/dashboard/sponsor/candidatura?event=${eventId}`,
     // Dashboard personale dello sponsor: lista candidature e stati pagamento
     mySponsorships:     '/dashboard/sponsor/candidature',
   },
